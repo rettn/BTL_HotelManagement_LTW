@@ -1,147 +1,169 @@
-﻿
-@{
-    ViewData["Title"] = "Dashboard";
+﻿@{
+    ViewData["Title"] = "Trang chủ khách sạn";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
+<main class="hotel-home">
 
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
-    <div>
-        <h1 class="page-title mb-0">Tổng quan</h1>
-        <p class="page-subtitle mb-0">
-            Chào mừng trở lại! Đây là tình hình hoạt động khách sạn.
+    <!-- BANNER CHÍNH -->
+    <section class="hero" id="hero">
+        <div class="hero-image" id="heroImage"></div>
+        <div class="hero-overlay"></div>
+
+        <!-- Thanh đầu banner -->
+        <div class="hero-top">
+            <a class="hotel-logo" asp-controller="Home" asp-action="Index">
+                <img src="~/images/logo.png" alt="Logo" style="width: 43px; height: 43px; object-fit: contain;" />
+                <span class="hotel-name">HOTEL MANAGEMENT</span>
+            </a>
+
+            <div class="hero-actions">
+                <button id="themeToggle"
+                        class="theme-toggle"
+                        type="button"
+                        aria-label="Chuyển giao diện sáng tối"
+                        title="Chuyển giao diện sáng tối">
+                    <span id="themeIcon">☾</span>
+                </button>
+
+                <a class="login-button"
+                   asp-controller="Account"
+                   asp-action="Login">
+                    ĐĂNG NHẬP
+                </a>
+            </div>
+        </div>
+
+        <!-- Nội dung giới thiệu -->
+        <div class="hero-content" id="heroContent">
+            <p class="hero-eyebrow" id="heroEyebrow">
+                WELCOME TO OUR HOTEL
+            </p>
+
+            <h1 id="heroTitle">
+                TRẢI NGHIỆM NGHỈ DƯỠNG ĐẲNG CẤP
+            </h1>
+
+            <p class="hero-description" id="heroDescription">
+                Không gian tinh tế, dịch vụ tận tâm, trải nghiệm khác biệt.
+            </p>
+
+            <a class="hero-button" href="#discover">
+                KHÁM PHÁ KHÁCH SẠN
+                <span>↗</span>
+            </a>
+        </div>
+
+        <!-- Chuyển banner -->
+        <div class="hero-controls">
+            <div class="hero-tabs" role="group" aria-label="Chọn nội dung giới thiệu">
+                <button type="button" class="hero-tab active"
+                        data-slide="0" aria-label="Giới thiệu khách sạn">
+                     Khách sạn
+                </button>
+                <button type="button" class="hero-tab"
+                        data-slide="1" aria-label="Giới thiệu phòng nghỉ">
+                     Phòng nghỉ
+                </button>
+                <button type="button" class="hero-tab"
+                        data-slide="2" aria-label="Giới thiệu dịch vụ">
+                     Dịch vụ
+                </button>
+            </div>
+
+            <div class="hero-arrows">
+                <button type="button" id="prevSlide" aria-label="Banner trước">←</button>
+                <button type="button" id="nextSlide" aria-label="Banner tiếp theo">→</button>
+            </div>
+        </div>
+
+        <div class="hero-counter">
+            <span id="currentSlide">01</span>
+            <span class="counter-line"></span>
+            <span>03</span>
+        </div>
+    </section>
+
+    <!-- THANH ĐIỀU HƯỚNG -->
+    <nav class="main-nav" aria-label="Điều hướng chính">
+        <a class="nav-brand" asp-controller="Home" asp-action="Index">
+            HOTEL
+        </a>
+
+        <div class="nav-links">
+            <a href="#discover">Trang chủ</a>
+            <a href="#rooms">Phòng nghỉ</a>
+            <a href="#services">Dịch vụ</a>
+            <a href="#dining">Ẩm thực</a>
+            <a href="#about">Giới thiệu</a>
+            <a href="#contact">Liên hệ</a>
+        </div>
+
+        <button type="button" class="mobile-menu"
+                id="mobileMenu" aria-label="Mở menu">
+            ☰
+        </button>
+    </nav>
+
+    <!-- GIỚI THIỆU -->
+    <section class="intro-section" id="discover">
+        <p class="section-eyebrow reveal">DISCOVER OUR HOTEL</p>
+        <h2 class="section-title reveal">
+            NƠI MỖI KHOẢNH KHẮC<br />
+            ĐỀU TRỞ THÀNH TRẢI NGHIỆM
+        </h2>
+        <p class="section-description reveal">
+            Khám phá không gian nghỉ dưỡng, tiện nghi hiện đại
+            và những dịch vụ được thiết kế dành riêng cho bạn.
         </p>
-    </div>
-    <a asp-controller="Phong" asp-action="Index" class="btn btn-primary">
-        <i class="bi bi-door-open me-2"></i>Quản lý phòng
-    </a>
-</div>
 
-<div class="row g-3 mb-4">
-    <div class="col-12 col-sm-6 col-xl-3">
-        <div class="stat-card">
-            <div class="d-flex justify-content-between align-items-center">
-                <span class="stat-label">Tổng số phòng</span>
-                <span class="stat-icon" style="background:#e8edff;color:#4263eb">
-                    <i class="bi bi-buildings"></i>
-                </span>
-            </div>
-            <div class="stat-number">--</div>
-            <div class="small text-secondary mt-2">Sẽ lấy từ cơ sở dữ liệu</div>
-        </div>
-    </div>
-
-    <div class="col-12 col-sm-6 col-xl-3">
-        <div class="stat-card">
-            <div class="d-flex justify-content-between align-items-center">
-                <span class="stat-label">Phòng trống</span>
-                <span class="stat-icon" style="background:#dcfce7;color:#15803d">
-                    <i class="bi bi-check-circle"></i>
-                </span>
-            </div>
-            <div class="stat-number">--</div>
-            <div class="small text-secondary mt-2">Sẵn sàng đón khách</div>
-        </div>
-    </div>
-
-    <div class="col-12 col-sm-6 col-xl-3">
-        <div class="stat-card">
-            <div class="d-flex justify-content-between align-items-center">
-                <span class="stat-label">Đang sử dụng</span>
-                <span class="stat-icon" style="background:#fee2e2;color:#dc2626">
-                    <i class="bi bi-person-check"></i>
-                </span>
-            </div>
-            <div class="stat-number">--</div>
-            <div class="small text-secondary mt-2">Phòng đang có khách</div>
-        </div>
-    </div>
-
-    <div class="col-12 col-sm-6 col-xl-3">
-        <div class="stat-card">
-            <div class="d-flex justify-content-between align-items-center">
-                <span class="stat-label">Bảo trì</span>
-                <span class="stat-icon" style="background:#fef3c7;color:#b45309">
-                    <i class="bi bi-tools"></i>
-                </span>
-            </div>
-            <div class="stat-number">--</div>
-            <div class="small text-secondary mt-2">Cần kiểm tra, sửa chữa</div>
-        </div>
-    </div>
-</div>
-
-<div class="row g-3">
-    <div class="col-12 col-xl-8">
-        <div class="content-card h-100">
-            <div class="content-card-header">
-                <div>
-                    <h5 class="fw-bold mb-1">Truy cập nhanh</h5>
-                    <div class="text-secondary small">Các chức năng thường dùng</div>
+        <div class="feature-grid">
+            <a class="feature-card reveal" id="rooms" href="#contact">
+                <div class="feature-image image-room"></div>
+                <div class="feature-info">
+                    <span>01 / ACCOMMODATION</span>
+                    <h3>Phòng nghỉ</h3>
+                    <p>Không gian riêng tư và tiện nghi.</p>
+                    <span class="feature-arrow">↗</span>
                 </div>
-            </div>
+            </a>
 
-            <div class="p-3">
-                <div class="row g-3">
-                    <div class="col-6 col-md-4">
-                        <a asp-controller="Phong" asp-action="Index"
-                           class="btn btn-light border w-100 p-3 text-start h-100">
-                            <i class="bi bi-door-closed fs-3 d-block text-primary mb-2"></i>
-                            <span class="fw-semibold">Quản lý phòng</span>
-                            <span class="d-block text-secondary small mt-1">Danh sách và trạng thái</span>
-                        </a>
-                    </div>
-
-                    <div class="col-6 col-md-4">
-                        <a asp-controller="LoaiPhong" asp-action="Index"
-                           class="btn btn-light border w-100 p-3 text-start h-100">
-                            <i class="bi bi-tags fs-3 d-block text-success mb-2"></i>
-                            <span class="fw-semibold">Loại phòng</span>
-                            <span class="d-block text-secondary small mt-1">Giá và sức chứa</span>
-                        </a>
-                    </div>
-
-                    <div class="col-6 col-md-4">
-                        <div class="btn btn-light border w-100 p-3 text-start h-100">
-                            <i class="bi bi-calendar-check fs-3 d-block text-warning mb-2"></i>
-                            <span class="fw-semibold">Đặt phòng</span>
-                            <span class="d-block text-secondary small mt-1">Sẽ triển khai tiếp</span>
-                        </div>
-                    </div>
+            <a class="feature-card reveal" id="dining" href="#contact">
+                <div class="feature-image image-dining"></div>
+                <div class="feature-info">
+                    <span>02 / DINING</span>
+                    <h3>Ẩm thực</h3>
+                    <p>Khám phá những trải nghiệm vị giác.</p>
+                    <span class="feature-arrow">↗</span>
                 </div>
-            </div>
+            </a>
+
+            <a class="feature-card reveal" id="services" href="#contact">
+                <div class="feature-image image-service"></div>
+                <div class="feature-info">
+                    <span>03 / EXPERIENCE</span>
+                    <h3>Dịch vụ</h3>
+                    <p>Tận hưởng kỳ nghỉ theo cách riêng.</p>
+                    <span class="feature-arrow">↗</span>
+                </div>
+            </a>
         </div>
-    </div>
+    </section>
 
-    <div class="col-12 col-xl-4">
-        <div class="content-card h-100">
-            <div class="content-card-header">
-                <h5 class="fw-bold mb-0">Trạng thái hệ thống</h5>
-            </div>
-            <div class="p-4">
-                <div class="d-flex align-items-center gap-3 mb-4">
-                    <span class="stat-icon" style="background:#dcfce7;color:#15803d">
-                        <i class="bi bi-database-check"></i>
-                    </span>
-                    <div>
-                        <div class="fw-semibold">Cơ sở dữ liệu</div>
-                        <div class="text-secondary small">SQL Server đã cấu hình</div>
-                    </div>
-                </div>
-
-                <div class="d-flex align-items-center gap-3">
-                    <span class="stat-icon" style="background:#e8edff;color:#4263eb">
-                        <i class="bi bi-code-slash"></i>
-                    </span>
-                    <div>
-                        <div class="fw-semibold">Ứng dụng</div>
-                        <div class="text-secondary small">ASP.NET Core MVC</div>
-                    </div>
-                </div>
-
-                <hr />
-                <div class="small text-secondary">
-                    Số liệu thống kê sẽ được kết nối với dữ liệu thực sau khi hoàn thiện các nghiệp vụ.
-                </div>
-            </div>
+    <!-- PHẦN CUỐI TRANG -->
+    <footer class="hotel-footer" id="contact">
+        <div>
+            <span class="footer-logo">HOTEL MANAGEMENT</span>
+            <p>Không gian nghỉ dưỡng dành cho bạn.</p>
         </div>
-    </div>
-</div>
+        <div class="footer-right" id="about">
+            <span>Địa chỉ: Số 3 Cầu Giấy, Hà Nội</span>
+            <span>Điện thoại: 0379 868 686</span>
+            <span>Email: thetoan.official@gmail.com</span>
+        </div>
+    </footer>
+
+</main>
+
+@section Scripts {
+    <script src="~/js/hotel-home.js" asp-append-version="true"></script>
+}
