@@ -30,10 +30,10 @@
             </a>
         </div>
 
-        <div class="welcome-decoration">
+       @* <div class="welcome-decoration">
             <i class="bi bi-buildings"></i>
             <span>EXCELLENCE IN HOSPITALITY</span>
-        </div>
+        </div> *@
     </div>
 
     <div class="dashboard-section-heading">
@@ -67,27 +67,39 @@
             <span class="stat-link">Xem chi tiết <i class="bi bi-arrow-right"></i></span>
         </a>
 
-        <div class="dashboard-stat dashboard-stat-disabled">
+        
+        <a asp-controller="DatPhong" asp-action="Index"
+           class="dashboard-stat">
             <div class="stat-top">
-                <span class="stat-icon"><i class="bi bi-calendar2-check"></i></span>
-                <span class="stat-status">SẮP CÓ</span>
+                <span class="stat-icon">
+                    <i class="bi bi-calendar2-check"></i>
+                </span>
+                <i class="bi bi-arrow-up-right stat-arrow"></i>
             </div>
             <span class="stat-label">RESERVATIONS</span>
             <h3>Đặt phòng</h3>
-            <p>Quản lý đặt phòng sẽ được bổ sung sau.</p>
-            <span class="stat-link">Đang phát triển</span>
-        </div>
+            <p>Quản lý đặt phòng và lịch nhận, trả phòng.</p>
+            <span class="stat-link">
+                Xem chi tiết <i class="bi bi-arrow-right"></i>
+            </span>
+        </a>
 
-        <div class="dashboard-stat dashboard-stat-disabled">
+        <a asp-controller="KhachHang" asp-action="Index"
+           class="dashboard-stat">
             <div class="stat-top">
-                <span class="stat-icon"><i class="bi bi-people"></i></span>
-                <span class="stat-status">SẮP CÓ</span>
+                <span class="stat-icon">
+                    <i class="bi bi-people"></i>
+                </span>
+                <i class="bi bi-arrow-up-right stat-arrow"></i>
             </div>
             <span class="stat-label">GUEST SERVICES</span>
             <h3>Khách hàng</h3>
-            <p>Thông tin khách hàng và lịch sử lưu trú.</p>
-            <span class="stat-link">Đang phát triển</span>
-        </div>
+            <p>Quản lý thông tin khách hàng và lịch sử lưu trú.</p>
+            <span class="stat-link">
+                Xem chi tiết <i class="bi bi-arrow-right"></i>
+            </span>
+        </a>
+
     </div>
 
     <div class="dashboard-bottom">
