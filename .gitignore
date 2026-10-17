@@ -1,0 +1,25 @@
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# Build output
+bin/
+obj/
+Debug/
+Release/
+
+# IDE
+.idea/
+
+# Logs
+*.log
+
+# Local environment secrets
+.env
+appsettings.Local.json
+
+# Python cache (if any)
+__pycache__/
+*.pyc

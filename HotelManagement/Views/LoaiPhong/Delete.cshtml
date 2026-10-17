@@ -1,0 +1,48 @@
+﻿```cshtml
+@model HotelManagement.Models.LoaiPhong
+
+@{
+    ViewData["Title"] = "Xóa loại phòng";
+}
+
+<div class="container mt-4">
+    <h2 class="mb-3 text-danger">Xóa loại phòng</h2>
+
+    <div class="alert alert-warning">
+        Cậu có chắc chắn muốn xóa loại phòng này không?
+        Thao tác này không thể hoàn tác.
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-4">Mã loại phòng</dt>
+                <dd class="col-sm-8">@Model.MaLoaiPhong</dd>
+
+                <dt class="col-sm-4">Tên loại phòng</dt>
+                <dd class="col-sm-8">@Model.TenLoaiPhong</dd>
+
+                <dt class="col-sm-4">Số người tối đa</dt>
+                <dd class="col-sm-8">@Model.SoNguoiToiDa người</dd>
+
+                <dt class="col-sm-4">Giá theo đêm</dt>
+                <dd class="col-sm-8">
+                    @Model.GiaTheoDem.ToString("N0") VNĐ
+                </dd>
+            </dl>
+
+            <form asp-action="Delete"
+                  asp-route-id="@Model.MaLoaiPhong"
+                  method="post">
+                <button type="submit" class="btn btn-danger">
+                    Xác nhận xóa
+                </button>
+
+                <a asp-action="Index" class="btn btn-secondary">
+                    Hủy
+                </a>
+            </form>
+        </div>
+    </div>
+</div>
+```

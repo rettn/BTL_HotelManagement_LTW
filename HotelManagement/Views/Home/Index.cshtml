@@ -1,0 +1,147 @@
+﻿
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <h1 class="page-title mb-0">Tổng quan</h1>
+        <p class="page-subtitle mb-0">
+            Chào mừng trở lại! Đây là tình hình hoạt động khách sạn.
+        </p>
+    </div>
+    <a asp-controller="Phong" asp-action="Index" class="btn btn-primary">
+        <i class="bi bi-door-open me-2"></i>Quản lý phòng
+    </a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="stat-label">Tổng số phòng</span>
+                <span class="stat-icon" style="background:#e8edff;color:#4263eb">
+                    <i class="bi bi-buildings"></i>
+                </span>
+            </div>
+            <div class="stat-number">--</div>
+            <div class="small text-secondary mt-2">Sẽ lấy từ cơ sở dữ liệu</div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="stat-label">Phòng trống</span>
+                <span class="stat-icon" style="background:#dcfce7;color:#15803d">
+                    <i class="bi bi-check-circle"></i>
+                </span>
+            </div>
+            <div class="stat-number">--</div>
+            <div class="small text-secondary mt-2">Sẵn sàng đón khách</div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="stat-label">Đang sử dụng</span>
+                <span class="stat-icon" style="background:#fee2e2;color:#dc2626">
+                    <i class="bi bi-person-check"></i>
+                </span>
+            </div>
+            <div class="stat-number">--</div>
+            <div class="small text-secondary mt-2">Phòng đang có khách</div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="stat-label">Bảo trì</span>
+                <span class="stat-icon" style="background:#fef3c7;color:#b45309">
+                    <i class="bi bi-tools"></i>
+                </span>
+            </div>
+            <div class="stat-number">--</div>
+            <div class="small text-secondary mt-2">Cần kiểm tra, sửa chữa</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-12 col-xl-8">
+        <div class="content-card h-100">
+            <div class="content-card-header">
+                <div>
+                    <h5 class="fw-bold mb-1">Truy cập nhanh</h5>
+                    <div class="text-secondary small">Các chức năng thường dùng</div>
+                </div>
+            </div>
+
+            <div class="p-3">
+                <div class="row g-3">
+                    <div class="col-6 col-md-4">
+                        <a asp-controller="Phong" asp-action="Index"
+                           class="btn btn-light border w-100 p-3 text-start h-100">
+                            <i class="bi bi-door-closed fs-3 d-block text-primary mb-2"></i>
+                            <span class="fw-semibold">Quản lý phòng</span>
+                            <span class="d-block text-secondary small mt-1">Danh sách và trạng thái</span>
+                        </a>
+                    </div>
+
+                    <div class="col-6 col-md-4">
+                        <a asp-controller="LoaiPhong" asp-action="Index"
+                           class="btn btn-light border w-100 p-3 text-start h-100">
+                            <i class="bi bi-tags fs-3 d-block text-success mb-2"></i>
+                            <span class="fw-semibold">Loại phòng</span>
+                            <span class="d-block text-secondary small mt-1">Giá và sức chứa</span>
+                        </a>
+                    </div>
+
+                    <div class="col-6 col-md-4">
+                        <div class="btn btn-light border w-100 p-3 text-start h-100">
+                            <i class="bi bi-calendar-check fs-3 d-block text-warning mb-2"></i>
+                            <span class="fw-semibold">Đặt phòng</span>
+                            <span class="d-block text-secondary small mt-1">Sẽ triển khai tiếp</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-xl-4">
+        <div class="content-card h-100">
+            <div class="content-card-header">
+                <h5 class="fw-bold mb-0">Trạng thái hệ thống</h5>
+            </div>
+            <div class="p-4">
+                <div class="d-flex align-items-center gap-3 mb-4">
+                    <span class="stat-icon" style="background:#dcfce7;color:#15803d">
+                        <i class="bi bi-database-check"></i>
+                    </span>
+                    <div>
+                        <div class="fw-semibold">Cơ sở dữ liệu</div>
+                        <div class="text-secondary small">SQL Server đã cấu hình</div>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center gap-3">
+                    <span class="stat-icon" style="background:#e8edff;color:#4263eb">
+                        <i class="bi bi-code-slash"></i>
+                    </span>
+                    <div>
+                        <div class="fw-semibold">Ứng dụng</div>
+                        <div class="text-secondary small">ASP.NET Core MVC</div>
+                    </div>
+                </div>
+
+                <hr />
+                <div class="small text-secondary">
+                    Số liệu thống kê sẽ được kết nối với dữ liệu thực sau khi hoàn thiện các nghiệp vụ.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

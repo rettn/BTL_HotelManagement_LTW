@@ -1,0 +1,52 @@
+﻿```cshtml
+@model HotelManagement.Models.LoaiPhong
+
+@{
+    ViewData["Title"] = "Chi tiết loại phòng";
+}
+
+<div class="container mt-4">
+    <h2 class="mb-4">Chi tiết loại phòng</h2>
+
+    <div class="card shadow-sm">
+        <div class="card-header">
+            Thông tin loại phòng
+        </div>
+
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-4">Mã loại phòng</dt>
+                <dd class="col-sm-8">@Model.MaLoaiPhong</dd>
+
+                <dt class="col-sm-4">Tên loại phòng</dt>
+                <dd class="col-sm-8">@Model.TenLoaiPhong</dd>
+
+                <dt class="col-sm-4">Số người tối đa</dt>
+                <dd class="col-sm-8">@Model.SoNguoiToiDa người</dd>
+
+                <dt class="col-sm-4">Giá theo đêm</dt>
+                <dd class="col-sm-8">
+                    @Model.GiaTheoDem.ToString("N0") VNĐ
+                </dd>
+
+                <dt class="col-sm-4">Mô tả</dt>
+                <dd class="col-sm-8">
+                    @(string.IsNullOrWhiteSpace(Model.MoTa)
+                        ? "Chưa có mô tả"
+                        : Model.MoTa)
+                </dd>
+            </dl>
+
+            <a asp-action="Edit"
+               asp-route-id="@Model.MaLoaiPhong"
+               class="btn btn-warning">
+                Sửa
+            </a>
+
+            <a asp-action="Index" class="btn btn-secondary">
+                Quay lại danh sách
+            </a>
+        </div>
+    </div>
+</div>
+```

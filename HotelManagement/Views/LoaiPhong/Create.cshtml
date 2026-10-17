@@ -1,0 +1,69 @@
+﻿```cshtml
+@model HotelManagement.Models.LoaiPhong
+
+@{
+    ViewData["Title"] = "Thêm loại phòng";
+}
+
+<div class="container mt-4">
+    <h2 class="mb-4">Thêm loại phòng</h2>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form asp-action="Create" method="post">
+                <div asp-validation-summary="ModelOnly"
+                     class="text-danger mb-3"></div>
+
+                <div class="mb-3">
+                    <label asp-for="TenLoaiPhong" class="form-label">
+                        Tên loại phòng
+                    </label>
+                    <input asp-for="TenLoaiPhong" class="form-control"
+                           placeholder="Ví dụ: Phòng đơn, phòng đôi" />
+                    <span asp-validation-for="TenLoaiPhong"
+                          class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="SoNguoiToiDa" class="form-label">
+                        Số người tối đa
+                    </label>
+                    <input asp-for="SoNguoiToiDa" type="number"
+                           min="1" class="form-control" />
+                    <span asp-validation-for="SoNguoiToiDa"
+                          class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="GiaTheoDem" class="form-label">
+                        Giá theo đêm (VNĐ)
+                    </label>
+                    <input asp-for="GiaTheoDem" type="number"
+                           min="0" step="1000" class="form-control" />
+                    <span asp-validation-for="GiaTheoDem"
+                          class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="MoTa" class="form-label">Mô tả</label>
+                    <textarea asp-for="MoTa" class="form-control"
+                              rows="3"></textarea>
+                    <span asp-validation-for="MoTa"
+                          class="text-danger"></span>
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                    Lưu loại phòng
+                </button>
+                <a asp-action="Index" class="btn btn-secondary">
+                    Quay lại
+                </a>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+```
