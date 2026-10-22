@@ -1,6 +1,9 @@
 Hướng dẫn tạo tài khoản admin để chạy thử vào trang quản trị
 trên cửa sổ terminal của thư mục chứa file csproj chạy lần lượt cách lệnh
 
+Update-Database trên Nuget Manager Console
+
+rồi chạy qua termirnal
 dotnet user-secrets init
 
 dotnet user-secrets set "SeedAdmin:Email" "admin@hotel.local"
