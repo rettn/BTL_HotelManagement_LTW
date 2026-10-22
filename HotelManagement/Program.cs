@@ -7,12 +7,21 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+
 //builder.Services.AddDbContext<ApplicationDbContext>(options =>
 //    options.UseSqlServer(connectionString));
+//builder.Services.AddDbContext<ApplicationDbContext>(options =>
+//    options.UseSqlServer(
+//        builder.Configuration.GetConnectionString("DefaultConnection")));
+var connectionString =
+    builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException(
+        "Chua cau hinh ConnectionStrings:DefaultConnection");
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseMySql(
+        connectionString,
+        ServerVersion.AutoDetect(connectionString)));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddDefaultIdentity<IdentityUser>(options =>
