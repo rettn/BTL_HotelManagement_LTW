@@ -73,6 +73,18 @@ namespace HotelManagement.Data
                 }
             }
 
+            var checkAdmin = await userManager.FindByEmailAsync(email);
+
+            if (checkAdmin == null)
+            {
+                throw new Exception("Khong tim thay tai khoan Admin trong database.");
+            }
+
+            if (!await userManager.HasPasswordAsync(checkAdmin))
+            {
+                throw new Exception("Tai khoan Admin chua co mat khau.");
+            }
+
             // Dam bao tai khoan duoc gan vai tro Admin
             if (!await userManager.IsInRoleAsync(admin, "Admin"))
             {
