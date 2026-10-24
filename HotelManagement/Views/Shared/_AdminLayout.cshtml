@@ -71,10 +71,11 @@
 
                 <div class="sidebar-section-label">QUẢN LÝ KHÁCH SẠN</div>
 
-                <a href="#roomMenu" class="sidebar-link"
-                   data-menu-toggle="roomMenu"
-                   aria-expanded="@(currentController == "Phong" || currentController == "LoaiPhong" ? "true" : "false")">
-                    <i class="bi bi-door-closed"></i><span>Sơ đồ phòng</span>
+                <a asp-controller="Phong"
+                   asp-action="Index"
+                   class="sidebar-link @(currentController.Equals("Phong", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
+                    <i class="bi bi-door-closed"></i>
+                    <span>Sơ đồ phòng</span>
                 </a>
 
                 @* <div class="sidebar-submenu @(currentController == "Phong" || currentController == "LoaiPhong" ? "show" : "")" id="roomMenu">

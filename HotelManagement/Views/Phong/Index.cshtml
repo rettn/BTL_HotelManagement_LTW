@@ -1,0 +1,239 @@
+﻿
+@model List<HotelManagement.Models.Phong>
+
+@{
+    ViewData["Title"] = "Sơ đồ phòng";
+
+    int LayTang(string soPhong)
+    {
+        if (int.TryParse(soPhong, out int so))
+            return so / 100;
+
+        return 0;
+    }
+
+    string MauTrangThai(string? trangThai)
+    {
+        return trangThai?.ToLowerInvariant() switch
+        {
+            "trong" => "room-empty",
+            "dadat" => "room-booked",
+            "đã đặt" => "room-booked",
+            "dangsu dung" => "room-occupied",
+            "đang sử dụng" => "room-occupied",
+            "dangdon" => "room-cleaning",
+            "đang dọn dẹp" => "room-cleaning",
+            _ => "room-other"
+        };
+    }
+
+    string TenTrangThai(string? trangThai)
+    {
+        return trangThai?.ToLowerInvariant() switch
+        {
+            "trong" => "Phòng trống",
+            "dadat" => "Đã đặt",
+            "đã đặt" => "Đã đặt",
+            "dangsu dung" => "Đang sử dụng",
+            "đang sử dụng" => "Đang sử dụng",
+            "dangdon" => "Đang dọn dẹp",
+            "đang dọn dẹp" => "Đang dọn dẹp",
+            _ => trangThai ?? "Chưa xác định"
+        };
+    }
+
+    var cacTang = Model
+        .GroupBy(p => LayTang(p.SoPhong))
+        .OrderBy(g => g.Key)
+        .ToList();
+
+    var soPhongTrong = Model.Count(p =>
+        p.TrangThai.Equals("Trong", StringComparison.OrdinalIgnoreCase));
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/room-map.css" asp-append-version="true" />
+}
+
+<div class="room-map-page">
+    <div class="room-toolbar">
+        <div>
+            <h2>Quản lý phòng</h2>
+            <p>Theo dõi trạng thái phòng theo từng tầng</p>
+        </div>
+
+        <a asp-controller="Phong" asp-action="Create" class="room-add-button">
+            <i class="bi bi-plus-lg"></i> Thêm phòng
+        </a>
+    </div>
+
+    <div class="room-summary">
+        <div class="room-summary-card">
+            <span>Tổng số phòng</span>
+            <strong>@Model.Count</strong>
+            <i class="bi bi-door-closed"></i>
+        </div>
+        <div class="room-summary-card">
+            <span>Phòng trống</span>
+            <strong>@soPhongTrong</strong>
+            <i class="bi bi-check-circle"></i>
+        </div>
+        <div class="room-summary-card">
+            <span>Số tầng</span>
+            <strong>@cacTang.Count</strong>
+            <i class="bi bi-building"></i>
+        </div>
+    </div>
+
+    <div class="room-filter-panel">
+        <div class="room-search">
+            <i class="bi bi-search"></i>
+            <input id="roomSearch" type="search"
+                   placeholder="Tìm số phòng, loại phòng..." />
+        </div>
+
+        <select id="roomStatusFilter" aria-label="Lọc trạng thái">
+            <option value="">Tất cả trạng thái</option>
+            <option value="Trong">Phòng trống</option>
+            <option value="DaDat">Đã đặt</option>
+            <option value="DangSuDung">Đang sử dụng</option>
+            <option value="DangDon">Đang dọn dẹp</option>
+        </select>
+
+        <select id="roomTypeFilter" aria-label="Lọc loại phòng">
+            <option value="">Tất cả loại phòng</option>
+            @foreach (var loai in Model
+                .Where(p => p.LoaiPhong != null)
+                .Select(p => p.LoaiPhong!)
+                .GroupBy(lp => lp.MaLoaiPhong)
+                .Select(g => g.First())
+                .OrderBy(lp => lp.TenLoaiPhong))
+            {
+                <option value="@loai.TenLoaiPhong">@loai.TenLoaiPhong</option>
+            }
+        </select>
+    </div>
+
+    <div class="room-legend">
+        <span><i class="legend-dot room-empty"></i> Phòng trống</span>
+        <span><i class="legend-dot room-booked"></i> Đã đặt</span>
+        <span><i class="legend-dot room-occupied"></i> Đang sử dụng</span>
+        <span><i class="legend-dot room-cleaning"></i> Đang dọn dẹp</span>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="room-empty-state">
+            <i class="bi bi-building"></i>
+            <h3>Chưa có phòng nào</h3>
+            <p>Hãy thêm phòng để bắt đầu quản lý sơ đồ phòng.</p>
+            <a asp-action="Create" class="room-add-button">Thêm phòng đầu tiên</a>
+        </div>
+    }
+    else
+    {
+        @foreach (var tang in cacTang)
+        {
+            <section class="room-floor" data-floor="@tang.Key">
+                <div class="room-floor-heading">
+                    <div>
+                        <h3>
+                            @(tang.Key > 0 ? $"Tầng {tang.Key}" : "Chưa xác định tầng")
+                        </h3>
+                        <span>@tang.Count() phòng</span>
+                    </div>
+                    <i class="bi bi-chevron-down"></i>
+                </div>
+
+                <div class="room-grid">
+                    @foreach (var phong in tang.OrderBy(p => p.SoPhong))
+                    {
+                        var trangThaiKey = phong.TrangThai.ToLowerInvariant() switch
+                        {
+                            "trong" => "Trong",
+                            "dadat" or "đã đặt" => "DaDat",
+                            "dangsudung" or "đang sử dụng" => "DangSuDung",
+                            "dangdon" or "đang dọn dẹp" => "DangDon",
+                            _ => "Khac"
+                        };
+
+                        <button type="button"
+                                class="room-card @MauTrangThai(phong.TrangThai)"
+                                data-room-id="@phong.MaPhong"
+                                data-room-number="@phong.SoPhong"
+                                data-room-type="@(phong.LoaiPhong?.TenLoaiPhong ?? "")"
+                                data-room-status="@trangThaiKey"
+                                data-room-status-name="@TenTrangThai(phong.TrangThai)"
+                                data-room-price="@(phong.LoaiPhong?.GiaTheoDem ?? 0)"
+                                data-room-note="@phong.GhiChu"
+                                aria-label="Chi tiết phòng @phong.SoPhong">
+
+                            <div class="room-card-top">
+                                <strong>@phong.SoPhong</strong>
+                                <i class="bi bi-three-dots-vertical"></i>
+                            </div>
+
+                            <div class="room-card-type">
+                                @(phong.LoaiPhong?.TenLoaiPhong ?? "Chưa phân loại")
+                            </div>
+
+                            <div class="room-card-price">
+                                @(phong.LoaiPhong?.GiaTheoDem.ToString("N0") ?? "0") đ/đêm
+                            </div>
+
+                            <span class="room-status-label">
+                                @TenTrangThai(phong.TrangThai)
+                            </span>
+                        </button>
+                    }
+                </div>
+            </section>
+        }
+    }
+
+    <div id="roomDetailModal" class="room-modal" aria-hidden="true">
+        <div class="room-modal-backdrop" data-close-modal></div>
+
+        <div class="room-modal-dialog" role="dialog"
+             aria-modal="true" aria-labelledby="modalRoomNumber">
+            <div class="room-modal-header">
+                <div>
+                    <h2 id="modalRoomNumber">Phòng</h2>
+                    <span id="modalRoomStatus" class="room-status-label"></span>
+                </div>
+                <button type="button" class="room-modal-close" data-close-modal
+                        aria-label="Đóng cửa sổ">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
+            <div class="room-modal-body">
+                <div class="room-detail-row">
+                    <i class="bi bi-door-open"></i>
+                    <div><small>Loại phòng</small><strong id="modalRoomType">-</strong></div>
+                </div>
+                <div class="room-detail-row">
+                    <i class="bi bi-cash-coin"></i>
+                    <div><small>Giá theo đêm</small><strong id="modalRoomPrice">-</strong></div>
+                </div>
+                <div class="room-detail-row">
+                    <i class="bi bi-card-text"></i>
+                    <div><small>Ghi chú</small><strong id="modalRoomNote">Chưa có ghi chú</strong></div>
+                </div>
+            </div>
+
+            <div class="room-modal-footer">
+                <a id="modalEditLink" href="#" class="room-modal-secondary">
+                    <i class="bi bi-pencil"></i> Chỉnh sửa
+                </a>
+                <button type="button" class="room-add-button" data-close-modal>
+                    Đóng
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/room-map.js" asp-append-version="true"></script>
+}

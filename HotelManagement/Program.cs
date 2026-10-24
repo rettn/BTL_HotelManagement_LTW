@@ -33,8 +33,13 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options =>
 
 builder.Services.AddControllersWithViews();
 
+// Quan ly loai phong
 builder.Services.AddScoped<LoaiPhongRepository>();
 builder.Services.AddScoped<LoaiPhongService>();
+
+// Quan ly phong
+builder.Services.AddScoped<PhongRepository>();
+builder.Services.AddScoped<PhongService>();
 var app = builder.Build();
 
 await IdentitySeeder.SeedAsync(
