@@ -1,9 +1,13 @@
 ﻿
 @{
-    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
-    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var isReservationSection = currentController.Equals("DatPhong", StringComparison.OrdinalIgnoreCase);
+    var isFinanceSection = currentController.Equals("HoaDon", StringComparison.OrdinalIgnoreCase)
+        || currentController.Equals("ThanhToan", StringComparison.OrdinalIgnoreCase);
+    var displayName = User.Identity?.IsAuthenticated == true
+        ? (User.Identity?.Name ?? "Quản trị viên")
+        : "Quản trị viên";
 }
-
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -11,141 +15,220 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Hotel Manager</title>
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-          rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
-          rel="stylesheet" />
-
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/hotel-home.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@coreui/coreui@5.4.3/dist/css/coreui.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" />
     <link rel="stylesheet" href="~/css/admin-theme.css" asp-append-version="true" />
 
     @await RenderSectionAsync("Styles", required: false)
 </head>
+<body>
+<div class="admin-shell" id="adminShell">
+    <aside class="admin-sidebar" id="adminSidebar">
+        
+        <div class="sidebar-brand">
+            <a asp-controller="Dashboard"
+               asp-action="Index"
+               class="brand-link">
+                <span class="brand-mark">
+                    <!-- Chon anh logo -->
+                    <img src="images\logo.png"
+                         alt="Logo khách sạn"
+                         class="brand-logo" />
+                </span>
+            </a>
 
-<body class="admin-body">
-    <div class="admin-layout">
+            <button type="button"
+                    class="sidebar-collapse"
+                    id="sidebarCollapse"
+                    aria-label="Thu gọn menu">
+                <i class="bi bi-chevron-left"></i>
+            </button>
+        </div>
 
-        <aside class="sidebar" id="sidebar">
-            <div class="sidebar-brand">
-                <a asp-controller="Dashboard" asp-action="Index"
-                   class="logo-placeholder" title="Hotel Manager">
-                    <img src="~/images/logo.png" alt="Hotel Manager" />
+        <nav class="sidebar-nav" aria-label="Menu quản trị">
+            <div class="sidebar-section-label">TỔNG QUAN</div>
+            <a asp-controller="Dashboard" asp-action="Index"
+               class="sidebar-link @(currentController.Equals("Dashboard", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
+                <i class="bi bi-speedometer2"></i><span>Tổng quan</span>
+            </a>
+
+            <div class="sidebar-section-label">QUẢN LÝ KHÁCH SẠN</div>
+
+            <a href="#roomMenu" class="sidebar-link sidebar-parent"
+               data-menu-toggle="roomMenu"
+               aria-expanded="@(currentController == "Phong" || currentController == "LoaiPhong" ? "true" : "false")">
+                <i class="bi bi-door-closed"></i><span>Sơ đồ phòng</span>
+                <i class="bi bi-chevron-down menu-chevron"></i>
+            </a>
+
+            <div class="sidebar-submenu @(currentController == "Phong" || currentController == "LoaiPhong" ? "show" : "")" id="roomMenu">
+                <a href="#" class="sidebar-sublink disabled-link" aria-disabled="true">
+                    Sơ đồ phòng
+                </a>
+
+                <a asp-controller="LoaiPhong" asp-action="Index"
+                   class="sidebar-sublink @(currentController.Equals("LoaiPhong", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
+                    Loại phòng
                 </a>
             </div>
 
-            <div class="sidebar-label">TỔNG QUAN</div>
-
-            <a asp-controller="Dashboard" asp-action="Index"
-               class="nav-item-custom @(currentController == "Dashboard" ? "active" : "")">
-                <i class="bi bi-grid-1x2-fill"></i>
-                <span>Dashboard</span>
+            <a href="#reservationMenu" class="sidebar-link sidebar-parent"
+               data-menu-toggle="reservationMenu"
+               aria-expanded="@(isReservationSection ? "true" : "false")">
+                <i class="bi bi-calendar2-check"></i><span>Quản lý đặt phòng</span>
+                <i class="bi bi-chevron-down menu-chevron"></i>
             </a>
+            <div class="sidebar-submenu @(isReservationSection ? "show" : "")" id="reservationMenu">
+                <a href="#" class="sidebar-sublink disabled-link" aria-disabled="true">
+                    Đặt phòng
+                </a>
+                <a href="#" class="sidebar-sublink disabled-link" aria-disabled="true">Danh sách đặt phòng</a>
+                <a href="#" class="sidebar-sublink disabled-link" aria-disabled="true">Nhận / trả phòng</a>
+            </div>
 
-            <div class="sidebar-label">QUẢN LÝ KHÁCH SẠN</div>
-
-            <a asp-controller="Phong" asp-action="Index"
-               class="nav-item-custom @(currentController == "Phong" ? "active" : "")">
-                <i class="bi bi-door-closed-fill"></i>
-                <span>Quản lý phòng</span>
-            </a>
-
-            <a asp-controller="LoaiPhong" asp-action="Index"
-               class="nav-item-custom @(currentController == "LoaiPhong" ? "active" : "")">
-                <i class="bi bi-tags-fill"></i>
-                <span>Loại phòng</span>
-            </a>
-
-            <a href="#" class="nav-item-custom">
-                <i class="bi bi-calendar2-check-fill"></i>
-                <span>Đặt phòng</span>
-            </a>
-
-            <a href="#" class="nav-item-custom">
-                <i class="bi bi-people-fill"></i>
-                <span>Khách hàng</span>
+            <a href="#" class="sidebar-link disabled-link" aria-disabled="true">
+                <i class="bi bi-people"></i><span>Khách hàng</span>
             </a>
 
             <a asp-controller="DichVu" asp-action="Index"
-               class="nav-item-custom @(currentController == "DichVu" ? "active" : "")">
-                <i class="bi bi-tags-fill"></i>
-                <span>Dịch vụ</span>
+               class="sidebar-link @(currentController.Equals("DichVu", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
+                <i class="bi bi-cup-hot"></i><span>Dịch vụ</span>
             </a>
 
-            <div class="sidebar-label">TÀI CHÍNH & HỆ THỐNG</div>
-
-            <a href="#" class="nav-item-custom">
-                <i class="bi bi-receipt"></i>
-                <span>Hóa đơn</span>
+            <div class="sidebar-section-label">TÀI CHÍNH</div>
+            <a href="#financeMenu" class="sidebar-link sidebar-parent"
+               data-menu-toggle="financeMenu"
+               aria-expanded="@(isFinanceSection ? "true" : "false")">
+                <i class="bi bi-wallet2"></i><span>Hóa đơn & thanh toán</span>
+                <i class="bi bi-chevron-down menu-chevron"></i>
             </a>
-
-            <a href="#" class="nav-item-custom">
-                <i class="bi bi-person-badge-fill"></i>
-                <span>Nhân viên</span>
-            </a>
-
-            <div class="sidebar-bottom">
-                <div class="support-icon">
-                    <i class="bi bi-headset"></i>
-                </div>
-                <div>
-                    <strong>Cần hỗ trợ?</strong>
-                    <span>Liên hệ quản trị viên</span>
-                </div>
+            <div class="sidebar-submenu @(isFinanceSection ? "show" : "")" id="financeMenu">
+                <a href="#" class="sidebar-sublink disabled-link" aria-disabled="true">
+                    Danh sách hóa đơn
+                </a>
+                <a href="#" class="sidebar-sublink disabled-link" aria-disabled="true">Thanh toán</a>
             </div>
-        </aside>
 
-        <div class="sidebar-backdrop" onclick="toggleSidebar()"></div>
+            <div class="sidebar-section-label">BÁO CÁO & HỆ THỐNG</div>
+            <a href="#" class="sidebar-link disabled-link" aria-disabled="true">
+                <i class="bi bi-bar-chart-line"></i><span>Báo cáo thống kê</span>
+            </a>
+            <a href="#" class="sidebar-link disabled-link" aria-disabled="true">
+                <i class="bi bi-gear"></i><span>Cài đặt</span>
+            </a>
+        </nav>
 
-        <main class="main-content">
-            <header class="topbar">
-                <button class="sidebar-toggle" type="button"
-                        onclick="toggleSidebar()" aria-label="Mở menu">
+        <div class="sidebar-footer">
+            <span class="sidebar-footer-icon"><i class="bi bi-shield-check"></i></span>
+            <div><strong>Hotel Manager</strong><small>Hệ thống quản trị</small></div>
+        </div>
+    </aside>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="admin-main">
+        <header class="admin-topbar">
+            <div class="topbar-left">
+                <button type="button" class="mobile-menu-button" id="mobileMenuButton" aria-label="Mở menu">
                     <i class="bi bi-list"></i>
                 </button>
+                <label class="topbar-search">
+                    <i class="bi bi-search"></i>
+                    <input type="search" placeholder="Tìm kiếm..." aria-label="Tìm kiếm" />
+                    <kbd>Ctrl K</kbd>
+                </label>
+            </div>
 
-                <div class="topbar-heading">
-                    <span>HOTEL MANAGEMENT SYSTEM</span>
-                    <strong>Hệ thống quản lý khách sạn</strong>
+            <div class="topbar-actions">
+                <button type="button" class="topbar-icon" title="Thông báo">
+                    <i class="bi bi-bell"></i><span class="notification-dot"></span>
+                </button>
+                <button type="button" class="topbar-icon" title="Trợ giúp">
+                    <i class="bi bi-question-circle"></i>
+                </button>
+                <span class="topbar-divider"></span>
+                <div class="profile-chip">
+                    <span class="profile-avatar">@(displayName.Length > 0 ? displayName[..1].ToUpperInvariant() : "A")</span>
+                    <span class="profile-text">
+                        <strong>@displayName</strong>
+                        <small>Quản trị viên</small>
+                    </span>
                 </div>
+            </div>
+        </header>
 
-                <div class="topbar-right">
-                    <div class="topbar-date">
-                        <i class="bi bi-calendar3"></i>
-                        <span>Trang quản trị</span>
-                    </div>
-
-                    <div class="topbar-divider"></div>
-
-                    <div class="avatar">AD</div>
-
-                    <div class="admin-identity">
-                        <strong>Quản trị viên</strong>
-                        <span>Administrator</span>
+        <main class="admin-content">
+            <div class="content-heading">
+                <div>
+                    <h1>@ViewData["Title"]</h1>
+                    <div class="breadcrumb-line">
+                        <a asp-controller="Dashboard" asp-action="Index">Trang chủ</a>
+                        <i class="bi bi-chevron-right"></i>
+                        <span>@ViewData["Title"]</span>
                     </div>
                 </div>
-            </header>
-
-            <section class="page-content">
-                @RenderBody()
-            </section>
-
-            <footer class="page-footer">
-                <span>© @DateTime.Now.Year Hotel Manager</span>
-                <span>Excellence in Hospitality</span>
-            </footer>
+                <div class="content-date">
+                    <i class="bi bi-calendar3"></i>@DateTime.Now.ToString("dd/MM/yyyy")
+                </div>
+            </div>
+            @RenderBody()
         </main>
+
+        <footer class="admin-footer">
+            <span>© @DateTime.Now.Year Hotel Manager</span>
+            <span>Hệ thống quản lý khách sạn</span>
+        </footer>
     </div>
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@@coreui/coreui@5.4.3/dist/js/coreui.bundle.min.js"></script>
+<script>
+(() => {
+    const shell = document.getElementById('adminShell');
+    const overlay = document.getElementById('sidebarOverlay');
+    const mobileButton = document.getElementById('mobileMenuButton');
+    const collapseButton = document.getElementById('sidebarCollapse');
 
-    <script>
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('sidebar-open');
-            document.body.classList.toggle('sidebar-visible');
+    document.querySelectorAll('[data-menu-toggle]').forEach(link => {
+        link.addEventListener('click', event => {
+            event.preventDefault();
+
+            const target = document.getElementById(link.dataset.menuToggle);
+            if (!target) return;
+
+            target.classList.toggle('show');
+            link.setAttribute(
+                'aria-expanded',
+                target.classList.contains('show') ? 'true' : 'false'
+            );
+        });
+    });
+
+    collapseButton?.addEventListener('click', () => {
+        shell.classList.toggle('sidebar-collapsed');
+    });
+
+    mobileButton?.addEventListener('click', () => {
+        shell.classList.toggle('mobile-sidebar-open');
+    });
+
+    overlay?.addEventListener('click', () => {
+        shell.classList.remove('mobile-sidebar-open');
+    });
+
+    document.addEventListener('keydown', event => {
+        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+            event.preventDefault();
+            document.querySelector('.topbar-search input')?.focus();
         }
-    </script>
 
-    @await RenderSectionAsync("Scripts", required: false)
+        if (event.key === 'Escape') {
+            shell.classList.remove('mobile-sidebar-open');
+        }
+    });
+})();
+</script>
+
+@await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
