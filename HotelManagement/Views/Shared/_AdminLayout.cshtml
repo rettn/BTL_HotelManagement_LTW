@@ -54,14 +54,13 @@
 
             <div class="sidebar-section-label">QUẢN LÝ KHÁCH SẠN</div>
 
-            <a href="#roomMenu" class="sidebar-link sidebar-parent"
+            <a href="#roomMenu" class="sidebar-link"
                data-menu-toggle="roomMenu"
                aria-expanded="@(currentController == "Phong" || currentController == "LoaiPhong" ? "true" : "false")">
                 <i class="bi bi-door-closed"></i><span>Sơ đồ phòng</span>
-                <i class="bi bi-chevron-down menu-chevron"></i>
             </a>
 
-            <div class="sidebar-submenu @(currentController == "Phong" || currentController == "LoaiPhong" ? "show" : "")" id="roomMenu">
+            @* <div class="sidebar-submenu @(currentController == "Phong" || currentController == "LoaiPhong" ? "show" : "")" id="roomMenu">
                 <a href="#" class="sidebar-sublink disabled-link" aria-disabled="true">
                     Sơ đồ phòng
                 </a>
@@ -70,21 +69,20 @@
                    class="sidebar-sublink @(currentController.Equals("LoaiPhong", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
                     Loại phòng
                 </a>
-            </div>
+            </div> *@
 
-            <a href="#reservationMenu" class="sidebar-link sidebar-parent"
+            <a href="#reservationMenu" class="sidebar-link"
                data-menu-toggle="reservationMenu"
                aria-expanded="@(isReservationSection ? "true" : "false")">
-                <i class="bi bi-calendar2-check"></i><span>Quản lý đặt phòng</span>
-                <i class="bi bi-chevron-down menu-chevron"></i>
+                <i class="bi bi-calendar2-check"></i><span>Danh sách đặt phòng</span>
             </a>
-            <div class="sidebar-submenu @(isReservationSection ? "show" : "")" id="reservationMenu">
+            @* <div class="sidebar-submenu @(isReservationSection ? "show" : "")" id="reservationMenu">
                 <a href="#" class="sidebar-sublink disabled-link" aria-disabled="true">
                     Đặt phòng
                 </a>
                 <a href="#" class="sidebar-sublink disabled-link" aria-disabled="true">Danh sách đặt phòng</a>
                 <a href="#" class="sidebar-sublink disabled-link" aria-disabled="true">Nhận / trả phòng</a>
-            </div>
+            </div> *@
 
             <a href="#" class="sidebar-link disabled-link" aria-disabled="true">
                 <i class="bi bi-people"></i><span>Khách hàng</span>
@@ -96,18 +94,17 @@
             </a>
 
             <div class="sidebar-section-label">TÀI CHÍNH</div>
-            <a href="#financeMenu" class="sidebar-link sidebar-parent"
+            <a href="#financeMenu" class="sidebar-link"
                data-menu-toggle="financeMenu"
                aria-expanded="@(isFinanceSection ? "true" : "false")">
                 <i class="bi bi-wallet2"></i><span>Hóa đơn & thanh toán</span>
-                <i class="bi bi-chevron-down menu-chevron"></i>
             </a>
-            <div class="sidebar-submenu @(isFinanceSection ? "show" : "")" id="financeMenu">
+            @* <div class="sidebar-submenu @(isFinanceSection ? "show" : "")" id="financeMenu">
                 <a href="#" class="sidebar-sublink disabled-link" aria-disabled="true">
                     Danh sách hóa đơn
                 </a>
                 <a href="#" class="sidebar-sublink disabled-link" aria-disabled="true">Thanh toán</a>
-            </div>
+            </div> *@
 
             <div class="sidebar-section-label">BÁO CÁO & HỆ THỐNG</div>
             <a href="#" class="sidebar-link disabled-link" aria-disabled="true">
