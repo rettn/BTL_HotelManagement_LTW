@@ -1,30 +1,28 @@
-﻿
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace HotelManagement.Models
 {
-    [Table("DichVu")]
     public class DichVu
     {
         [Key]
-        public int MaDichVu { get; set; }
+        public int Id { get; set; }
 
-        [Required, StringLength(100)]
-        public string TenDichVu { get; set; } = string.Empty;
+        [Required(ErrorMessage = "Vui lòng nhập tên dịch vụ")]
+        [StringLength(100, ErrorMessage = "Tên dịch vụ không được vượt quá 100 ký tự")]
+        [Display(Name = "Tên dịch vụ")]
+        public string TenDichVu { get; set; }
 
-        [StringLength(500)]
-        public string? MoTa { get; set; }
+        [Display(Name = "Mô tả")]
+        [DataType(DataType.MultilineText)]
+        public string MoTa { get; set; }
 
-        [Column(TypeName = "decimal(18,2)")]
-        public decimal DonGia { get; set; }
+        [Required(ErrorMessage = "Vui lòng nhập giá dịch vụ")]
+        [Range(0, double.MaxValue, ErrorMessage = "Giá dịch vụ phải lớn hơn hoặc bằng 0")]
+        [Display(Name = "Giá (VNĐ)")]
+        [DisplayFormat(DataFormatString = "{0:N0}", ApplyFormatInEditMode = false)]
+        public decimal Gia { get; set; }
 
-        [StringLength(30)]
-        public string DonViTinh { get; set; } = "Lan";
-
+        [Display(Name = "Trạng thái")]
         public bool TrangThai { get; set; } = true;
-
-        public ICollection<ChiTietDichVu> ChiTietDichVus { get; set; }
-            = new List<ChiTietDichVu>();
     }
 }

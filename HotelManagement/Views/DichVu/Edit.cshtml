@@ -1,0 +1,65 @@
+@model HotelManagement.Models.DichVu
+@{
+    ViewData["Title"] = "Cập nhật dịch vụ";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold">Cập nhật dịch vụ</h2>
+            <p class="text-muted mb-0">Chỉnh sửa thông tin dịch vụ: @Model.TenDichVu</p>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary">Quay lại danh sách</a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3">
+            <strong>Thông tin dịch vụ</strong>
+        </div>
+        <div class="card-body">
+            <form asp-action="Edit">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                <input type="hidden" asp-for="Id" />
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="TenDichVu" class="form-label fw-semibold"></label>
+                        <input asp-for="TenDichVu" class="form-control" />
+                        <span asp-validation-for="TenDichVu" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Gia" class="form-label fw-semibold"></label>
+                        <div class="input-group">
+                            <input asp-for="Gia" type="number" class="form-control" />
+                            <span class="input-group-text">VND</span>
+                        </div>
+                        <span asp-validation-for="Gia" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="MoTa" class="form-label fw-semibold"></label>
+                    <textarea asp-for="MoTa" class="form-control" rows="3"></textarea>
+                    <span asp-validation-for="MoTa" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-4 form-check form-switch">
+                    <input class="form-check-input" type="checkbox" asp-for="TrangThai">
+                    <label class="form-check-label fw-semibold" asp-for="TrangThai">Hoạt động</label>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-warning text-dark">Lưu thay đổi</button>
+                    <a asp-action="Index" class="btn btn-light border">Hủy bỏ</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -171,23 +171,18 @@ namespace HotelManagement.Data.Migrations
 
             modelBuilder.Entity("HotelManagement.Models.DichVu", b =>
                 {
-                    b.Property<int>("MaDichVu")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("MaDichVu"));
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<decimal>("DonGia")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("DonViTinh")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("varchar(30)");
+                    b.Property<decimal>("Gia")
+                        .HasColumnType("decimal(65,30)");
 
                     b.Property<string>("MoTa")
-                        .HasMaxLength(500)
-                        .HasColumnType("varchar(500)");
+                        .IsRequired()
+                        .HasColumnType("longtext");
 
                     b.Property<string>("TenDichVu")
                         .IsRequired()
@@ -197,9 +192,9 @@ namespace HotelManagement.Data.Migrations
                     b.Property<bool>("TrangThai")
                         .HasColumnType("tinyint(1)");
 
-                    b.HasKey("MaDichVu");
+                    b.HasKey("Id");
 
-                    b.ToTable("DichVu");
+                    b.ToTable("DichVus");
                 });
 
             modelBuilder.Entity("HotelManagement.Models.HoaDon", b =>
@@ -841,7 +836,7 @@ namespace HotelManagement.Data.Migrations
             modelBuilder.Entity("HotelManagement.Models.ChiTietDichVu", b =>
                 {
                     b.HasOne("HotelManagement.Models.DichVu", "DichVu")
-                        .WithMany("ChiTietDichVus")
+                        .WithMany()
                         .HasForeignKey("MaDichVu")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1012,11 +1007,6 @@ namespace HotelManagement.Data.Migrations
                     b.Navigation("ChiTietDatPhongs");
 
                     b.Navigation("HoaDons");
-                });
-
-            modelBuilder.Entity("HotelManagement.Models.DichVu", b =>
-                {
-                    b.Navigation("ChiTietDichVus");
                 });
 
             modelBuilder.Entity("HotelManagement.Models.HoaDon", b =>

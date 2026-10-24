@@ -1,0 +1,37 @@
+@model HotelManagement.Models.DichVu
+@{
+    ViewData["Title"] = "Xóa dịch vụ";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-danger">Xóa dịch vụ</h2>
+            <p class="text-muted mb-0">Bạn có chắc chắn muốn xóa dịch vụ này không?</p>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary">Quay lại danh sách</a>
+    </div>
+
+    <div class="card shadow-sm border-danger">
+        <div class="card-header bg-danger text-white py-3">
+            <strong>Cảnh báo: Hành động này không thể hoàn tác!</strong>
+        </div>
+        <div class="card-body">
+            <dl class="row mb-4">
+                <dt class="col-sm-3 mb-2 text-muted">Tên dịch vụ</dt>
+                <dd class="col-sm-9 mb-2 fw-bold">@Model.TenDichVu</dd>
+
+                <dt class="col-sm-3 mb-2 text-muted">Mức giá</dt>
+                <dd class="col-sm-9 mb-2">@Model.Gia.ToString("N0") VNĐ</dd>
+            </dl>
+
+            <form asp-action="Delete">
+                <input type="hidden" asp-for="Id" />
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-danger">Xác nhận Xóa</button>
+                    <a asp-action="Index" class="btn btn-light border">Hủy bỏ</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

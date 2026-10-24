@@ -66,8 +66,9 @@
                 <span>Khách hàng</span>
             </a>
 
-            <a href="#" class="nav-item-custom">
-                <i class="bi bi-cup-hot-fill"></i>
+            <a asp-controller="DichVu" asp-action="Index"
+               class="nav-item-custom @(currentController == "DichVu" ? "active" : "")">
+                <i class="bi bi-tags-fill"></i>
                 <span>Dịch vụ</span>
             </a>
 

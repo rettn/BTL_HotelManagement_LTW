@@ -1,0 +1,9 @@
+Quá trình tạo nhánh mới và đẩy code lên kho lưu trữ Git bao gồm 4 thao tác lệnh tuần tự.
+
+Tạo nhánh mới: Chạy lệnh git checkout -b <tên_nhánh> để khởi tạo và chuyển ngay không gian làm việc sang nhánh mới.
+
+Đánh dấu thay đổi: Dùng lệnh git add . để đưa toàn bộ các file vừa thêm hoặc chỉnh sửa vào trạng thái chờ duyệt (staging).
+
+Đóng gói commit: Gõ lệnh git commit -m "Ghi chú thay đổi" để lưu lại lịch sử cho bản cập nhật code này.
+
+Đẩy code lên: Thực thi lệnh git push -u origin <tên_nhánh> để tải nhánh mới cùng toàn bộ dữ liệu lên máy chủ GitHub.
