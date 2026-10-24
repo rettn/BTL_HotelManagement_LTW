@@ -360,6 +360,139 @@ a {
     gap: 9px;
 }
 
+
+.profile-menu {
+    position: relative;
+}
+
+.profile-menu-trigger {
+    padding: 5px 7px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    text-align: left;
+}
+
+    .profile-menu-trigger:hover, .profile-menu.is-open .profile-menu-trigger {
+        border-color: #e3e9f1;
+        background: #f7f9fc;
+    }
+
+    .profile-menu-trigger:focus-visible, .profile-logout-button:focus-visible, .profile-account-link:focus-visible {
+        outline: 2px solid #79baff;
+        outline-offset: 2px;
+    }
+
+.profile-menu-chevron {
+    color: #8c95a5;
+    font-size: 10px;
+    transition: transform .15s ease;
+}
+
+.profile-menu.is-open .profile-menu-chevron {
+    transform: rotate(180deg);
+}
+
+.profile-popover {
+    position: absolute;
+    z-index: 1050;
+    top: calc(100% + 9px);
+    right: 0;
+    display: none;
+    width: min(290px, calc(100vw - 28px));
+    padding: 8px;
+    border: 1px solid #e4e8ef;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 10px 28px rgba(37, 43, 59, .16);
+}
+
+.profile-menu.is-open .profile-popover {
+    display: block;
+}
+
+.profile-account-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    border-radius: 8px;
+    color: var(--admin-text);
+}
+
+    .profile-account-link:hover {
+        background: #f4f8fd;
+        color: var(--admin-text);
+    }
+
+.profile-avatar-large {
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    font-size: 16px;
+}
+
+.profile-account-details {
+    min-width: 0;
+}
+
+    .profile-account-details strong, .profile-account-details small, .profile-account-details span {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .profile-account-details strong {
+        font-size: 13px;
+        font-weight: 650;
+    }
+
+    .profile-account-details small {
+        margin-top: 2px;
+        color: #7e8899;
+        font-size: 11px;
+    }
+
+    .profile-account-details span {
+        margin-top: 5px;
+        color: var(--admin-accent);
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+.profile-popover-divider {
+    height: 1px;
+    margin: 6px 2px;
+    background: var(--admin-border);
+}
+
+.profile-logout-form {
+    margin: 0;
+}
+
+.profile-logout-button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #c43b3b;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+}
+
+    .profile-logout-button:hover {
+        background: #fff5f5;
+    }
+
 .profile-avatar {
     display: grid;
     place-items: center;
