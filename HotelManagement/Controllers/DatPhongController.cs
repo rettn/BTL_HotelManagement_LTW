@@ -152,12 +152,10 @@ namespace HotelManagement.Controllers
         {
             var result = await _service.CancelAsync(id);
 
-            if (result.Success)
-                TempData["Success"] = result.Message;
-            else
-                TempData["Error"] = result.Message;
+            if (!result.Success)
+                return BadRequest(new { success = false, message = result.Message });
 
-            return RedirectToAction(nameof(Index));
+            return Json(new { success = true, message = result.Message });
         }
 
         // Nap danh sach khach hang va phong cho bieu mau
@@ -191,6 +189,28 @@ namespace HotelManagement.Controllers
                     TrangThai = p.TrangThai
                 })
                 .ToListAsync();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CheckIn(int id, int maPhong)
+        {
+            var result = await _service.CheckInAsync(id, maPhong);
+
+            if (!result.Success)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = result.Message
+                });
+            }
+
+            return Json(new
+            {
+                success = true,
+                message = result.Message
+            });
         }
     }
 }

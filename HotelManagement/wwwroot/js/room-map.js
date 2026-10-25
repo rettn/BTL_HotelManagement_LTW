@@ -56,6 +56,58 @@
     statusFilter.addEventListener("change", filterRooms);
     typeFilter.addEventListener("change", filterRooms);
 
+    async function thucHienThaoTacPhong(url, maDatPhong, maPhong, cauHoi) {
+    if (!confirm(cauHoi)) return;
+
+    const token = document.querySelector(
+        '#roomModalContent input[name="__RequestVerificationToken"]'
+    )?.value;
+
+    const body = new URLSearchParams({
+        id: maDatPhong,
+        maPhong: maPhong
+    });
+
+    if (token) {
+        body.append('__RequestVerificationToken', token);
+    }
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: body
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            alert(data.message || 'Thao tác thất bại.');
+            return;
+        }
+
+        alert(data.message || 'Thao tác thành công.');
+
+        // Tai lai noi dung popup cua phong hien tai.
+        const popupUrl = `/Phong/Popup/${maPhong}`;
+        const popupResponse = await fetch(popupUrl);
+
+        if (!popupResponse.ok) {
+            alert('Thao tác thành công nhưng không thể tải lại popup.');
+            return;
+        }
+
+        document.getElementById('roomModalContent').innerHTML =
+            await popupResponse.text();
+
+    } catch (error) {
+        console.error(error);
+        alert('Không thể kết nối máy chủ. Vui lòng thử lại.');
+    }
+}
+
     function openRoomModal(card) {
 
         const bookingLink = document.getElementById("modalBookingLink");
