@@ -1,0 +1,105 @@
+﻿@model HotelManagement.Models.DatPhong
+@using HotelManagement.Models
+
+@{
+    ViewData["Title"] = "Tạo phiếu đặt phòng";
+    var danhSachKhachHang = ViewBag.DanhSachKhachHang as List<KhachHang> ?? new List<KhachHang>();
+    var danhSachPhong = ViewBag.DanhSachPhong as List<Phong> ?? new List<Phong>();
+}
+
+<div class="room-create-card">
+    <div class="room-create-heading">
+        <h2>Tạo phiếu đặt phòng</h2>
+        <p>Lựa chọn khách hàng, phòng trống và thời gian lưu trú tương ứng.</p>
+    </div>
+
+    <form asp-action="Create" method="post">
+        @Html.AntiForgeryToken()
+
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label asp-for="MaKH" class="form-label">Khách hàng</label>
+                <select asp-for="MaKH" class="form-select" required>
+                    <option value="">-- Chọn khách hàng --</option>
+                    @foreach (var kh in danhSachKhachHang)
+                    {
+                        <option value="@kh.MaKH">@kh.HoTen (@kh.SoDienThoai)</option>
+                    }
+                </select>
+                <span asp-validation-for="MaKH" class="text-danger"></span>
+                @if (!danhSachKhachHang.Any())
+                {
+                    <div class="text-danger mt-1 small">Chưa có khách hàng. Hãy thêm khách hàng trước.</div>
+                }
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Chọn phòng trống</label>
+                <select name="selectedPhongId" class="form-select" required>
+                    <option value="">-- Chọn phòng --</option>
+                    @foreach (var p in danhSachPhong)
+                    {
+                        <option value="@p.MaPhong">Phòng @p.SoPhong - @(p.LoaiPhong?.TenLoaiPhong ?? "Thường") (@p.LoaiPhong?.GiaTheoDem.ToString("N0") đ/đêm)</option>
+                    }
+                </select>
+                <small class="text-secondary">Chỉ hiển thị các phòng đang có trạng thái trống.</small>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <label asp-for="NgayNhanDuKien" class="form-label">Ngày nhận dự kiến</label>
+                <input asp-for="NgayNhanDuKien" type="date" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-dd")" required />
+                <span asp-validation-for="NgayNhanDuKien" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-4">
+                <label asp-for="NgayTraDuKien" class="form-label">Ngày trả dự kiến</label>
+                <input asp-for="NgayTraDuKien" type="date" class="form-control" value="@DateTime.Now.AddDays(1).ToString("yyyy-MM-dd")" required />
+                <span asp-validation-for="NgayTraDuKien" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-4">
+                <label asp-for="TienCoc" class="form-label">Tiền cọc (VNĐ)</label>
+                <input asp-for="TienCoc" type="number" class="form-control" value="0" />
+                <span asp-validation-for="TienCoc" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label asp-for="TrangThai" class="form-label">Trạng thái</label>
+                <select asp-for="TrangThai" class="form-select">
+                    <option value="ChoXacNhan">Chờ xác nhận</option>
+                    <option value="DaXacNhan">Đã xác nhận</option>
+                </select>
+                <span asp-validation-for="TrangThai" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="GhiChu" class="form-label">Ghi chú</label>
+                <textarea asp-for="GhiChu" class="form-control" rows="2" placeholder="Thông tin bổ sung (nếu có)"></textarea>
+                <span asp-validation-for="GhiChu" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="room-create-actions">
+            <a asp-action="Index" class="btn btn-light">
+                Quay lại
+            </a>
+            <button type="submit" class="room-add-button">
+                <i class="bi bi-check-lg"></i> Lưu phiếu đặt phòng
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/room-map.css" asp-append-version="true" />
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

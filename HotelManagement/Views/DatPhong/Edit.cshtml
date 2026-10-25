@@ -1,0 +1,99 @@
+﻿@model HotelManagement.Models.DatPhong
+
+@{
+    ViewData["Title"] = "Chỉnh sửa phiếu đặt phòng";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/room-map.css" asp-append-version="true" />
+}
+
+<div class="room-map-page">
+    <div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden; background-color: #fff;">
+        <div class="card-body p-5">
+
+            <div class="mb-4 pb-3 border-bottom">
+                <h5 class="fw-bold text-dark mb-1">Chỉnh sửa phiếu đặt phòng #@Model.MaDatPhong</h5>
+                <p class="text-muted small mb-0">Cập nhật thông tin lưu trú, tiền cọc hoặc trạng thái phiếu đặt.</p>
+            </div>
+
+            <form asp-action="Edit" method="post">
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" asp-for="MaDatPhong" />
+                <input type="hidden" asp-for="MaKH" />
+                <input type="hidden" asp-for="NgayDat" />
+
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger mb-4" role="alert"></div>
+
+                <!-- Ngay nhan, tra tien coc -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <label asp-for="NgayNhanDuKien" class="form-label fw-bold text-dark mb-2">Ngày nhận dự kiến</label>
+                        <input asp-for="NgayNhanDuKien" type="date" class="form-control py-2" style="border-radius: 8px;" required />
+                        <span asp-validation-for="NgayNhanDuKien" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="NgayTraDuKien" class="form-label fw-bold text-dark mb-2">Ngày trả dự kiến</label>
+                        <input asp-for="NgayTraDuKien" type="date" class="form-control py-2" style="border-radius: 8px;" required />
+                        <span asp-validation-for="NgayTraDuKien" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="TienCoc" class="form-label fw-bold text-dark mb-2">Tiền cọc (VNĐ)</label>
+                        <input asp-for="TienCoc" type="number" class="form-control py-2" style="border-radius: 8px;" />
+                        <span asp-validation-for="TienCoc" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <!-- Ghi chu -->
+                <div class="row mb-5">
+                    <div class="col-md-6">
+                        <label asp-for="TrangThai" class="form-label fw-bold text-dark mb-2">Trạng thái</label>
+                        <select asp-for="TrangThai" class="form-select py-2" style="border-radius: 8px;">
+                            <option value="ChoXacNhan">Chờ xác nhận</option>
+                            <option value="DaXacNhan">Đã xác nhận</option>
+                            <option value="DaHuy">Đã hủy</option>
+                        </select>
+                        <span asp-validation-for="TrangThai" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="GhiChu" class="form-label fw-bold text-dark mb-2">Ghi chú</label>
+                        <textarea asp-for="GhiChu" class="form-control" rows="2" style="border-radius: 8px;" placeholder="Thông tin bổ sung (nếu có)..."></textarea>
+                        <span asp-validation-for="GhiChu" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <!-- Nut dieu huong -->
+                <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                    <a asp-action="Index" class="btn btn-light px-3 py-2 border fw-normal text-secondary" style="border-radius: 8px; font-size: 0.9rem;">
+                        Hủy
+                    </a>
+                    <button type="submit" class="btn text-white px-3 py-2 custom-save-btn" style="border-radius: 8px; font-size: 0.9rem;">
+                        <i class="bi bi-save me-1"></i> Lưu thay đổi
+                    </button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<style>
+    .custom-save-btn {
+        background-color: #198754 !important; 
+        border: none !important;
+        transition: background-color 0.2s ease-in-out;
+    }
+
+        .custom-save-btn:hover {
+            background-color: #157347 !important; 
+            color: #fff !important;
+        }
+</style>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

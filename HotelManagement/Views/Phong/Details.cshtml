@@ -1,0 +1,123 @@
+﻿@model HotelManagement.Models.Phong
+
+@{
+    ViewData["Title"] = "Chi tiết phòng";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/room-map.css" asp-append-version="true" />
+}
+
+<div class="room-map-page">
+    <div class="room-toolbar">
+        <div>
+            <h2>Chi tiết phòng @Model.SoPhong</h2>
+            <p>Thông tin đầy đủ về phòng và hạng phòng tương ứng.</p>
+        </div>
+        <div class="room-toolbar-actions">
+            <a asp-action="Index" class="btn btn-light px-3 py-2 border fw-normal text-secondary d-inline-flex align-items-center justify-content-center" style="border-radius: 8px; font-size: 0.9rem;">
+                <i class="bi bi-arrow-left me-1"></i> Quay lại danh sách
+            </a>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm p-4" style="border-radius: 12px; background-color: #fff;">
+
+        <div class="mb-4 pb-3 border-bottom">
+            <h5 class="fw-bold text-dark mb-1">Thông tin chung</h5>
+            <p class="text-muted small mb-0">Các thông tin cơ bản về phòng.</p>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <span class="text-muted small d-block mb-1">Số phòng</span>
+                <strong class="text-dark fs-6">@Model.SoPhong</strong>
+            </div>
+            <div class="col-md-4">
+                <span class="text-muted small d-block mb-1">Trạng thái hiện tại</span>
+                <div>
+                    @{
+                        var cleanStatus = Model.TrangThai?.Trim().ToLowerInvariant() ?? "";
+                        if (cleanStatus.Contains("trong") || cleanStatus.Contains("trống"))
+                        {
+                            <span class="badge bg-success px-3 py-2 rounded-pill fw-normal">Phòng trống</span>
+                        }
+                        else if (cleanStatus.Contains("dadat") || cleanStatus.Contains("đã đặt"))
+                        {
+                            <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-normal">Đã đặt</span>
+                        }
+                        else if (cleanStatus.Contains("dangsudung") || cleanStatus.Contains("đang sử dụng"))
+                        {
+                            <span class="badge bg-danger px-3 py-2 rounded-pill fw-normal">Đang sử dụng</span>
+                        }
+                        else if (cleanStatus.Contains("dangdon") || cleanStatus.Contains("đang dọn dẹp"))
+                        {
+                            <span class="badge bg-info text-dark px-3 py-2 rounded-pill fw-normal">Đang dọn dẹp</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary px-3 py-2 rounded-pill fw-normal">@(Model.TrangThai ?? "Chưa xác định")</span>
+                        }
+                    }
+                </div>
+            </div>
+            <div class="col-md-4">
+                <span class="text-muted small d-block mb-1">Mã hệ thống</span>
+                <span class="text-dark">#@Model.MaPhong</span>
+            </div>
+        </div>
+
+        <div class="mb-4 pb-3 border-bottom">
+            <h5 class="fw-bold text-dark mb-1">Chi tiết loại phòng</h5>
+            <p class="text-muted small mb-0">Hạng phòng, sức chứa và giá lưu trú.</p>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <span class="text-muted small d-block mb-1">Tên loại phòng</span>
+                <strong class="text-primary">@(Model.LoaiPhong?.TenLoaiPhong ?? "Chưa phân loại")</strong>
+            </div>
+            <div class="col-md-4">
+                <span class="text-muted small d-block mb-1">Số người tối đa</span>
+                <span class="text-dark"><i class="bi bi-people me-1"></i> @(Model.LoaiPhong?.SoNguoiToiDa.ToString() ?? "0") người</span>
+            </div>
+            <div class="col-md-4">
+                <span class="text-muted small d-block mb-1">Giá theo đêm</span>
+                <strong class="text-success fs-6">@(Model.LoaiPhong?.GiaTheoDem.ToString("N0") ?? "0") đ</strong>
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <span class="text-muted small d-block mb-1">Ghi chú</span>
+            <div class="p-3 bg-light rounded-3 text-secondary">
+                @(string.IsNullOrEmpty(Model.GhiChu) ? "Không có ghi chú bổ sung." : Model.GhiChu)
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+            <a asp-action="Index" class="btn btn-light px-3 py-2 border fw-normal text-secondary d-inline-flex align-items-center justify-content-center" style="border-radius: 8px; font-size: 0.9rem;">
+                Quay lại
+            </a>
+
+            <a asp-action="Delete" asp-route-id="@Model.MaPhong" class="btn btn-outline-danger px-4 py-2 fw-semibold d-inline-flex align-items-center justify-content-center" style="border-radius: 8px; font-size: 0.9rem;">
+                <i class="bi bi-trash me-1"></i> Xóa phòng
+            </a>
+
+            <a asp-action="Edit" asp-route-id="@Model.MaPhong" class="btn text-white px-4 py-2 custom-edit-btn fw-semibold d-inline-flex align-items-center justify-content-center" style="border-radius: 8px; font-size: 0.9rem;">
+                <i class="bi bi-pencil me-1"></i> Chỉnh sửa phòng
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .custom-edit-btn {
+        background-color: #198754 !important;
+        border: none !important;
+        transition: background-color 0.2s ease-in-out;
+    }
+
+        .custom-edit-btn:hover {
+            background-color: #157347 !important;
+        }
+</style>
