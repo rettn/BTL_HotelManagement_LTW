@@ -1,0 +1,95 @@
+﻿
+@model HotelManagement.Models.KhachHang
+
+@{
+    ViewData["Title"] = "Chỉnh sửa khách hàng";
+}
+
+<div class="container-fluid">
+    <div class="mb-4">
+        <h2 class="fw-bold">Chỉnh sửa khách hàng</h2>
+        <p class="text-secondary">Cập nhật hồ sơ khách hàng.</p>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-3">
+        <div class="card-body p-4">
+            <form asp-action="Edit" asp-route-id="@Model.MaKH" method="post">
+                @Html.AntiForgeryToken()
+                <input asp-for="MaKH" type="hidden" />
+                <input asp-for="NgayTao" type="hidden" />
+
+                <div asp-validation-summary="ModelOnly"
+                     class="alert alert-danger"></div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Mã khách hàng</label>
+                        <input value="KH@Model.MaKH.ToString("D4")"
+                               class="form-control" readonly />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="HoTen" class="form-label">Họ và tên *</label>
+                        <input asp-for="HoTen" class="form-control" />
+                        <span asp-validation-for="HoTen" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="GioiTinh" class="form-label">Giới tính</label>
+                        <select asp-for="GioiTinh" class="form-select">
+                            <option value="">-- Chọn giới tính --</option>
+                            <option value="Nam">Nam</option>
+                            <option value="Nữ">Nữ</option>
+                            <option value="Khác">Khác</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="NgaySinh" class="form-label">Ngày sinh</label>
+                        <input asp-for="NgaySinh" type="date" class="form-control"
+                               max="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                        <span asp-validation-for="NgaySinh" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="SoDienThoai" class="form-label">Số điện thoại</label>
+                        <input asp-for="SoDienThoai" type="tel" class="form-control" />
+                        <span asp-validation-for="SoDienThoai" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Email" class="form-label">Email</label>
+                        <input asp-for="Email" type="email" class="form-control" />
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="CCCD" class="form-label">CCCD</label>
+                        <input asp-for="CCCD" class="form-control" />
+                        <span asp-validation-for="CCCD" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <label asp-for="DiaChi" class="form-label">Địa chỉ</label>
+                        <textarea asp-for="DiaChi" class="form-control" rows="3"></textarea>
+                    </div>
+                </div>
+
+                <hr class="my-4" />
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a asp-action="Index" class="btn btn-outline-secondary">
+                        Hủy
+                    </a>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-save"></i> Lưu thay đổi
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
