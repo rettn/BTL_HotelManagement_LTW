@@ -13,22 +13,24 @@ namespace HotelManagement.Services
             _repository = repository;
         }
 
-        // Lay danh sach loai phong
-        public async Task<List<LoaiPhong>> GetAllAsync()
+        public Task<List<LoaiPhong>> GetAllAsync()
         {
-            return await _repository.GetAllAsync();
+            return _repository.GetAllAsync();
         }
 
-        // Tim theo ma
-        public async Task<LoaiPhong?> GetByIdAsync(int id)
+        public Task<LoaiPhong?> GetByIdAsync(int id)
         {
             if (id <= 0)
-                return null;
+                return Task.FromResult<LoaiPhong?>(null);
 
-            return await _repository.GetByIdAsync(id);
+            return _repository.GetByIdAsync(id);
         }
 
-        // Them loai phong
+        public Task<List<LoaiPhong>> SearchAsync(string? keyword)
+        {
+            return _repository.SearchAsync(keyword);
+        }
+
         public async Task<(bool ThanhCong, string ThongBao)> AddAsync(
             LoaiPhong loaiPhong)
         {
@@ -37,25 +39,25 @@ namespace HotelManagement.Services
             if (loi != null)
                 return (false, loi);
 
-            var danhSach = await _repository.GetAllAsync();
+            loaiPhong.TenLoaiPhong =
+                loaiPhong.TenLoaiPhong.Trim();
 
-            if (danhSach.Any(lp =>
-                lp.TenLoaiPhong.Trim().Equals(
-                    loaiPhong.TenLoaiPhong.Trim(),
-                    StringComparison.OrdinalIgnoreCase)))
+            loaiPhong.MoTa =
+                string.IsNullOrWhiteSpace(loaiPhong.MoTa)
+                    ? null
+                    : loaiPhong.MoTa.Trim();
+
+            if (await _repository.ExistsNameAsync(
+                loaiPhong.TenLoaiPhong))
             {
                 return (false, "Tên loại phòng đã tồn tại.");
             }
-
-            loaiPhong.TenLoaiPhong = loaiPhong.TenLoaiPhong.Trim();
-            loaiPhong.MoTa = loaiPhong.MoTa?.Trim();
 
             await _repository.AddAsync(loaiPhong);
 
             return (true, "Thêm loại phòng thành công.");
         }
 
-        // Cap nhat loai phong
         public async Task<(bool ThanhCong, string ThongBao)> UpdateAsync(
             LoaiPhong loaiPhong)
         {
@@ -73,19 +75,18 @@ namespace HotelManagement.Services
             if (hienTai == null)
                 return (false, "Không tìm thấy loại phòng.");
 
-            var danhSach = await _repository.GetAllAsync();
+            string tenMoi = loaiPhong.TenLoaiPhong.Trim();
 
-            if (danhSach.Any(lp =>
-                lp.MaLoaiPhong != loaiPhong.MaLoaiPhong &&
-                lp.TenLoaiPhong.Trim().Equals(
-                    loaiPhong.TenLoaiPhong.Trim(),
-                    StringComparison.OrdinalIgnoreCase)))
+            if (await _repository.ExistsNameAsync(
+                tenMoi, loaiPhong.MaLoaiPhong))
             {
                 return (false, "Tên loại phòng đã tồn tại.");
             }
 
-            hienTai.TenLoaiPhong = loaiPhong.TenLoaiPhong.Trim();
-            hienTai.MoTa = loaiPhong.MoTa?.Trim();
+            hienTai.TenLoaiPhong = tenMoi;
+            hienTai.MoTa = string.IsNullOrWhiteSpace(loaiPhong.MoTa)
+                ? null
+                : loaiPhong.MoTa.Trim();
             hienTai.SoNguoiToiDa = loaiPhong.SoNguoiToiDa;
             hienTai.GiaTheoDem = loaiPhong.GiaTheoDem;
 
@@ -94,7 +95,6 @@ namespace HotelManagement.Services
             return (true, "Cập nhật loại phòng thành công.");
         }
 
-        // Xoa loai phong
         public async Task<(bool ThanhCong, string ThongBao)> DeleteAsync(
             int id)
         {
@@ -106,31 +106,29 @@ namespace HotelManagement.Services
             if (loaiPhong == null)
                 return (false, "Không tìm thấy loại phòng.");
 
-            bool thanhCong = await _repository.DeleteAsync(id);
-
-            if (!thanhCong)
+            if (await _repository.IsBeingUsedAsync(id))
             {
                 return (false,
                     "Không thể xóa loại phòng đang được phòng sử dụng.");
             }
 
-            return (true, "Xóa loại phòng thành công.");
+            bool thanhCong = await _repository.DeleteAsync(id);
+
+            return thanhCong
+                ? (true, "Xóa loại phòng thành công.")
+                : (false, "Không thể xóa loại phòng.");
         }
 
-        // Tim kiem
-        public async Task<List<LoaiPhong>> SearchAsync(string? keyword)
-        {
-            return await _repository.SearchAsync(keyword?.Trim());
-        }
-
-        // Kiem tra du lieu
         private static string? Validate(LoaiPhong loaiPhong)
         {
             if (string.IsNullOrWhiteSpace(loaiPhong.TenLoaiPhong))
-                return "Tên loại phòng không được để trống.";
+                return "Vui lòng nhập tên loại phòng.";
 
             if (loaiPhong.TenLoaiPhong.Trim().Length > 100)
-                return "Tên loại phòng không được vượt quá 100 ký tự.";
+                return "Tên loại phòng tối đa 100 ký tự.";
+
+            if (loaiPhong.MoTa?.Length > 500)
+                return "Mô tả tối đa 500 ký tự.";
 
             if (loaiPhong.SoNguoiToiDa < 1 ||
                 loaiPhong.SoNguoiToiDa > 100)

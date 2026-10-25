@@ -62,9 +62,23 @@
             <p>Theo dõi trạng thái phòng theo từng tầng</p>
         </div>
 
-        <a asp-controller="Phong" asp-action="Create" class="room-add-button">
-            <i class="bi bi-plus-lg"></i> Thêm phòng
-        </a>
+        
+        <div class="room-toolbar-actions">
+            <button type="button"
+                    class="room-manage-type-button"
+                    id="openLoaiPhongModal">
+                <i class="bi bi-tags"></i>
+                Quản lý loại phòng
+            </button>
+
+            <a asp-controller="Phong"
+               asp-action="Create"
+               class="room-add-button">
+                <i class="bi bi-plus-lg"></i>
+                Thêm phòng
+            </a>
+        </div>
+
     </div>
 
     <div class="room-summary">
@@ -232,8 +246,41 @@
             </div>
         </div>
     </div>
+
+    <div id="loaiPhongModal" class="type-modal" aria-hidden="true">
+        <div class="type-modal-backdrop" data-close-type-modal></div>
+
+        <section class="type-modal-dialog"
+                 role="dialog"
+                 aria-modal="true"
+                 aria-labelledby="loaiPhongModalTitle">
+            <header class="type-modal-header">
+                <div>
+                    <h2 id="loaiPhongModalTitle">Quản lý loại phòng</h2>
+                    <p>Quản lý hạng phòng và giá lưu trú</p>
+                </div>
+
+                <button type="button"
+                        class="type-modal-close"
+                        data-close-type-modal
+                        aria-label="Đóng">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </header>
+
+            <div class="type-modal-content" id="loaiPhongModalContent">
+                <div class="type-loading">
+                    <i class="bi bi-arrow-repeat"></i>
+                    Đang tải danh sách loại phòng...
+                </div>
+            </div>
+        </section>
+    </div>
+
 </div>
 
 @section Scripts {
     <script src="~/js/room-map.js" asp-append-version="true"></script>
+    <script src="~/js/loai-phong-modal.js" asp-append-version="true"></script>
+
 }

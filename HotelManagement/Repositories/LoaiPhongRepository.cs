@@ -14,7 +14,6 @@ namespace HotelManagement.Repositories
             _context = context;
         }
 
-        // Lay danh sach loai phong
         public async Task<List<LoaiPhong>> GetAllAsync()
         {
             return await _context.LoaiPhongs
@@ -23,28 +22,41 @@ namespace HotelManagement.Repositories
                 .ToListAsync();
         }
 
-        // Tim loai phong theo ma
         public async Task<LoaiPhong?> GetByIdAsync(int id)
         {
             return await _context.LoaiPhongs
                 .FirstOrDefaultAsync(lp => lp.MaLoaiPhong == id);
         }
 
-        // Them loai phong
+        public async Task<bool> ExistsNameAsync(
+            string tenLoaiPhong, int? excludeId = null)
+        {
+            string ten = tenLoaiPhong.Trim().ToLower();
+
+            return await _context.LoaiPhongs.AnyAsync(lp =>
+                lp.TenLoaiPhong.ToLower() == ten &&
+                (!excludeId.HasValue ||
+                 lp.MaLoaiPhong != excludeId.Value));
+        }
+
         public async Task AddAsync(LoaiPhong loaiPhong)
         {
             _context.LoaiPhongs.Add(loaiPhong);
             await _context.SaveChangesAsync();
         }
 
-        // Cap nhat loai phong
         public async Task UpdateAsync(LoaiPhong loaiPhong)
         {
             _context.LoaiPhongs.Update(loaiPhong);
             await _context.SaveChangesAsync();
         }
 
-        // Xoa loai phong
+        public async Task<bool> IsBeingUsedAsync(int id)
+        {
+            return await _context.Phongs
+                .AnyAsync(p => p.MaLoaiPhong == id);
+        }
+
         public async Task<bool> DeleteAsync(int id)
         {
             var loaiPhong = await _context.LoaiPhongs
@@ -53,10 +65,8 @@ namespace HotelManagement.Repositories
             if (loaiPhong == null)
                 return false;
 
-            bool dangCoPhong = await _context.Phongs
-                .AnyAsync(p => p.MaLoaiPhong == id);
-
-            if (dangCoPhong)
+            // Khong xoa neu van co phong thuoc loai nay.
+            if (await IsBeingUsedAsync(id))
                 return false;
 
             _context.LoaiPhongs.Remove(loaiPhong);
@@ -65,19 +75,22 @@ namespace HotelManagement.Repositories
             return true;
         }
 
-        // Tim kiem theo ten
         public async Task<List<LoaiPhong>> SearchAsync(string? keyword)
         {
             var query = _context.LoaiPhongs.AsNoTracking();
 
             if (!string.IsNullOrWhiteSpace(keyword))
             {
+                string tuKhoa = keyword.Trim().ToLower();
+
                 query = query.Where(lp =>
-                    lp.TenLoaiPhong.Contains(keyword));
+                    lp.TenLoaiPhong.ToLower().Contains(tuKhoa) ||
+                    (lp.MoTa != null &&
+                     lp.MoTa.ToLower().Contains(tuKhoa)));
             }
 
             return await query
-                .OrderBy(lp => lp.TenLoaiPhong)
+                .OrderBy(lp => lp.MaLoaiPhong)
                 .ToListAsync();
         }
     }

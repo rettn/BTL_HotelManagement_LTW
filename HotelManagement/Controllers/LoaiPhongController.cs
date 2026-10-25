@@ -14,7 +14,6 @@ namespace HotelManagement.Controllers
             _service = service;
         }
 
-        // GET: /LoaiPhong
         public async Task<IActionResult> Index(string? keyword)
         {
             var danhSach = string.IsNullOrWhiteSpace(keyword)
@@ -22,11 +21,21 @@ namespace HotelManagement.Controllers
                 : await _service.SearchAsync(keyword);
 
             ViewBag.Keyword = keyword;
-
             return View(danhSach);
         }
 
-        // GET: /LoaiPhong/Details/5
+        // Danh sach dung trong modal cua trang so do phong.
+        [HttpGet]
+        public async Task<IActionResult> Popup(string? keyword)
+        {
+            var danhSach = string.IsNullOrWhiteSpace(keyword)
+                ? await _service.GetAllAsync()
+                : await _service.SearchAsync(keyword);
+
+            ViewBag.Keyword = keyword;
+            return PartialView("_QuanLyLoaiPhong", danhSach);
+        }
+
         public async Task<IActionResult> Details(int id)
         {
             var loaiPhong = await _service.GetByIdAsync(id);
@@ -37,14 +46,12 @@ namespace HotelManagement.Controllers
             return View(loaiPhong);
         }
 
-        // GET: /LoaiPhong/Create
         [HttpGet]
         public IActionResult Create()
         {
-            return View();
+            return View(new LoaiPhong());
         }
 
-        // POST: /LoaiPhong/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(LoaiPhong loaiPhong)
@@ -56,18 +63,14 @@ namespace HotelManagement.Controllers
 
             if (!ketQua.ThanhCong)
             {
-                ModelState.AddModelError(
-                    string.Empty, ketQua.ThongBao);
-
+                ModelState.AddModelError("", ketQua.ThongBao);
                 return View(loaiPhong);
             }
 
             TempData["SuccessMessage"] = ketQua.ThongBao;
-
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: /LoaiPhong/Edit/5
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
@@ -79,7 +82,6 @@ namespace HotelManagement.Controllers
             return View(loaiPhong);
         }
 
-        // POST: /LoaiPhong/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(
@@ -95,18 +97,14 @@ namespace HotelManagement.Controllers
 
             if (!ketQua.ThanhCong)
             {
-                ModelState.AddModelError(
-                    string.Empty, ketQua.ThongBao);
-
+                ModelState.AddModelError("", ketQua.ThongBao);
                 return View(loaiPhong);
             }
 
             TempData["SuccessMessage"] = ketQua.ThongBao;
-
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: /LoaiPhong/Delete/5
         [HttpGet]
         public async Task<IActionResult> Delete(int id)
         {
@@ -118,7 +116,6 @@ namespace HotelManagement.Controllers
             return View(loaiPhong);
         }
 
-        // POST: /LoaiPhong/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
