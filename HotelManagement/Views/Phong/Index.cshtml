@@ -1,54 +1,36 @@
-﻿
-@model List<HotelManagement.Models.Phong>
+﻿@model List<HotelManagement.Models.Phong>
 
 @{
     ViewData["Title"] = "Sơ đồ phòng";
 
     int LayTang(string soPhong)
     {
-        if (int.TryParse(soPhong, out int so))
-            return so / 100;
-
+        if (int.TryParse(soPhong, out int so)) return so / 100;
         return 0;
     }
 
     string MauTrangThai(string? trangThai)
     {
-        return trangThai?.ToLowerInvariant() switch
-        {
-            "trong" => "room-empty",
-            "dadat" => "room-booked",
-            "đã đặt" => "room-booked",
-            "dangsu dung" => "room-occupied",
-            "đang sử dụng" => "room-occupied",
-            "dangdon" => "room-cleaning",
-            "đang dọn dẹp" => "room-cleaning",
-            _ => "room-other"
-        };
+        var cleanStatus = trangThai?.Trim().ToLowerInvariant() ?? "";
+        if (cleanStatus.Contains("trong") || cleanStatus.Contains("trống")) return "room-empty";
+        if (cleanStatus.Contains("dadat") || cleanStatus.Contains("đã đặt")) return "room-booked";
+        if (cleanStatus.Contains("dangsudung") || cleanStatus.Contains("đang sử dụng")) return "room-occupied";
+        if (cleanStatus.Contains("dangdon") || cleanStatus.Contains("đang dọn dẹp")) return "room-cleaning";
+        return "room-other";
     }
 
     string TenTrangThai(string? trangThai)
     {
-        return trangThai?.ToLowerInvariant() switch
-        {
-            "trong" => "Phòng trống",
-            "dadat" => "Đã đặt",
-            "đã đặt" => "Đã đặt",
-            "dangsu dung" => "Đang sử dụng",
-            "đang sử dụng" => "Đang sử dụng",
-            "dangdon" => "Đang dọn dẹp",
-            "đang dọn dẹp" => "Đang dọn dẹp",
-            _ => trangThai ?? "Chưa xác định"
-        };
+        var cleanStatus = trangThai?.Trim().ToLowerInvariant() ?? "";
+        if (cleanStatus.Contains("trong") || cleanStatus.Contains("trống")) return "Phòng trống";
+        if (cleanStatus.Contains("dadat") || cleanStatus.Contains("đã đặt")) return "Đã đặt";
+        if (cleanStatus.Contains("dangsudung") || cleanStatus.Contains("đang sử dụng")) return "Đang sử dụng";
+        if (cleanStatus.Contains("dangdon") || cleanStatus.Contains("đang dọn dẹp")) return "Đang dọn dẹp";
+        return trangThai ?? "Chưa xác định";
     }
 
-    var cacTang = Model
-        .GroupBy(p => LayTang(p.SoPhong))
-        .OrderBy(g => g.Key)
-        .ToList();
-
-    var soPhongTrong = Model.Count(p =>
-        p.TrangThai.Equals("Trong", StringComparison.OrdinalIgnoreCase));
+    var cacTang = Model.GroupBy(p => LayTang(p.SoPhong)).OrderBy(g => g.Key).ToList();
+    var soPhongTrong = Model.Count(p => p.TrangThai != null && (p.TrangThai.ToLower().Contains("trong") || p.TrangThai.ToLower().Contains("trống")));
 }
 
 @section Styles {
@@ -61,24 +43,14 @@
             <h2>Quản lý phòng</h2>
             <p>Theo dõi trạng thái phòng theo từng tầng</p>
         </div>
-
-        
         <div class="room-toolbar-actions">
-            <button type="button"
-                    class="room-manage-type-button"
-                    id="openLoaiPhongModal">
-                <i class="bi bi-tags"></i>
-                Quản lý loại phòng
+            <button type="button" class="room-manage-type-button" id="openLoaiPhongModal">
+                <i class="bi bi-tags"></i> Quản lý loại phòng
             </button>
-
-            <a asp-controller="Phong"
-               asp-action="Create"
-               class="room-add-button">
-                <i class="bi bi-plus-lg"></i>
-                Thêm phòng
+            <a asp-controller="Phong" asp-action="Create" class="room-add-button">
+                <i class="bi bi-plus-lg"></i> Thêm phòng
             </a>
         </div>
-
     </div>
 
     <div class="room-summary">
@@ -99,34 +71,33 @@
         </div>
     </div>
 
-    <div class="room-filter-panel">
-        <div class="room-search">
+    <form method="get" asp-controller="Phong" asp-action="Index" class="room-filter-panel mb-4" id="filterForm">
+        <div class="room-search" style="flex: 1.5; min-width: 180px;">
             <i class="bi bi-search"></i>
-            <input id="roomSearch" type="search"
-                   placeholder="Tìm số phòng, loại phòng..." />
+            <input id="roomSearch" type="search" name="keyword" value="@ViewBag.Keyword" placeholder="Tìm số phòng..." />
         </div>
-
-        <select id="roomStatusFilter" aria-label="Lọc trạng thái">
+        <select id="roomStatusFilter" name="trangThai" style="flex: 1; min-width: 140px; padding: 0.6rem 1rem; border: 1px solid #dee2e6; border-radius: 8px;">
             <option value="">Tất cả trạng thái</option>
-            <option value="Trong">Phòng trống</option>
-            <option value="DaDat">Đã đặt</option>
-            <option value="DangSuDung">Đang sử dụng</option>
-            <option value="DangDon">Đang dọn dẹp</option>
+            <option value="Trống" selected="@(ViewBag.TrangThai == "Trống" ? "selected" : null)">Phòng trống</option>
+            <option value="Đã đặt" selected="@(ViewBag.TrangThai == "Đã đặt" ? "selected" : null)">Đã đặt</option>
+            <option value="Đang sử dụng" selected="@(ViewBag.TrangThai == "Đang sử dụng" ? "selected" : null)">Đang sử dụng</option>
+            <option value="Đang dọn dẹp" selected="@(ViewBag.TrangThai == "Đang dọn dẹp" ? "selected" : null)">Đang dọn dẹp</option>
         </select>
-
-        <select id="roomTypeFilter" aria-label="Lọc loại phòng">
+        <select id="roomTypeFilter" name="maLoaiPhong" style="flex: 1; min-width: 140px; padding: 0.6rem 1rem; border: 1px solid #dee2e6; border-radius: 8px;">
             <option value="">Tất cả loại phòng</option>
-            @foreach (var loai in Model
-                .Where(p => p.LoaiPhong != null)
-                .Select(p => p.LoaiPhong!)
-                .GroupBy(lp => lp.MaLoaiPhong)
-                .Select(g => g.First())
-                .OrderBy(lp => lp.TenLoaiPhong))
+            @if (ViewBag.DanhSachLoaiPhong != null)
             {
-                <option value="@loai.TenLoaiPhong">@loai.TenLoaiPhong</option>
+                foreach (var loai in ViewBag.DanhSachLoaiPhong)
+                {
+                    <option value="@loai.MaLoaiPhong" selected="@(loai.MaLoaiPhong == ViewBag.MaLoaiPhong ? "selected" : null)">@loai.TenLoaiPhong</option>
+                }
             }
         </select>
-    </div>
+        <div class="d-flex align-items-center gap-2">
+            <button type="submit" class="btn text-white fw-semibold px-3 py-2 exact-search-btn" style="border-radius: 8px;"><i class="bi bi-search me-1"></i> Tìm kiếm</button>
+            <a asp-action="Index" class="btn btn-light px-3 py-2 border text-secondary" style="border-radius: 8px;">Khôi phục</a>
+        </div>
+    </form>
 
     <div class="room-legend">
         <span><i class="legend-dot room-empty"></i> Phòng trống</span>
@@ -140,7 +111,6 @@
         <div class="room-empty-state">
             <i class="bi bi-building"></i>
             <h3>Chưa có phòng nào</h3>
-            <p>Hãy thêm phòng để bắt đầu quản lý sơ đồ phòng.</p>
             <a asp-action="Create" class="room-add-button">Thêm phòng đầu tiên</a>
         </div>
     }
@@ -151,9 +121,7 @@
             <section class="room-floor" data-floor="@tang.Key">
                 <div class="room-floor-heading">
                     <div>
-                        <h3>
-                            @(tang.Key > 0 ? $"Tầng {tang.Key}" : "Chưa xác định tầng")
-                        </h3>
+                        <h3>@(tang.Key > 0 ? $"Tầng {tang.Key}" : "Chưa xác định tầng")</h3>
                         <span>@tang.Count() phòng</span>
                     </div>
                     <i class="bi bi-chevron-down"></i>
@@ -162,147 +130,177 @@
                 <div class="room-grid">
                     @foreach (var phong in tang.OrderBy(p => p.SoPhong))
                     {
-                        var trangThaiKey = phong.TrangThai.ToLowerInvariant() switch
-                        {
-                            "trong" => "Trong",
-                            "dadat" or "đã đặt" => "DaDat",
-                            "dangsudung" or "đang sử dụng" => "DangSuDung",
-                            "dangdon" or "đang dọn dẹp" => "DangDon",
-                            _ => "Khac"
-                        };
-
-                        <button type="button"
-                                class="room-card @MauTrangThai(phong.TrangThai)"
-                                data-room-id="@phong.MaPhong"
-                                data-room-number="@phong.SoPhong"
-                                data-room-type="@(phong.LoaiPhong?.TenLoaiPhong ?? "")"
-                                data-room-status="@trangThaiKey"
-                                data-room-status-name="@TenTrangThai(phong.TrangThai)"
-                                data-room-price="@(phong.LoaiPhong?.GiaTheoDem ?? 0)"
-                                data-room-note="@phong.GhiChu"
-                                aria-label="Chi tiết phòng @phong.SoPhong">
-
+                        <div class="room-card @MauTrangThai(phong.TrangThai) room-card-trigger"
+                             data-room-id="@phong.MaPhong"
+                             style="cursor: pointer; position: relative;"
+                             title="Xem chi tiết phòng @phong.SoPhong">
                             <div class="room-card-top">
                                 <strong>@phong.SoPhong</strong>
-                                <i class="bi bi-three-dots-vertical"></i>
+                                <i class="bi bi-arrow-up-right-circle text-muted"></i>
                             </div>
-
-                            <div class="room-card-type">
-                                @(phong.LoaiPhong?.TenLoaiPhong ?? "Chưa phân loại")
-                            </div>
-
-                            <div class="room-card-price">
-                                @(phong.LoaiPhong?.GiaTheoDem.ToString("N0") ?? "0") đ/đêm
-                            </div>
-
-                            <span class="room-status-label">
-                                @TenTrangThai(phong.TrangThai)
-                            </span>
-                        </button>
+                            <div class="room-card-type">@(phong.LoaiPhong?.TenLoaiPhong ?? "Chưa phân loại")</div>
+                            <div class="room-card-price">@(phong.LoaiPhong?.GiaTheoDem.ToString("N0") ?? "0") đ/đêm</div>
+                            <span class="room-status-label">@TenTrangThai(phong.TrangThai)</span>
+                        </div>
                     }
                 </div>
             </section>
         }
     }
 
-    <div id="roomDetailModal" class="room-modal" aria-hidden="true">
-        <div class="room-modal-backdrop" data-close-modal></div>
-
-        <div class="room-modal-dialog" role="dialog"
-             aria-modal="true" aria-labelledby="modalRoomNumber">
-            <div class="room-modal-header">
-                <div>
-                    <h2 id="modalRoomNumber">Phòng</h2>
-                    <span id="modalRoomStatus" class="room-status-label"></span>
-                </div>
-                <button type="button" class="room-modal-close" data-close-modal
-                        aria-label="Đóng cửa sổ">
-                    <i class="bi bi-x-lg"></i>
-                </button>
-            </div>
-
-            <div class="room-modal-body">
-                <div class="room-detail-row">
-                    <i class="bi bi-door-open"></i>
-                    <div><small>Loại phòng</small><strong id="modalRoomType">-</strong></div>
-                </div>
-                <div class="room-detail-row">
-                    <i class="bi bi-cash-coin"></i>
-                    <div><small>Giá theo đêm</small><strong id="modalRoomPrice">-</strong></div>
-                </div>
-                <div class="room-detail-row">
-                    <i class="bi bi-card-text"></i>
-                    <div><small>Ghi chú</small><strong id="modalRoomNote">Chưa có ghi chú</strong></div>
-                </div>
-            </div>
-
-            <div class="room-modal-footer">
-                <a id="modalBookingLink"
-                   href="#"
-                   class="room-add-button"
-                   style="display:none">
-                    <i class="bi bi-calendar-plus"></i>
-                    Đặt phòng
-                </a>
-
-                <a id="modalEditLink"
-                   href="#"
-                   class="room-modal-secondary">
-                    <i class="bi bi-pencil"></i>
-                    Chỉnh sửa
-                </a>
-
-                <button type="button"
-                        class="room-add-button"
-                        data-close-modal>
-                    Đóng
-                </button>
-            </div>
-        </div>
-        <a id="modalBookingLink"
-           href="#"
-           class="room-add-button"
-           style="display:none">
-            <i class="bi bi-calendar-plus"></i>
-            Đặt phòng
-        </a>
-
-    </div>
-
-    <div id="loaiPhongModal" class="type-modal" aria-hidden="true">
-        <div class="type-modal-backdrop" data-close-type-modal></div>
-
-        <section class="type-modal-dialog"
-                 role="dialog"
-                 aria-modal="true"
-                 aria-labelledby="loaiPhongModalTitle">
-            <header class="type-modal-header">
-                <div>
-                    <h2 id="loaiPhongModalTitle">Quản lý loại phòng</h2>
-                    <p>Quản lý hạng phòng và giá lưu trú</p>
-                </div>
-
-                <button type="button"
-                        class="type-modal-close"
-                        data-close-type-modal
-                        aria-label="Đóng">
-                    <i class="bi bi-x-lg"></i>
-                </button>
-            </header>
-
-            <div class="type-modal-content" id="loaiPhongModalContent">
-                <div class="type-loading">
-                    <i class="bi bi-arrow-repeat"></i>
-                    Đang tải danh sách loại phòng...
-                </div>
+    <!-- MODAL CHI TIẾT PHÒNG (header + nút đóng nằm trong partial _QuanLyThePhong) -->
+    <div id="roomDetailModal" class="type-modal room-detail-modal" aria-hidden="true">
+        <div class="type-modal-backdrop" id="closeRoomModalBackdrop"></div>
+        <section class="type-modal-dialog" role="dialog" aria-modal="true">
+            <div id="roomModalContent">
+                <div class="type-loading"><i class="bi bi-arrow-repeat"></i> Đang tải thông tin phòng...</div>
             </div>
         </section>
     </div>
 
+    <div id="loaiPhongModal" class="type-modal" aria-hidden="true">
+        <div class="type-modal-backdrop" data-close-type-modal></div>
+        <section class="type-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="loaiPhongModalTitle">
+            <header class="type-modal-header">
+                <div><h2 id="loaiPhongModalTitle">Quản lý loại phòng</h2><p>Quản lý hạng phòng và giá lưu trú</p></div>
+                <button type="button" class="type-modal-close" data-close-type-modal aria-label="Đóng"><i class="bi bi-x-lg"></i></button>
+            </header>
+            <div class="type-modal-content" id="loaiPhongModalContent">
+                <div class="type-loading"><i class="bi bi-arrow-repeat"></i> Đang tải danh sách loại phòng...</div>
+            </div>
+        </section>
+    </div>
 </div>
 
-@section Scripts {
-    <script src="~/js/room-map.js" asp-append-version="true"></script>
-    <script src="~/js/loai-phong-modal.js" asp-append-version="true"></script>
+<style>
+    .exact-search-btn {
+        background-color: #198754 !important;
+        border: none !important;
+        transition: background-color 0.2s ease-in-out;
+    }
 
-}
+        .exact-search-btn:hover {
+            background-color: #157347 !important;
+            color: #fff !important;
+        }
+
+    /* Popup chi tiết phòng */
+    .room-detail-modal .type-modal-dialog {
+        width: min(980px, calc(100% - 32px)) !important;
+        max-width: none !important;
+        margin: 24px auto !important;
+        min-height: 560px;
+    }
+
+    .room-detail-modal .type-modal-dialog {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .room-detail-modal #roomModalContent {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+    }
+
+    .room-detail-modal .rp-body {
+        flex: 1;
+    }
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+        function showModal(modal) {
+            modal.classList.add('show');
+            modal.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('type-modal-open');
+        }
+
+        function hideModal(modal) {
+            modal.classList.remove('show');
+            modal.setAttribute('aria-hidden', 'true');
+            if (!document.querySelector('.type-modal.show')) {
+                document.body.classList.remove('type-modal-open');
+            }
+        }
+
+        const loadingHtml = text =>
+            '<div class="type-loading"><i class="bi bi-arrow-repeat"></i> ' + text + '</div>';
+
+        // chi tiet phong
+        const roomModal = document.getElementById('roomDetailModal');
+        const roomContent = document.getElementById('roomModalContent');
+
+        if (roomModal) {
+            roomModal.addEventListener('click', function (e) {
+                if (e.target.closest('#closeRoomModalBackdrop, #closeRoomModalBtn, #closeRoomModalFooterBtn')) {
+                    hideModal(roomModal);
+                }
+            });
+
+            document.querySelectorAll('.room-card-trigger').forEach(card => {
+                card.addEventListener('click', function () {
+                    const roomId = this.getAttribute('data-room-id');
+                    if (!roomId) return;
+
+                    showModal(roomModal);
+                    roomContent.innerHTML = loadingHtml('Đang tải thông tin phòng...');
+
+                    fetch('/Phong/Popup/' + roomId)
+                        .then(response => {
+                            if (!response.ok) throw new Error('Lỗi tải dữ liệu từ server.');
+                            return response.text();
+                        })
+                        .then(html => { roomContent.innerHTML = html; })
+                        .catch(() => {
+                            roomContent.innerHTML = '<div class="type-empty"><p class="text-danger">Không thể tải chi tiết phòng.</p></div>';
+                        });
+                });
+            });
+        }
+
+        const typeModal = document.getElementById('loaiPhongModal');
+        const typeContent = document.getElementById('loaiPhongModalContent');
+        const openTypeBtn = document.getElementById('openLoaiPhongModal');
+
+        function loadLoaiPhong(url) {
+            typeContent.innerHTML = loadingHtml('Đang tải danh sách loại phòng...');
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) throw new Error('Lỗi tải dữ liệu từ server.');
+                    return response.text();
+                })
+                .then(html => { typeContent.innerHTML = html; })
+                .catch(() => {
+                    typeContent.innerHTML = '<div class="type-empty"><p class="text-danger">Không thể tải danh sách loại phòng.</p></div>';
+                });
+        }
+
+        if (typeModal && openTypeBtn) {
+            openTypeBtn.addEventListener('click', function () {
+                showModal(typeModal);
+                loadLoaiPhong('/LoaiPhong/Popup');
+            });
+
+            typeModal.addEventListener('click', function (e) {
+                if (e.target.closest('[data-close-type-modal]')) {
+                    hideModal(typeModal);
+                }
+            });
+
+            typeContent.addEventListener('submit', function (e) {
+                const form = e.target.closest('form[data-type-search]');
+                if (!form) return;
+                e.preventDefault();
+                const query = new URLSearchParams(new FormData(form)).toString();
+                loadLoaiPhong('/LoaiPhong/Popup?' + query);
+            });
+        }
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key !== 'Escape') return;
+            document.querySelectorAll('.type-modal.show').forEach(hideModal);
+        });
+    });
+</script>

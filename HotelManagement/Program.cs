@@ -33,6 +33,10 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options =>
 
 builder.Services.AddControllersWithViews();
 
+//Quan ly dat phong
+builder.Services.AddScoped<DatPhongRepository>();
+builder.Services.AddScoped<DatPhongService>();
+
 // Quan ly loai phong
 builder.Services.AddScoped<LoaiPhongRepository>();
 builder.Services.AddScoped<LoaiPhongService>();

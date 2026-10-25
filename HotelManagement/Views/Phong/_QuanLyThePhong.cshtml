@@ -1,0 +1,286 @@
+﻿@model HotelManagement.Models.Phong
+
+@{
+    var tt = Model.TrangThai?.Trim() ?? "";
+    bool laTrong = tt == "Trong" || tt == "Trống";
+
+    string tenTrangThai = tt switch
+    {
+        "Trong" or "Trống" => "Phòng trống",
+        "DaDat" or "Đã đặt" => "Đã đặt trước",
+        "DangSuDung" or "Đang sử dụng" => "Đang sử dụng",
+        "DangDon" or "Đang dọn dẹp" => "Đang dọn dẹp",
+        "" => "Chưa xác định",
+        _ => tt
+    };
+
+    string lopTrangThai = tt switch
+    {
+        "Trong" or "Trống" => "rp-badge-empty",
+        "DaDat" or "Đã đặt" => "rp-badge-booked",
+        "DangSuDung" or "Đang sử dụng" => "rp-badge-occupied",
+        "DangDon" or "Đang dọn dẹp" => "rp-badge-cleaning",
+        _ => "rp-badge-other"
+    };
+}
+
+<div class="rp-header">
+    <div class="rp-title">
+        <h2>Phòng @Model.SoPhong</h2>
+        <span class="rp-badge @lopTrangThai">@tenTrangThai</span>
+    </div>
+    <div class="rp-header-actions">
+        <a asp-controller="Phong" asp-action="Edit" asp-route-id="@Model.MaPhong" class="rp-text-btn">
+            <i class="bi bi-pencil"></i> Chỉnh sửa
+        </a>
+        <a asp-controller="Phong" asp-action="Delete" asp-route-id="@Model.MaPhong" class="rp-text-btn rp-text-danger">
+            <i class="bi bi-trash"></i> Xóa
+        </a>
+        <button type="button" class="rp-close-btn" id="closeRoomModalBtn" aria-label="Đóng">
+            <i class="bi bi-x-lg"></i>
+        </button>
+    </div>
+</div>
+
+<div class="rp-body">
+    <div class="rp-info-grid">
+        <div class="rp-info-card">
+            <div class="rp-info-label"><i class="bi bi-door-open"></i> Loại phòng</div>
+            <div class="rp-info-value">@(Model.LoaiPhong?.TenLoaiPhong ?? "Chưa phân loại")</div>
+        </div>
+        <div class="rp-info-card">
+            <div class="rp-info-label"><i class="bi bi-people"></i> Sức chứa tối đa</div>
+            <div class="rp-info-value">@(Model.LoaiPhong?.SoNguoiToiDa ?? 2) người</div>
+        </div>
+        <div class="rp-info-card">
+            <div class="rp-info-label"><i class="bi bi-cash-coin"></i> Giá theo đêm</div>
+            <div class="rp-info-value rp-price">@(Model.LoaiPhong?.GiaTheoDem.ToString("N0") ?? "0") đ / đêm</div>
+        </div>
+    </div>
+
+    <div class="rp-note">
+        <div class="rp-info-label"><i class="bi bi-journal-text"></i> Ghi chú phòng</div>
+        @if (string.IsNullOrWhiteSpace(Model.GhiChu))
+        {
+            <div class="rp-muted">Chưa có ghi chú</div>
+        }
+        else
+        {
+            <div>@Model.GhiChu</div>
+        }
+    </div>
+</div>
+
+<div class="rp-footer">
+    <button type="button" class="rp-secondary-btn" id="closeRoomModalFooterBtn">Đóng</button>
+    @if (laTrong)
+    {
+        <a asp-controller="DatPhong" asp-action="Create" class="rp-main-btn">
+            <i class="bi bi-calendar-plus"></i> Đặt phòng
+        </a>
+    }
+</div>
+
+<style>
+    .rp-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 22px 28px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .rp-title {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+        .rp-title h2 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+    .rp-badge {
+        padding: 4px 12px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .rp-badge-empty {
+        background: #e7f7ed;
+        color: #21834d;
+    }
+
+    .rp-badge-booked {
+        background: #fff3dc;
+        color: #b87508;
+    }
+
+    .rp-badge-occupied {
+        background: #fdeaea;
+        color: #bd3535;
+    }
+
+    .rp-badge-cleaning {
+        background: #e9f2ff;
+        color: #2563b7;
+    }
+
+    .rp-badge-other {
+        background: #eef0f4;
+        color: #626d7e;
+    }
+
+    .rp-header-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .rp-text-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 9px 14px;
+        border-radius: 9px;
+        background: #f1f5f9;
+        color: #374151;
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: background .2s, color .2s;
+    }
+
+        .rp-text-btn:hover {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+    .rp-text-danger:hover {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+
+    .rp-close-btn {
+        display: inline-flex;
+        width: 40px;
+        height: 40px;
+        align-items: center;
+        justify-content: center;
+        border: 0;
+        border-radius: 9px;
+        background: #f1f5f9;
+        color: #475569;
+        cursor: pointer;
+    }
+
+        .rp-close-btn:hover {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+    .rp-body {
+        padding: 24px 28px;
+    }
+
+    .rp-info-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+        margin-bottom: 16px;
+    }
+
+    .rp-info-card,
+    .rp-note {
+        padding: 16px 18px;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        background: #f8fafc;
+        color: #374151;
+        font-size: 15px;
+    }
+
+    .rp-info-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+        color: #6b7280;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .rp-info-value {
+        font-size: 18px;
+        font-weight: 700;
+        color: #1f2937;
+    }
+
+    .rp-price {
+        color: #15803d;
+    }
+
+    .rp-muted {
+        color: #8b94a3;
+    }
+
+    .rp-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        padding: 16px 28px 22px;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .rp-secondary-btn {
+        padding: 12px 24px;
+        border: 0;
+        border-radius: 8px;
+        background: #eef2f7;
+        color: #374151;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+        .rp-secondary-btn:hover {
+            background: #e2e8f0;
+        }
+
+    .rp-main-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 12px 28px;
+        border-radius: 8px;
+        background: #198754;
+        color: #fff;
+        font-size: 15px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: background .2s;
+    }
+
+        .rp-main-btn:hover {
+            background: #157347;
+            color: #fff;
+        }
+
+    @@media (max-width: 800px) {
+        .rp-info-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .rp-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+    }
+</style>
