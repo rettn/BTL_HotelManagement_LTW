@@ -57,6 +57,17 @@
     typeFilter.addEventListener("change", filterRooms);
 
     function openRoomModal(card) {
+
+        const bookingLink = document.getElementById("modalBookingLink");
+
+        if (card.dataset.roomStatus === "Trong") {
+            bookingLink.href =
+                `/DatPhong/Create?maPhong=${encodeURIComponent(card.dataset.roomId)}`;
+            bookingLink.style.display = "inline-flex";
+        } else {
+            bookingLink.style.display = "none";
+        }
+
         document.getElementById("modalRoomNumber").textContent =
             "Phòng " + card.dataset.roomNumber;
 

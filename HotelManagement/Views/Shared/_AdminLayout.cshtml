@@ -89,10 +89,10 @@
                 </a>
             </div> *@
 
-                <a href="#reservationMenu" class="sidebar-link"
-                   data-menu-toggle="reservationMenu"
-                   aria-expanded="@(isReservationSection ? "true" : "false")">
-                    <i class="bi bi-calendar2-check"></i><span>Danh sách đặt phòng</span>
+                <a asp-controller="DatPhong" asp-action="Index"
+                   class="sidebar-link @(currentController.Equals("DatPhong", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
+                    <i class="bi bi-calendar-check"></i>
+                    <span>Sơ đồ phòng</span>
                 </a>
 
                 <a href="#" class="sidebar-link disabled-link" aria-disabled="true">

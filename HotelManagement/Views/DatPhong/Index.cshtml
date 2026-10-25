@@ -1,0 +1,424 @@
+﻿
+@model IEnumerable<HotelManagement.Models.DatPhong>
+
+@{
+    ViewData["Title"] = "Danh sách đặt phòng";
+
+    string TenTrangThai(string? trangThai) => trangThai switch
+    {
+        "ChoXacNhan" => "Chờ xác nhận",
+        "DaXacNhan" => "Đã xác nhận",
+        "DaHuy" => "Đã hủy",
+        "DangLuuTru" => "Đang lưu trú",
+        "DaHoanThanh" => "Đã hoàn thành",
+        _ => trangThai ?? "Chưa xác định"
+    };
+
+    string MauTrangThai(string? trangThai) => trangThai switch
+    {
+        "ChoXacNhan" => "badge-pending",
+        "DaXacNhan" => "badge-confirmed",
+        "DaHuy" => "badge-cancelled",
+        "DangLuuTru" => "badge-staying",
+        "DaHoanThanh" => "badge-completed",
+        _ => "badge-pending"
+    };
+}
+
+<style>
+    .booking-page {
+        color: #263449;
+    }
+
+    .booking-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 24px;
+    }
+
+    .booking-toolbar h2 {
+        font-size: 26px;
+        font-weight: 700;
+        margin-bottom: 6px;
+    }
+
+    .booking-toolbar p {
+        color: #748198;
+        margin: 0;
+    }
+
+    .booking-panel {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .booking-search {
+        width: 100%;
+        max-width: 460px;
+        padding: 11px 14px;
+        border: 1px solid #dce3ed;
+        border-radius: 8px;
+        outline: none;
+    }
+
+    .booking-search:focus {
+        border-color: #3997f5;
+    }
+
+    .booking-table-wrapper {
+        overflow-x: auto;
+    }
+
+    .booking-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 1000px;
+    }
+
+    .booking-table th {
+        background: #f7f9fc;
+        color: #65748b;
+        font-weight: 600;
+        font-size: 13px;
+        text-align: left;
+        padding: 14px 12px;
+        white-space: nowrap;
+    }
+
+    .booking-table td {
+        padding: 15px 12px;
+        border-bottom: 1px solid #edf0f5;
+        vertical-align: middle;
+    }
+
+    .booking-table tbody tr:hover {
+        background: #fafcff;
+    }
+
+    .booking-code {
+        font-weight: 700;
+        color: #287fd1;
+    }
+
+    .booking-customer {
+        font-weight: 600;
+    }
+
+    .booking-muted {
+        color: #77849a;
+        font-size: 13px;
+        margin-top: 4px;
+    }
+
+    .booking-rooms {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        max-width: 180px;
+    }
+
+    .booking-room {
+        display: inline-block;
+        background: #edf5ff;
+        color: #2874bd;
+        border-radius: 5px;
+        padding: 4px 7px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .booking-status {
+        display: inline-block;
+        border-radius: 6px;
+        padding: 6px 9px;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .badge-pending {
+        background: #fff3d6;
+        color: #986500;
+    }
+
+    .badge-confirmed {
+        background: #e5f1ff;
+        color: #2168b3;
+    }
+
+    .badge-cancelled {
+        background: #ffe8e8;
+        color: #c03939;
+    }
+
+    .badge-staying {
+        background: #e4f8ed;
+        color: #16804a;
+    }
+
+    .badge-completed {
+        background: #e9eafc;
+        color: #5556a8;
+    }
+
+    .booking-actions {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+
+    .booking-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        padding: 7px 9px;
+        border: 1px solid #dce3ed;
+        border-radius: 6px;
+        background: white;
+        color: #41516a;
+        text-decoration: none;
+        font-size: 12px;
+        cursor: pointer;
+    }
+
+    .booking-action:hover {
+        background: #f1f6fc;
+    }
+
+    .booking-action-danger {
+        color: #c03939;
+        border-color: #f0d0d0;
+    }
+
+    .booking-empty {
+        text-align: center;
+        padding: 48px 16px;
+        color: #7b8798;
+    }
+
+    .booking-empty i {
+        font-size: 38px;
+        display: block;
+        margin-bottom: 12px;
+    }
+
+    .booking-empty h3 {
+        color: #344258;
+        font-size: 19px;
+    }
+
+    .booking-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        color: #748198;
+        font-size: 13px;
+        margin-top: 16px;
+    }
+
+    .booking-primary {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: 0;
+        border-radius: 8px;
+        padding: 11px 16px;
+        background: #209c60;
+        color: white;
+        text-decoration: none;
+        font-weight: 600;
+    }
+
+    .booking-primary:hover {
+        background: #16834f;
+        color: white;
+    }
+</style>
+
+<div class="booking-page">
+    <div class="booking-toolbar">
+        <div>
+            <h2>Danh sách đặt phòng</h2>
+            <p>Quản lý các lượt đặt phòng và thông tin khách hàng</p>
+        </div>
+
+        <a asp-controller="DatPhong"
+           asp-action="Create"
+           class="booking-primary">
+            <i class="bi bi-plus-lg"></i>
+            Tạo lượt đặt phòng
+        </a>
+    </div>
+
+    <div class="booking-panel">
+        <input id="bookingSearch"
+               class="booking-search"
+               type="search"
+               placeholder="Tìm mã đặt phòng, tên khách hàng, số phòng..." />
+
+        <div class="booking-table-wrapper" style="margin-top:20px">
+            <table class="booking-table">
+                <thead>
+                    <tr>
+                        <th>Mã đặt phòng</th>
+                        <th>Khách hàng</th>
+                        <th>Phòng đã đặt</th>
+                        <th>Ngày đặt</th>
+                        <th>Ngày nhận</th>
+                        <th>Ngày trả</th>
+                        <th>Tiền cọc</th>
+                        <th>Trạng thái</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+
+                <tbody id="bookingTableBody">
+                    @foreach (var datPhong in Model)
+                    {
+                        var cacPhong = datPhong.ChiTietDatPhongs?
+                            .Where(ct => ct.Phong != null)
+                            .Select(ct => ct.Phong!.SoPhong)
+                            .ToList() ?? new List<string>();
+
+                        var tenKhach = datPhong.KhachHang?.HoTen ?? "Chưa có thông tin";
+                        var tuKhoa = $"{datPhong.MaDatPhong} {tenKhach} {string.Join(" ", cacPhong)}";
+
+                        <tr data-search="@tuKhoa.ToLowerInvariant()">
+                            <td>
+                                <span class="booking-code">
+                                    @datPhong.MaDatPhong
+                                </span>
+                            </td>
+
+                            <td>
+                                <div class="booking-customer">@tenKhach</div>
+                                <div class="booking-muted">
+                                    @(datPhong.KhachHang?.SoDienThoai ?? "Chưa có số điện thoại")
+                                </div>
+                            </td>
+
+                            <td>
+                                <div class="booking-rooms">
+                                    @if (cacPhong.Count > 0)
+                                    {
+                                        foreach (var soPhong in cacPhong)
+                                        {
+                                            <span class="booking-room">@soPhong</span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="booking-muted">Chưa gán phòng</span>
+                                    }
+                                </div>
+                            </td>
+
+                            <td>@datPhong.NgayDat.ToString("dd/MM/yyyy")</td>
+                            <td>@datPhong.NgayNhanDuKien.ToString("dd/MM/yyyy")</td>
+                            <td>@datPhong.NgayTraDuKien.ToString("dd/MM/yyyy")</td>
+
+                            <td>
+                                @datPhong.TienCoc.ToString("N0") đ
+                            </td>
+
+                            <td>
+                                <span class="booking-status @MauTrangThai(datPhong.TrangThai)">
+                                    @TenTrangThai(datPhong.TrangThai)
+                                </span>
+                            </td>
+
+                            <td>
+                                <div class="booking-actions">
+                                    <a asp-controller="DatPhong"
+                                       asp-action="Details"
+                                       asp-route-id="@datPhong.MaDatPhong"
+                                       class="booking-action"
+                                       title="Xem chi tiết">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+
+                                    @if (datPhong.TrangThai == "ChoXacNhan")
+                                    {
+                                        <a asp-controller="DatPhong"
+                                           asp-action="Edit"
+                                           asp-route-id="@datPhong.MaDatPhong"
+                                           class="booking-action"
+                                           title="Chỉnh sửa">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+
+                                        <form asp-controller="DatPhong"
+                                              asp-action="Cancel"
+                                              asp-route-id="@datPhong.MaDatPhong"
+                                              method="post"
+                                              onsubmit="return confirm('Cậu có chắc muốn hủy lượt đặt phòng này?');">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit"
+                                                    class="booking-action booking-action-danger"
+                                                    title="Hủy đặt phòng">
+                                                <i class="bi bi-x-circle"></i>
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            @if (!Model.Any())
+            {
+                <div class="booking-empty">
+                    <i class="bi bi-calendar2-x"></i>
+                    <h3>Chưa có lượt đặt phòng</h3>
+                    <p>Các lượt đặt phòng sẽ xuất hiện tại đây sau khi được tạo.</p>
+                </div>
+            }
+
+            <div id="bookingNoResult" class="booking-empty" style="display:none">
+                <i class="bi bi-search"></i>
+                <h3>Không tìm thấy kết quả</h3>
+                <p>Thử tìm bằng mã đặt phòng, tên khách hàng hoặc số phòng khác.</p>
+            </div>
+
+            <div class="booking-footer">
+                <span>Tổng số lượt đặt phòng: <strong>@Model.Count()</strong></span>
+                <span>Hiển thị danh sách lượt đặt phòng từ hệ thống</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (() => {
+            const search = document.getElementById("bookingSearch");
+            const rows = [...document.querySelectorAll("#bookingTableBody tr")];
+            const noResult = document.getElementById("bookingNoResult");
+
+            search?.addEventListener("input", () => {
+                const keyword = search.value.trim().toLowerCase();
+                let visible = 0;
+
+                rows.forEach(row => {
+                    const match = (row.dataset.search || "").includes(keyword);
+                    row.style.display = match ? "" : "none";
+                    if (match) visible++;
+                });
+
+                noResult.style.display =
+                    rows.length > 0 && visible === 0 ? "" : "none";
+            });
+        })();
+    </script>
+}
