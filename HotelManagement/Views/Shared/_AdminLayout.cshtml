@@ -103,15 +103,6 @@
                     <i class="bi bi-cup-hot"></i><span>Dịch vụ</span>
                 </a>
 
-                @if (User.IsInRole("Admin"))
-                {
-                    <div class="sidebar-section-label">QUẢN TRỊ</div>
-                    <a asp-controller="QuanTri" asp-action="Index"
-                       class="sidebar-link @(currentController.Equals("QuanTri", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
-                        <i class="bi bi-person-gear"></i><span>Quản trị tài khoản</span>
-                    </a>
-                }
-
                 <div class="sidebar-section-label">TÀI CHÍNH</div>
                 <a href="#financeMenu" class="sidebar-link"
                    data-menu-toggle="financeMenu"
@@ -129,9 +120,15 @@
                 <a href="#" class="sidebar-link disabled-link" aria-disabled="true">
                     <i class="bi bi-bar-chart-line"></i><span>Báo cáo thống kê</span>
                 </a>
-                <a href="#" class="sidebar-link disabled-link" aria-disabled="true">
+
+                @if (User.IsInRole("Admin"))
+                {
+                    <a asp-controller="CaiDat" asp-action="Index"
+                       class="sidebar-link @((currentController.Equals("CaiDat", StringComparison.OrdinalIgnoreCase)
+                                                     || currentController.Equals("QuanTri", StringComparison.OrdinalIgnoreCase)) ? "active" : "")">
                     <i class="bi bi-gear"></i><span>Cài đặt</span>
                 </a>
+                                }
             </nav>
 
             <div class="sidebar-footer">
@@ -305,6 +302,34 @@
                 if (event.key === 'Escape') {
                     shell.classList.remove('mobile-sidebar-open');
                 }
+            });
+        })();
+    </script>
+    <script>
+        (() => {
+            document.querySelectorAll('input[type="password"]').forEach(input => {
+             
+                if (input.closest('.input-group')) return;
+
+                const wrap = document.createElement('div');
+                wrap.className = 'password-field';
+                input.parentNode.insertBefore(wrap, input);
+                wrap.appendChild(input);
+
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'password-toggle';
+                btn.setAttribute('aria-label', 'Hiện mật khẩu');
+                btn.innerHTML = '<i class="bi bi-eye"></i>';
+
+                btn.addEventListener('click', () => {
+                    const show = input.type === 'password';
+                    input.type = show ? 'text' : 'password';
+                    btn.setAttribute('aria-label', show ? 'Ẩn mật khẩu' : 'Hiện mật khẩu');
+                    btn.querySelector('i').className = show ? 'bi bi-eye-slash' : 'bi bi-eye';
+                });
+
+                wrap.appendChild(btn);
             });
         })();
     </script>
