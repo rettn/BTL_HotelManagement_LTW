@@ -2,9 +2,11 @@
 using HotelManagement.Models;
 using HotelManagement.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace HotelManagement.Controllers
 {
+    [Authorize(Roles = "Admin,NhanVien")]
     public class KhachHangController : Controller
     {
         private readonly KhachHangService _service;

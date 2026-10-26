@@ -1,4 +1,4 @@
-﻿
+﻿using Microsoft.AspNetCore.Authorization;
 using HotelManagement.Data;
 using HotelManagement.Models;
 using HotelManagement.Services;
@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HotelManagement.Controllers
 {
+    [Authorize(Roles = "Admin,NhanVien")]
     public class DatPhongController : Controller
     {
         private readonly DatPhongService _service;

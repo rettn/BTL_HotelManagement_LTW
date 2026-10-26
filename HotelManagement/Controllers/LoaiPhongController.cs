@@ -2,9 +2,11 @@
 using HotelManagement.Models;
 using HotelManagement.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace HotelManagement.Controllers
 {
+    [Authorize(Roles = "Admin")]
     public class LoaiPhongController : Controller
     {
         private readonly LoaiPhongService _service;

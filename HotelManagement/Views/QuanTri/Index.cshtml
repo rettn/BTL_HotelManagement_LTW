@@ -1,0 +1,66 @@
+﻿
+@model List<HotelManagement.ViewModels.QuanTriItemViewModel>
+@{
+    ViewData["Title"] = "Quản trị tài khoản"; Layout = "_AdminLayout";
+}
+
+<div class="card">
+    <div class="card-body">
+        <form method="get" class="d-flex gap-2 mb-3">
+            <input name="keyword" value="@ViewBag.Keyword" class="form-control" placeholder="Tìm theo email hoặc số điện thoại..." />
+            <button class="btn btn-outline-primary text-nowrap"><i class="bi bi-search"></i> Tìm</button>
+            <a asp-action="Index" class="btn btn-outline-secondary text-nowrap">Làm mới</a>
+            <a asp-action="Create" class="btn btn-success text-nowrap">+ Tạo tài khoản</a>
+        </form>
+
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr><th>Email</th><th>Số điện thoại</th><th>Vai trò</th><th>Trạng thái</th><th class="text-end">Thao tác</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    var laToi = item.Id == (string?)ViewBag.CurrentUserId;
+                    <tr>
+                        <td>@item.Email @(laToi ? "(bạn)" : "")</td>
+                        <td>@item.PhoneNumber</td>
+                        <td>
+                            <span class="badge @(item.VaiTro == "Admin" ? "bg-danger" : "bg-info text-dark")">
+                                @(item.VaiTro == "Admin" ? "Quản trị viên" : item.VaiTro == "NhanVien" ? "Nhân viên" : item.VaiTro)
+                            </span>
+                        </td>
+                        <td>
+                            @if (item.BiKhoa)
+                            {
+                                <span class="badge bg-secondary">Đã khóa</span>
+                            }
+                            else
+                            {
+
+                                <span class="badge bg-success">Hoạt động</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning">Sửa</a>
+                            <a asp-action="ResetPassword" asp-route-id="@item.Id" class="btn btn-sm btn-info">Đặt lại mật khẩu</a>
+                            @if (!laToi)
+                            {
+                                <form asp-action="ToggleLock" asp-route-id="@item.Id" method="post" class="d-inline"
+                                      onsubmit="return confirm('@(item.BiKhoa ? "Mở khóa" : "Khóa") tài khoản này?');">
+                                    <button class="btn btn-sm @(item.BiKhoa ? "btn-secondary" : "btn-danger")">
+                                        @(item.BiKhoa ? "Mở khóa" : "Khóa")
+                                    </button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="5" class="text-center text-muted py-4">Không tìm thấy tài khoản.</td></tr>
+                }
+            </tbody>
+        </table>
+        <div class="text-muted">Tổng số: <strong>@Model.Count</strong></div>
+    </div>
+</div>

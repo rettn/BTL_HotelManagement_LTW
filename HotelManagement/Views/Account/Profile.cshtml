@@ -1,0 +1,44 @@
+﻿@model HotelManagement.ViewModels.ProfileViewModel
+@{
+    ViewData["Title"] = "Quản lý tài khoản";
+    Layout = "_AdminLayout";
+    var email = Model.Email ?? "";
+    var vaiTro = Model.VaiTro ?? "";
+    var initial = email.Length > 0 ? email[0].ToString().ToUpper() : "A";
+}
+<div class="row g-4">
+    <div class="col-lg-3"><partial name="_AccountTabs" /></div>
+    <div class="col-lg-9">
+        <div class="card">
+            <div class="card-header"><strong>Thông tin cá nhân</strong></div>
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-4">
+                    <span class="profile-avatar profile-avatar-large me-3">@initial</span>
+                    <div>
+                        <div class="fw-bold">@email</div>
+                        <span class="badge @(vaiTro.Contains("Admin") ? "bg-danger" : "bg-info text-dark")">
+                            @(vaiTro.Contains("Admin") ? "Quản trị viên" : "Nhân viên")
+                        </span>
+                    </div>
+                </div>
+
+                <form asp-action="Profile" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <div class="mb-3">
+                        <label class="form-label">Email đăng nhập</label>
+                        <input class="form-control" value="@email" readonly />
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="PhoneNumber" class="form-label">Số điện thoại</label>
+                        <input asp-for="PhoneNumber" class="form-control" />
+                        <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

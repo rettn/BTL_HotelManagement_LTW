@@ -1,0 +1,19 @@
+﻿@{
+    var action = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+}
+<div class="card">
+    <div class="list-group list-group-flush">
+        <a asp-area="" asp-controller="Account" asp-action="Profile"
+           class="list-group-item list-group-item-action @(action == "Profile" ? "active" : "")">
+            <i class="bi bi-person me-2"></i>Thông tin cá nhân
+        </a>
+        <a asp-area="" asp-controller="Account" asp-action="ChangeEmail"
+           class="list-group-item list-group-item-action @(action == "ChangeEmail" ? "active" : "")">
+            <i class="bi bi-envelope me-2"></i>Đổi email
+        </a>
+        <a asp-area="" asp-controller="Account" asp-action="ChangePassword"
+           class="list-group-item list-group-item-action @(action == "ChangePassword" ? "active" : "")">
+            <i class="bi bi-key me-2"></i>Đổi mật khẩu
+        </a>
+    </div>
+</div>
