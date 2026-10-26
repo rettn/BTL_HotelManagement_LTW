@@ -833,3 +833,69 @@ a {
         padding: 13px 14px;
     }
 }
+
+
+/* CoreUI theme: green accent */
+:root {
+    --cui-primary: #209c60;
+    --cui-primary-rgb: 32, 156, 96;
+    --cui-link-color: #209c60;
+    --cui-link-color-rgb: 32, 156, 96;
+    --cui-link-hover-color: #16834f;
+    --cui-link-hover-color-rgb: 22, 131, 79;
+}
+
+.btn-primary,
+.btn-success,
+.btn-warning,
+.btn-info,
+.btn-secondary {
+    --cui-btn-color: #fff;
+    --cui-btn-bg: #209c60;
+    --cui-btn-border-color: #209c60;
+    --cui-btn-hover-color: #fff;
+    --cui-btn-hover-bg: #16834f;
+    --cui-btn-hover-border-color: #16834f;
+    --cui-btn-focus-shadow-rgb: 32, 156, 96;
+    --cui-btn-active-color: #fff;
+    --cui-btn-active-bg: #16834f;
+    --cui-btn-active-border-color: #16834f;
+    --cui-btn-disabled-color: #fff;
+    --cui-btn-disabled-bg: #209c60;
+    --cui-btn-disabled-border-color: #209c60;
+}
+
+.btn-outline-primary,
+.btn-outline-secondary,
+.btn-outline-success,
+.btn-outline-info,
+.btn-outline-warning {
+    --cui-btn-color: #4d5668;
+    --cui-btn-border-color: #cfd5df;
+    --cui-btn-hover-color: #303849;
+    --cui-btn-hover-bg: #eef1f5;
+    --cui-btn-hover-border-color: #b8c0cc;
+    --cui-btn-focus-shadow-rgb: 138, 147, 165;
+    --cui-btn-active-color: #303849;
+    --cui-btn-active-bg: #e4e8ef;
+    --cui-btn-active-border-color: #b8c0cc;
+    --cui-btn-disabled-color: #8a93a5;
+    --cui-btn-disabled-border-color: #cfd5df;
+}
+
+.list-group {
+    --cui-list-group-active-bg: #209c60;
+    --cui-list-group-active-border-color: #209c60;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #209c60;
+    box-shadow: 0 0 0 .25rem rgba(32, 156, 96, .2);
+}
+
+.form-check-input:checked {
+    background-color: #209c60;
+    border-color: #209c60;
+}
+
