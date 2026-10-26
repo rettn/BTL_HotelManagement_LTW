@@ -1,7 +1,12 @@
-﻿using HotelManagement.ViewModels;
+using System.Security.Claims;
+using HotelManagement.Data;
+using HotelManagement.Models;
+using HotelManagement.ViewModels;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace HotelManagement.Controllers
 {
@@ -9,21 +14,33 @@ namespace HotelManagement.Controllers
     {
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly UserManager<IdentityUser> _userManager;
+        private readonly ApplicationDbContext _context;
+        private readonly IConfiguration _configuration;
 
         public AccountController(SignInManager<IdentityUser> signInManager,
-                                 UserManager<IdentityUser> userManager)
+                                 UserManager<IdentityUser> userManager,
+                                 ApplicationDbContext context,
+                                 IConfiguration configuration)
         {
             _signInManager = signInManager;
             _userManager = userManager;
+            _context = context;
+            _configuration = configuration;
         }
 
         // ============ ĐĂNG NHẬP / ĐĂNG XUẤT / TỪ CHỐI TRUY CẬP ============
         [HttpGet]
-        public IActionResult Login() => View();
+        public IActionResult Login(string? returnUrl = null)
+        {
+            ViewBag.ReturnUrl = returnUrl;
+            return View();
+        }
 
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> Login(string email, string password)
+        public async Task<IActionResult> Login(string email, string password, string? returnUrl = null)
         {
+            ViewBag.ReturnUrl = returnUrl;
+
             if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
             {
                 ViewBag.Error = "Vui lòng nhập email và mật khẩu.";
@@ -33,8 +50,25 @@ namespace HotelManagement.Controllers
             var result = await _signInManager.PasswordSignInAsync(
                 email, password, isPersistent: false, lockoutOnFailure: false);
 
-            if (result.Succeeded) return RedirectToAction("Index", "Dashboard");
+            if (result.Succeeded)
+            {
+                var user = await _userManager.FindByEmailAsync(email);
 
+                // 1. Kiểm tra Role trước: Admin hoặc Nhân viên luôn bị ép về Dashboard
+                if (user != null && (await _userManager.IsInRoleAsync(user, "Admin") || await _userManager.IsInRoleAsync(user, "NhanVien")))
+                {
+                    return RedirectToAction("Index", "Dashboard");
+                }
+
+                // 2. Đối với khách hàng bình thường: Ưu tiên trả về trang họ đang muốn truy cập (returnUrl)
+                if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                {
+                    return Redirect(returnUrl);
+                }
+
+                // 3. Nếu khách hàng vào thẳng trang Login mà không có returnUrl, cho về trang mặc định
+                return RedirectToAction("Index", "DatPhongKhachHang");
+            }
             if (result.IsLockedOut)
             {
                 ViewBag.Error = "Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.";

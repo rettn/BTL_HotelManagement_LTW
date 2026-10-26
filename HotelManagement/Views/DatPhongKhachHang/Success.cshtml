@@ -1,0 +1,766 @@
+@model HotelManagement.Models.DatPhong
+@{
+    ViewData["Title"] = "Đặt phòng thành công";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var chiTiet = Model.ChiTietDatPhongs.FirstOrDefault();
+    var soDem = (int)(ViewBag.SoDem ?? ((Model.NgayTraDuKien.Date - Model.NgayNhanDuKien.Date).Days > 0 ? (Model.NgayTraDuKien.Date - Model.NgayNhanDuKien.Date).Days : 1));
+    var tongTien = (decimal)(ViewBag.TongTien ?? (chiTiet != null ? chiTiet.DonGia * soDem : 0));
+    var soTienThanhToan = (decimal)(ViewBag.SoTienThanhToan ?? tongTien);
+    var settings = ViewBag.Settings as HotelManagement.Models.PaymentSetting ?? new HotelManagement.Models.PaymentSetting();
+    var vietQrUrl = ViewBag.VietQrUrl as string ?? $"https://img.vietqr.io/image/{settings.NganHangMa}-{settings.SoTaiKhoan}-compact2.png?amount={soTienThanhToan}&addInfo=DP{Model.MaDatPhong}&accountName={Uri.EscapeDataString(settings.TenChuTaiKhoan ?? "")}";
+    var noiDungCK = ViewBag.NoiDungChuyenKhoan as string ?? $"{settings.NoiDungPrefix}{Model.MaDatPhong}";
+
+    bool isDaThanhToan = Model.TrangThai == "DaCoc" || Model.TrangThai == "DaThanhToan";
+}
+
+<div class="booking-success-page">
+    <div class="container-narrow">
+        
+        <!-- THẺ CHÍNH: KẾT QUẢ ĐẶT PHÒNG -->
+        <div class="success-card">
+            
+            <div class="success-icon-box">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+
+            <span class="success-badge">ĐẶT PHÒNG THÀNH CÔNG</span>
+            <h2>Cảm ơn bạn đã lựa chọn khách sạn chúng tôi!</h2>
+            <p class="success-subtitle">
+                Yêu cầu đặt phòng của bạn đã được ghi nhận trên hệ thống. Quý khách có thể quét mã QR bên dưới để thanh toán trước tiền phòng và nhận phòng nhanh chóng.
+            </p>
+
+            <!-- PHIẾU ĐẶT PHÒNG -->
+            <div class="booking-ticket">
+                <div class="ticket-header">
+                    <div>
+                        <span class="ticket-code-label">MÃ PHIẾU ĐẶT PHÒNG</span>
+                        <h3 class="ticket-code">#DP-@Model.MaDatPhong</h3>
+                    </div>
+                    <div class="ticket-status" id="ticketStatusContainer">
+                        @if (isDaThanhToan)
+                        {
+                            <span class="badge-status-dacoc" id="badgeStatus">
+                                <i class="fa-solid fa-check-double me-1"></i> Đã thanh toán (@Model.TienCoc.ToString("N0") đ)
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge-status-choxacnhan" id="badgeStatus">
+                                <i class="fa-solid fa-clock me-1"></i> Chờ xác nhận
+                            </span>
+                        }
+                    </div>
+                </div>
+
+                <div class="ticket-body">
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <div class="ticket-info-item">
+                                <span class="label">Khách hàng:</span>
+                                <strong>@(Model.KhachHang?.HoTen ?? "Quý khách")</strong>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-6">
+                            <div class="ticket-info-item">
+                                <span class="label">Số điện thoại:</span>
+                                <strong>@(Model.KhachHang?.SoDienThoai ?? "Chưa cập nhật")</strong>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-6">
+                            <div class="ticket-info-item">
+                                <span class="label">Phòng nghỉ:</span>
+                                <strong>Phòng @(chiTiet?.Phong?.SoPhong ?? "Đã chọn") - @(chiTiet?.Phong?.LoaiPhong?.TenLoaiPhong ?? "Tiêu chuẩn")</strong>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-6">
+                            <div class="ticket-info-item">
+                                <span class="label">Thời gian lưu trú:</span>
+                                <strong>@soDem đêm (@Model.NgayNhanDuKien.ToString("dd/MM/yyyy") &rarr; @Model.NgayTraDuKien.ToString("dd/MM/yyyy"))</strong>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-6">
+                            <div class="ticket-info-item">
+                                <span class="label">Ngày đặt:</span>
+                                <span>@Model.NgayDat.ToString("HH:mm dd/MM/yyyy")</span>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-6">
+                            <div class="ticket-info-item">
+                                <span class="label">Tổng tiền tạm tính:</span>
+                                <span class="total-price" id="ticketTotalPrice">@tongTien.ToString("N0") đ</span>
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(Model.GhiChu))
+                        {
+                            <div class="col-12">
+                                <div class="ticket-info-item">
+                                    <span class="label">Ghi chú:</span>
+                                    <span id="ticketGhiChu">@Model.GhiChu</span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- KHỐI QUÉT MÃ QR VIETQR & TỰ ĐỘNG XÁC NHẬN QUA SEPAY -->
+            <div class="payment-qr-section @(isDaThanhToan ? "payment-done" : "")" id="paymentSection">
+                <div class="qr-section-header">
+                    <div class="qr-header-title">
+                        <i class="fa-solid fa-qrcode text-primary fs-3"></i>
+                        <div>
+                            <h4>Thanh toán qua chuyển khoản QR (VietQR)</h4>
+                            <p>Mở ứng dụng ngân hàng bất kỳ để quét mã. Hệ thống tự động xác nhận sau 3 giây qua SePay.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BANNER TRẠNG THÁI THANH TOÁN (THAY ĐỔI THEO POLLING 3 GIÂY) -->
+                <div id="paymentStatusBanner" class="payment-status-banner @(isDaThanhToan ? "status-paid" : "status-waiting")">
+                    @if (isDaThanhToan)
+                    {
+                        <div class="d-flex align-items-center justify-content-center gap-2">
+                            <i class="fa-solid fa-circle-check fs-4 text-success"></i>
+                            <div>
+                                <strong class="d-block text-success">THANH TOÁN THÀNH CÔNG!</strong>
+                                <small class="text-muted">Đơn đặt phòng đã được hệ thống ghi nhận hoàn tất tiền cọc.</small>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="d-flex align-items-center justify-content-center gap-2">
+                            <span class="sepay-pulsing-dot"></span>
+                            <div>
+                                <strong>Đang chờ chuyển khoản...</strong>
+                                <span class="text-muted">Hệ thống đang tự động kiểm tra giao dịch mỗi 3 giây</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <div class="qr-section-body">
+                    <div class="row align-items-center g-4">
+                        
+                        <!-- ẢNH MÃ QR VIETQR -->
+                        <div class="col-md-5 text-center">
+                            <div class="qr-image-wrapper">
+                                <img src="@vietQrUrl" 
+                                     alt="Mã VietQR thanh toán phòng #DP-@Model.MaDatPhong" 
+                                     id="vietQrImage"
+                                     class="vietqr-img" />
+                                <div class="qr-stamp-paid" id="qrStampPaid" style="display: @(isDaThanhToan ? "flex" : "none");">
+                                    <div class="stamp-inner">
+                                        <i class="fa-solid fa-check"></i>
+                                        <span>ĐÃ THANH TOÁN</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <small class="text-muted d-block mt-2">
+                                <i class="fa-solid fa-camera me-1"></i> Quét bằng app ngân hàng hoặc ví điện tử
+                            </small>
+                        </div>
+
+                        <!-- CHI TIẾT THÔNG TIN CHUYỂN KHOẢN -->
+                        <div class="col-md-7">
+                            <div class="bank-details-list">
+                                
+                                <div class="bank-detail-row">
+                                    <span class="detail-label">Ngân hàng:</span>
+                                    <span class="detail-val fw-bold text-dark">
+                                        <i class="fa-solid fa-building-columns text-primary me-1"></i>
+                                        @settings.TenNganHang (@settings.NganHangMa)
+                                    </span>
+                                </div>
+
+                                <div class="bank-detail-row">
+                                    <span class="detail-label">Số tài khoản:</span>
+                                    <div class="detail-val-copy">
+                                        <strong class="text-primary font-monospace fs-5" id="valSTK">@settings.SoTaiKhoan</strong>
+                                        <button type="button" class="btn-copy" onclick="copyToClipboard('@settings.SoTaiKhoan', this)" title="Sao chép số tài khoản">
+                                            <i class="fa-regular fa-copy"></i> Sao chép
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="bank-detail-row">
+                                    <span class="detail-label">Chủ tài khoản:</span>
+                                    <span class="detail-val fw-bold text-uppercase">@settings.TenChuTaiKhoan</span>
+                                </div>
+
+                                <div class="bank-detail-row">
+                                    <span class="detail-label">Số tiền:</span>
+                                    <div class="detail-val-copy">
+                                        <strong class="text-danger fs-5" id="valAmount">@soTienThanhToan.ToString("N0") đ</strong>
+                                        <button type="button" class="btn-copy" onclick="copyToClipboard('@((long)soTienThanhToan)', this)" title="Sao chép số tiền">
+                                            <i class="fa-regular fa-copy"></i> Sao chép
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="bank-detail-row highlight-memo">
+                                    <span class="detail-label">Nội dung CK:</span>
+                                    <div class="detail-val-copy">
+                                        <strong class="text-danger font-monospace fs-5" id="valMemo">@noiDungCK</strong>
+                                        <button type="button" class="btn-copy btn-copy-memo" onclick="copyToClipboard('@noiDungCK', this)" title="Sao chép nội dung">
+                                            <i class="fa-regular fa-copy"></i> Sao chép
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="memo-notice mt-2">
+                                    <i class="fa-solid fa-triangle-exclamation text-warning me-1"></i>
+                                    <strong>Lưu ý:</strong> Vui lòng nhập chính xác nội dung <strong>@noiDungCK</strong> để hệ thống tự động nhận diện thanh toán của bạn!
+                                </div>
+
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- KHU VỰC NÚT THỬ NGHIỆM GIẢ LẬP THANH TOÁN CHO CHẤM BÀI / KIỂM THỬ -->
+                <div class="demo-test-box mt-3 p-3 bg-light rounded-3 text-center border">
+                    <span class="small text-muted d-block mb-2">
+                        <i class="fa-solid fa-flask text-secondary me-1"></i> <strong>Chế độ kiểm thử:</strong> Bấm nút bên dưới để mô phỏng SePay nhận diện tiền vào thành công
+                    </span>
+                    <button type="button" class="btn btn-sm btn-outline-success" id="btnSimulatePayment" onclick="simulatePayment()">
+                        <i class="fa-solid fa-bolt me-1"></i> Giả lập thanh toán SePay thành công
+                    </button>
+                </div>
+            </div>
+
+            <!-- THÔNG TIN HỖ TRỢ -->
+            <div class="contact-support-box mt-4">
+                <h6><i class="fa-solid fa-headset me-2 text-warning"></i> Cần hỗ trợ khẩn cấp?</h6>
+                <p>Hotline lễ tân 24/7: <strong>0379 868 686</strong> | Email: <strong>thetoan.official@gmail.com</strong></p>
+            </div>
+
+            <!-- CÁC NÚT ĐIỀU HƯỚNG -->
+            <div class="success-actions mt-4">
+                <a asp-controller="Home" asp-action="Index" class="btn-home">
+                    <i class="fa-solid fa-house me-1"></i> Về trang chủ
+                </a>
+                <a asp-controller="DatPhongKhachHang" asp-action="Index" class="btn-book-more">
+                    <i class="fa-solid fa-plus me-1"></i> Đặt thêm phòng khác
+                </a>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .booking-success-page {
+            background: linear-gradient(135deg, #f7f4ee 0%, #ece5da 100%);
+            min-height: 100vh;
+            padding: 40px 16px 80px;
+        }
+
+        .container-narrow {
+            max-width: 820px;
+            margin: 0 auto;
+        }
+
+        .success-card {
+            background: #ffffff;
+            border-radius: 16px;
+            width: 100%;
+            padding: 40px 32px;
+            box-shadow: 0 20px 60px rgba(70, 55, 42, 0.1);
+            border: 1px solid #e7ded4;
+            text-align: center;
+        }
+
+        .success-icon-box {
+            font-size: 52px;
+            color: #2e7d32;
+            margin-bottom: 10px;
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @@keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .success-badge {
+            background: #e6f4ea;
+            color: #137333;
+            font-size: 11.5px;
+            font-weight: 700;
+            padding: 4px 14px;
+            border-radius: 20px;
+            letter-spacing: 1px;
+            display: inline-block;
+            margin-bottom: 12px;
+        }
+
+        .success-card h2 {
+            font-size: 26px;
+            font-weight: 700;
+            color: #2b231d;
+            margin-bottom: 8px;
+        }
+
+        .success-subtitle {
+            color: #7b6f65;
+            font-size: 14.5px;
+            line-height: 1.6;
+            max-width: 620px;
+            margin: 0 auto 28px;
+        }
+
+        /* PHIẾU ĐẶT PHÒNG */
+        .booking-ticket {
+            background: #fbf9f5;
+            border: 1.5px dashed #d6c6b2;
+            border-radius: 12px;
+            padding: 24px;
+            text-align: left;
+            margin-bottom: 28px;
+        }
+
+        .ticket-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ebdcd0;
+            padding-bottom: 14px;
+            margin-bottom: 18px;
+        }
+
+        .ticket-code-label {
+            font-size: 11px;
+            color: #8c7d71;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .ticket-code {
+            font-size: 24px;
+            font-weight: 700;
+            color: #b05d1a;
+            margin: 2px 0 0;
+        }
+
+        .badge-status-choxacnhan {
+            background: #fff3cd;
+            color: #856404;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        .badge-status-dacoc {
+            background: #d4edda;
+            color: #155724;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 12px;
+        }
+
+        .ticket-info-item {
+            margin-bottom: 6px;
+            font-size: 13.5px;
+        }
+
+        .ticket-info-item .label {
+            color: #8c7d71;
+            display: block;
+            font-size: 11.5px;
+            margin-bottom: 2px;
+        }
+
+        .ticket-info-item strong {
+            color: #2b231d;
+        }
+
+        .total-price {
+            font-weight: 700;
+            font-size: 16px;
+            color: #b05d1a;
+        }
+
+        /* KHỐI THANH TOÁN VIETQR */
+        .payment-qr-section {
+            background: #ffffff;
+            border: 2px solid #b99a7e;
+            border-radius: 14px;
+            padding: 24px;
+            text-align: left;
+            margin-bottom: 24px;
+            box-shadow: 0 8px 30px rgba(185, 154, 126, 0.15);
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .payment-qr-section.payment-done {
+            border-color: #2e7d32;
+            box-shadow: 0 8px 30px rgba(46, 125, 50, 0.15);
+        }
+
+        .qr-section-header {
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #f0e9e1;
+        }
+
+        .qr-header-title {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .qr-header-title h4 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 700;
+            color: #2b231d;
+        }
+
+        .qr-header-title p {
+            margin: 2px 0 0;
+            font-size: 13px;
+            color: #7b6f65;
+        }
+
+        /* STATUS BANNER */
+        .payment-status-banner {
+            padding: 12px 18px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .status-waiting {
+            background: #fff8e1;
+            border: 1px solid #ffe082;
+            color: #8d6e63;
+        }
+
+        .status-paid {
+            background: #e8f5e9;
+            border: 1px solid #a5d6a7;
+            color: #1b5e20;
+        }
+
+        .sepay-pulsing-dot {
+            width: 12px;
+            height: 12px;
+            background: #ff9800;
+            border-radius: 50%;
+            display: inline-block;
+            animation: sepayPulse 1.5s infinite;
+        }
+
+        @@keyframes sepayPulse {
+            0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.7); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(255, 152, 0, 0); }
+            100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(255, 152, 0, 0); }
+        }
+
+        /* QR IMAGE */
+        .qr-image-wrapper {
+            position: relative;
+            display: inline-block;
+            padding: 8px;
+            background: #ffffff;
+            border: 1px solid #e7ded4;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+        }
+
+        .vietqr-img {
+            max-width: 230px;
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            display: block;
+        }
+
+        .qr-stamp-paid {
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.88);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(2px);
+        }
+
+        .stamp-inner {
+            border: 3px dashed #2e7d32;
+            border-radius: 10px;
+            color: #2e7d32;
+            padding: 12px 20px;
+            font-weight: 800;
+            font-size: 16px;
+            letter-spacing: 1px;
+            transform: rotate(-8deg);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* CHI TIẾT CHUYỂN KHOẢN */
+        .bank-details-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .bank-detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: #fdfbf7;
+            border-radius: 8px;
+            font-size: 13.5px;
+            border: 1px solid #f0e9e1;
+        }
+
+        .bank-detail-row.highlight-memo {
+            background: #fff5f5;
+            border-color: #ffcdd2;
+        }
+
+        .detail-label {
+            color: #7b6f65;
+            font-weight: 500;
+        }
+
+        .detail-val-copy {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-copy {
+            background: #ffffff;
+            border: 1px solid #dcd3c8;
+            color: #6a5d52;
+            font-size: 12px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-copy:hover {
+            background: #b99a7e;
+            color: #ffffff;
+            border-color: #b99a7e;
+        }
+
+        .btn-copy-memo {
+            background: #dc3545;
+            color: #ffffff;
+            border-color: #dc3545;
+            font-weight: 600;
+        }
+
+        .btn-copy-memo:hover {
+            background: #b02a37;
+            border-color: #b02a37;
+        }
+
+        .memo-notice {
+            background: #fff8e1;
+            border-left: 3px solid #ffb300;
+            padding: 8px 12px;
+            font-size: 12.5px;
+            color: #6d4c41;
+            border-radius: 0 6px 6px 0;
+        }
+
+        /* CONTACT & ACTIONS */
+        .contact-support-box {
+            background: #fdfaf5;
+            border: 1px solid #ebdcd0;
+            border-radius: 8px;
+            padding: 14px 20px;
+            margin-bottom: 24px;
+        }
+
+        .contact-support-box h6 {
+            margin: 0 0 4px;
+            font-weight: 600;
+            color: #2b231d;
+            font-size: 14px;
+        }
+
+        .contact-support-box p {
+            margin: 0;
+            font-size: 13px;
+            color: #7b6f65;
+        }
+
+        .success-actions {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .btn-home {
+            background: #b99a7e;
+            color: #ffffff;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .btn-home:hover {
+            background: #9d7d60;
+            color: #ffffff;
+        }
+
+        .btn-book-more {
+            background: #ffffff;
+            color: #7b6f65;
+            border: 1px solid #dcd3c8;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .btn-book-more:hover {
+            background: #f7f4ee;
+            color: #2b231d;
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        const maDatPhong = @Model.MaDatPhong;
+        let isPaid = @(isDaThanhToan ? "true" : "false");
+        let checkTimer = null;
+
+        // Hàm sao chép nhanh vào Clipboard
+        function copyToClipboard(text, btnElement) {
+            navigator.clipboard.writeText(text).then(() => {
+                const originalHtml = btnElement.innerHTML;
+                btnElement.innerHTML = '<i class="fa-solid fa-check"></i> Đã sao chép';
+                btnElement.classList.add('btn-success');
+                setTimeout(() => {
+                    btnElement.innerHTML = originalHtml;
+                    btnElement.classList.remove('btn-success');
+                }, 2000);
+            }).catch(err => {
+                console.error("Không thể sao chép:", err);
+            });
+        }
+
+        // Xử lý khi thanh toán thành công
+        function handlePaymentSuccess(data) {
+            isPaid = true;
+            if (checkTimer) clearInterval(checkTimer);
+
+            // Cập nhật giao diện
+            const section = document.getElementById('paymentSection');
+            if (section) section.classList.add('payment-done');
+
+            const banner = document.getElementById('paymentStatusBanner');
+            if (banner) {
+                banner.className = 'payment-status-banner status-paid';
+                banner.innerHTML = `
+                    <div class="d-flex align-items-center justify-content-center gap-2">
+                        <i class="fa-solid fa-circle-check fs-4 text-success"></i>
+                        <div>
+                            <strong class="d-block text-success">THANH TOÁN THÀNH CÔNG QUA SEPAY!</strong>
+                            <small class="text-muted">Đã nhận ${Number(data.amount || 0).toLocaleString()} đ${data.transactionId ? ' (Mã GD: ' + data.transactionId + ')' : ''}. Đơn phòng của bạn đã được xác nhận!</small>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Hiện con dấu trên QR
+            const qrStamp = document.getElementById('qrStampPaid');
+            if (qrStamp) qrStamp.style.display = 'flex';
+
+            // Cập nhật badge trên phiếu đặt phòng
+            const statusContainer = document.getElementById('ticketStatusContainer');
+            if (statusContainer) {
+                statusContainer.innerHTML = `
+                    <span class="badge-status-dacoc">
+                        <i class="fa-solid fa-check-double me-1"></i> Đã thanh toán (${Number(data.amount || 0).toLocaleString()} đ)
+                    </span>
+                `;
+            }
+
+            // Hiệu ứng ăn mừng bằng âm thanh rung hoặc thông báo
+            if ('vibrate' in navigator) {
+                navigator.vibrate([100, 50, 100]);
+            }
+        }
+
+        // Tự động kiểm tra SePay mỗi 3 giây
+        async function checkPaymentStatus() {
+            if (isPaid) {
+                if (checkTimer) clearInterval(checkTimer);
+                return;
+            }
+
+            try {
+                const response = await fetch(`/DatPhongKhachHang/KiemTraThanhToan?maDatPhong=${maDatPhong}`);
+                if (!response.ok) return;
+
+                const result = await response.json();
+                if (result && result.isPaid) {
+                    handlePaymentSuccess(result);
+                }
+            } catch (err) {
+                console.warn("Lỗi kiểm tra thanh toán:", err);
+            }
+        }
+
+        // Khởi động vòng lặp kiểm tra mỗi 3s nếu chưa thanh toán
+        if (!isPaid) {
+            checkTimer = setInterval(checkPaymentStatus, 3000);
+        }
+
+        // Hàm giả lập thanh toán (phục vụ kiểm thử/chấm bài)
+        async function simulatePayment() {
+            const btn = document.getElementById('btnSimulatePayment');
+            if (btn) btn.disabled = true;
+
+            try {
+                const res = await fetch(`/DatPhongKhachHang/GiaLapThanhToan?maDatPhong=${maDatPhong}`, {
+                    method: 'POST'
+                });
+                const data = await res.json();
+                if (data && data.success) {
+                    // Kích hoạt ngay hàm kiểm tra
+                    await checkPaymentStatus();
+                }
+            } catch (e) {
+                console.error("Lỗi giả lập:", e);
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        }
+    </script>
+}
