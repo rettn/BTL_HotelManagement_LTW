@@ -1,0 +1,35 @@
+﻿@model HotelManagement.ViewModels.ChangeEmailViewModel
+@{
+    ViewData["Title"] = "Quản lý tài khoản"; Layout = "_AdminLayout";
+}
+<div class="row g-4">
+    <div class="col-lg-3"><partial name="_AccountTabs" /></div>
+    <div class="col-lg-9">
+        <div class="card">
+            <div class="card-header"><strong>Đổi email đăng nhập</strong></div>
+            <div class="card-body">
+                <form asp-action="ChangeEmail" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <div class="mb-3">
+                        <label class="form-label">Email hiện tại</label>
+                        <input class="form-control" value="@Model.EmailHienTai" readonly />
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="EmailMoi" class="form-label">Email mới</label>
+                        <input asp-for="EmailMoi" class="form-control" />
+                        <span asp-validation-for="EmailMoi" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="MatKhau" class="form-label">Mật khẩu xác nhận</label>
+                        <input asp-for="MatKhau" class="form-control" autocomplete="current-password" />
+                        <span asp-validation-for="MatKhau" class="text-danger"></span>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Đổi email</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -33,6 +33,12 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options =>
 
 builder.Services.AddControllersWithViews();
 
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/Account/Login";
+    options.AccessDeniedPath = "/Account/AccessDenied";
+});
+
 //Quan ly dat phong
 builder.Services.AddScoped<DatPhongRepository>();
 builder.Services.AddScoped<DatPhongService>();

@@ -833,18 +833,3 @@ a {
         padding: 13px 14px;
     }
 }
-
-.admin-sidebar .sidebar-link.active {
-    background: var(--admin-accent);
-    color: #fff;
-    opacity: 1;
-}
-
-    .admin-sidebar .sidebar-link.active > i,
-    .admin-sidebar .sidebar-link.active > span {
-        color: #fff;
-    }
-
-.admin-sidebar .sidebar-link:not(.active) {
-    opacity: 1;
-}

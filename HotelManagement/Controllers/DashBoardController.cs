@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace HotelManagement.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "Admin,NhanVien")]
     public class DashboardController : Controller
     {
         public IActionResult Index()

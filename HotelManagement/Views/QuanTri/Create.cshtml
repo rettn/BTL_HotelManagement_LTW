@@ -1,0 +1,45 @@
+﻿@model HotelManagement.ViewModels.QuanTriCreateViewModel
+@{
+    ViewData["Title"] = "Tạo tài khoản"; Layout = "_AdminLayout";
+}
+
+<div class="card" style="max-width:640px">
+    <div class="card-body">
+        <form asp-action="Create" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="mb-3">
+                <label asp-for="Email" class="form-label">Email đăng nhập</label>
+                <input asp-for="Email" class="form-control" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="PhoneNumber" class="form-label">Số điện thoại</label>
+                <input asp-for="PhoneNumber" class="form-control" />
+                <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="MatKhau" class="form-label">Mật khẩu</label>
+                <input asp-for="MatKhau" class="form-control" autocomplete="new-password" />
+                <span asp-validation-for="MatKhau" class="text-danger"></span>
+                <div class="form-text">Tối thiểu 6 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt.</div>
+            </div>
+            <div class="mb-3">
+                <label asp-for="XacNhanMatKhau" class="form-label">Xác nhận mật khẩu</label>
+                <input asp-for="XacNhanMatKhau" class="form-control" autocomplete="new-password" />
+                <span asp-validation-for="XacNhanMatKhau" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="VaiTro" class="form-label">Vai trò</label>
+                <select asp-for="VaiTro" class="form-select">
+                    <option value="NhanVien">Nhân viên</option>
+                    <option value="Admin">Quản trị viên (Admin)</option>
+                </select>
+            </div>
+            <button class="btn btn-primary">Lưu</button>
+            <a asp-action="Index" class="btn btn-secondary ms-2">Quay lại</a>
+        </form>
+    </div>
+</div>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
