@@ -13,7 +13,7 @@ namespace HotelManagement.Repositories
             _context = context;
         }
 
-        // Phuc vu tinh nang tim va loc
+        // Tinh nang tim kiem va loc 
         public async Task<IEnumerable<Phong>> SearchAndFilterAsync(string keyword, int? maLoaiPhong, string trangThai)
         {
             var query = _context.Phongs.Include(p => p.LoaiPhong).AsQueryable();
@@ -30,13 +30,38 @@ namespace HotelManagement.Repositories
 
             if (!string.IsNullOrWhiteSpace(trangThai))
             {
-                query = query.Where(p => p.TrangThai != null && p.TrangThai.Trim().ToLower() == trangThai.Trim().ToLower());
+                var tt = trangThai.Trim().ToLower();
+
+                if (tt.Contains("trong") || tt.Contains("trống"))
+                {
+                    query = query.Where(p => p.TrangThai != null &&
+                        (p.TrangThai.ToLower().Contains("trong") || p.TrangThai.ToLower().Contains("trống")));
+                }
+                else if (tt.Contains("dadat") || tt.Contains("đã đặt"))
+                {
+                    query = query.Where(p => p.TrangThai != null &&
+                        (p.TrangThai.ToLower().Contains("dadat") || p.TrangThai.ToLower().Contains("đã đặt") || p.TrangThai.ToLower().Contains("đặt")));
+                }
+                else if (tt.Contains("dangsudung") || tt.Contains("đang sử dụng"))
+                {
+                    query = query.Where(p => p.TrangThai != null &&
+                        (p.TrangThai.ToLower().Contains("dangsudung") || p.TrangThai.ToLower().Contains("đang sử dụng") || p.TrangThai.ToLower().Contains("sử dụng")));
+                }
+                else if (tt.Contains("dangdon") || tt.Contains("đang dọn dẹp"))
+                {
+                    query = query.Where(p => p.TrangThai != null &&
+                        (p.TrangThai.ToLower().Contains("dangdon") || p.TrangThai.ToLower().Contains("đang dọn dẹp") || p.TrangThai.ToLower().Contains("dọn dẹp")));
+                }
+                else
+                {
+                    query = query.Where(p => p.TrangThai != null && p.TrangThai.Trim().ToLower() == tt);
+                }
             }
 
             return await query.ToListAsync();
         }
 
-        //Phuc vu chuc nang xoa
+
         public async Task<bool> KiemTraPhongDangDuocDatAsync(int maPhong)
         {
             return await _context.ChiTietDatPhongs
@@ -94,7 +119,7 @@ namespace HotelManagement.Repositories
                 .ToListAsync();
         }
 
-        //Cap nhat thong tin phogn
+        // Cap nhat thong tin phong
         public async Task<bool> UpdateAsync(Phong phong)
         {
             var existingPhong = await _context.Phongs.FindAsync(phong.MaPhong);

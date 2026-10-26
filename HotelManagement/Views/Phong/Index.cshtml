@@ -1,5 +1,9 @@
 ﻿@model List<HotelManagement.Models.Phong>
 
+<!-- Giao dien thong bao dep -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 @{
     ViewData["Title"] = "Sơ đồ phòng";
 
@@ -38,6 +42,7 @@
 }
 
 <div class="room-map-page">
+    @Html.AntiForgeryToken()
     <div class="room-toolbar">
         <div>
             <h2>Quản lý phòng</h2>
@@ -179,6 +184,11 @@
         transition: background-color 0.2s ease-in-out;
     }
 
+    .swal2-container {
+        z-index: 99999 !important;
+        font-family: inherit !important;
+    }
+
         .exact-search-btn:hover {
             background-color: #157347 !important;
             color: #fff !important;
@@ -206,7 +216,96 @@
     .room-detail-modal .rp-body {
         flex: 1;
     }
+
 </style>
+
+<script>
+    // Dùng chung cho nút "Nhận phòng" và "Hủy đặt phòng" trong popup phòng
+        async function thucHienThaoTacPhong(url, maDatPhong, maPhong, thongBaoXacNhan) {
+        // 1. Popup hỏi xác nhận giao diện đẹp
+        const result = await Swal.fire({
+            title: 'Xác nhận thao tác',
+            text: thongBaoXacNhan,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#198754', // Màu xanh lá khớp giao diện
+            cancelButtonColor: '#dc3545',  // Màu đỏ cho nút Hủy
+            confirmButtonText: '<i class="bi bi-check-lg"></i> Đồng ý',
+            cancelButtonText: '<i class="bi bi-x-lg"></i> Hủy bỏ',
+            customClass: {
+                popup: 'rounded-4 shadow'
+            }
+        });
+
+        if (!result.isConfirmed) return;
+
+        const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+        if (!token) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Lỗi bảo mật',
+                text: 'Thiếu mã bảo mật (anti-forgery token). Hãy tải lại trang.'
+            });
+            return;
+        }
+
+        const body = new URLSearchParams();
+        body.append('id', maDatPhong);
+        if (maPhong !== null && maPhong !== undefined) {
+            body.append('maPhong', maPhong);
+        }
+        body.append('__RequestVerificationToken', token);
+
+        try {
+            // 2. Hiện hiệu ứng Loading khi đang xử lý
+            Swal.fire({
+                title: 'Đang xử lý...',
+                text: 'Vui lòng chờ trong giây lát',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+                body: body
+            });
+
+            let data = null;
+            try { data = await response.json(); } catch { }
+
+            if (!response.ok || !data || !data.success) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Thao tác thất bại',
+                    text: data?.message ?? 'Đã có lỗi xảy ra. Vui lòng thử lại.'
+                });
+                return;
+            }
+
+            // 3. Thông báo thành công & Tải lại trang
+            await Swal.fire({
+                icon: 'success',
+                title: 'Thành công!',
+                text: data.message,
+                timer: 1500,
+                showConfirmButton: false
+            });
+
+            location.reload();
+        } catch (err) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Lỗi kết nối',
+                text: 'Không thể kết nối đến máy chủ.'
+            });
+        }
+    }
+
+    //
+</script>
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {

@@ -181,6 +181,104 @@ namespace HotelManagement.Services
             return (true, "Hủy phiếu đặt phòng thành công.");
         }
 
+        public async Task<(bool Success, string Message)> DeleteAsync(int id)
+        {
+            await using var transaction =
+                await _context.Database.BeginTransactionAsync();
+            try
+            {
+                var datPhong = await _context.DatPhongs
+                    .Include(d => d.ChiTietDatPhongs)
+                    .FirstOrDefaultAsync(d => d.MaDatPhong == id);
+
+                if (datPhong == null)
+                    return (false, "Không tìm thấy phiếu đặt phòng.");
+
+                if (datPhong.TrangThai != "DaHuy")
+                    return (false, "Chỉ có thể xóa phiếu đã hủy.");
+
+                if (await _repository.CoLuuTruAsync(id))
+                    return (false, "Phiếu đã phát sinh lưu trú, không thể xóa.");
+
+                if (await _repository.CoHoaDonAsync(id))
+                    return (false, "Phiếu đã phát sinh hóa đơn, không thể xóa.");
+
+                _context.ChiTietDatPhongs.RemoveRange(datPhong.ChiTietDatPhongs);
+                _context.DatPhongs.Remove(datPhong);
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+                return (true, "Xóa phiếu đặt phòng thành công.");
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                return (false, "Không thể xóa phiếu đặt phòng.");
+            }
+        }
+
+        public async Task<(bool Success, string Message)> CheckInAsync(
+        int maDatPhong,
+        int maPhong)
+        {
+            await using var transaction =
+                await _context.Database.BeginTransactionAsync();
+
+            try
+            {
+                var chiTiet = await _context.ChiTietDatPhongs
+                    .Include(c => c.DatPhong)
+                    .Include(c => c.Phong)
+                    .FirstOrDefaultAsync(c =>
+                        c.MaDatPhong == maDatPhong &&
+                        c.MaPhong == maPhong);
+
+                if (chiTiet == null || chiTiet.DatPhong == null)
+                    return (false, "Không tìm thấy chi tiết đặt phòng.");
+
+                if (chiTiet.DatPhong.TrangThai == "DaHuy")
+                    return (false, "Phiếu đặt phòng đã bị hủy.");
+
+                if (chiTiet.Phong == null)
+                    return (false, "Không tìm thấy phòng.");
+
+                if (chiTiet.Phong.TrangThai != "DaDat" &&
+                    chiTiet.Phong.TrangThai != "Đã đặt")
+                {
+                    return (false, "Phòng không ở trạng thái đã đặt.");
+                }
+
+                var daNhan = await _context.LuuTrus.AnyAsync(l =>
+                    l.MaChiTietDatPhong == chiTiet.MaChiTietDatPhong &&
+                    l.ThoiGianTraPhong == null);
+
+                if (daNhan)
+                    return (false, "Phòng này đã được nhận.");
+
+                _context.LuuTrus.Add(new LuuTru
+                {
+                    MaChiTietDatPhong = chiTiet.MaChiTietDatPhong,
+                    ThoiGianNhanPhong = DateTime.Now
+                });
+
+                chiTiet.Phong.TrangThai = "DangSuDung";
+                chiTiet.DatPhong.TrangThai = "DangLuuTru";
+
+                // Chi tiet da nhan phong duoc theo doi qua LuuTru.
+                // Chi tiet cac phong chua nhan van giu nguyen.
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return (true, "Nhận phòng thành công.");
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                return (false, "Không thể nhận phòng.");
+            }
+        }
+
+
         private async Task<string?> ValidateAsync(
             DatPhongViewModel model,
             int? boQuaMaDatPhong = null)

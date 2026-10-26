@@ -193,5 +193,54 @@ namespace HotelManagement.Controllers
                 })
                 .ToListAsync();
         }
+
+        // GET: /DatPhong/Delete/5
+        [HttpGet]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var datPhong = await _service.GetByIdAsync(id);
+            if (datPhong == null)
+                return NotFound();
+
+            if (datPhong.TrangThai != "DaHuy")
+            {
+                TempData["Error"] = "Chỉ có thể xóa phiếu đã hủy.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            return View(datPhong);
+        }
+
+        // POST: /DatPhong/Delete
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int maDatPhong)
+        {
+            var result = await _service.DeleteAsync(maDatPhong);
+            TempData[result.Success ? "Success" : "Error"] = result.Message;
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CheckIn(int id, int maPhong)
+        {
+            var result = await _service.CheckInAsync(id, maPhong);
+
+            if (!result.Success)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = result.Message
+                });
+            }
+
+            return Json(new
+            {
+                success = true,
+                message = result.Message
+            });
+        }
     }
 }
