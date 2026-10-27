@@ -15,8 +15,10 @@ namespace HotelManagement.Models
         public DateTime NgayDat { get; set; } = DateTime.Now;
 
         public DateTime NgayNhanDuKien { get; set; }
+        public DateTime NgayNhanThucTe { get; set; }
 
         public DateTime NgayTraDuKien { get; set; }
+        public DateTime NgayTraThucTe { get; set; }
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal TienCoc { get; set; } = 0;

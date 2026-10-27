@@ -1,0 +1,820 @@
+﻿@model HotelManagement.ViewModels.HoaDonCheckoutViewModel
+
+@{
+    ViewData["Title"] = "Xác nhận Check-out & Thanh toán";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="checkout-page">
+    <div class="checkout-container">
+
+        <!-- HEADER TRANG CHECK-OUT -->
+        <div class="checkout-header">
+            <a asp-action="Index" class="btn-back-link">
+                <i class="fa-solid fa-arrow-left me-1"></i> Quay lại danh sách
+            </a>
+            <div class="header-content mt-2">
+                <span class="checkout-badge">
+                    <i class="fa-solid fa-file-invoice-dollar me-1"></i> CHECK-OUT & THANH TOÁN
+                </span>
+                <h1>XÁC NHẬN HÓA ĐƠN - PHÒNG @Model.SoPhong</h1>
+                <p>Vui lòng kiểm tra lại danh sách phòng, dịch vụ đã sử dụng và chọn hình thức thanh toán để hoàn tất thủ tục trả phòng.</p>
+            </div>
+        </div>
+
+        <form asp-action="XacNhanCheckout" method="post" id="checkoutForm">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="MaDatPhong" />
+            <input type="hidden" asp-for="SoPhong" />
+            <input type="hidden" asp-for="TongThanhToan" />
+
+            <div class="row g-4">
+
+                <!-- CỘT TRÁI: THÔNG TIN LƯU TRÚ & BẢNG KÊ CHI TIẾT -->
+                <div class="col-lg-7">
+
+                    <!-- KHỐI 1: THÔNG TIN KHÁCH HÀNG & LƯU TRÚ -->
+                    <div class="checkout-card mb-4">
+                        <div class="card-title-box">
+                            <i class="fa-solid fa-user-gear card-icon"></i>
+                            <div>
+                                <h3>Thông tin khách hàng & Lưu trú</h3>
+                                <p>Chi tiết thông tin đăng ký lưu trú thực tế tại khách sạn</p>
+                            </div>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-sm-6">
+                                <div class="info-group-item">
+                                    <span class="label">Mã phiếu đặt:</span>
+                                    <strong class="text-primary font-monospace fs-6">#DP-@Model.MaDatPhong</strong>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="info-group-item">
+                                    <span class="label">Khách hàng:</span>
+                                    <strong>@Model.TenKhachHang</strong>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="info-group-item">
+                                    <span class="label">Số điện thoại:</span>
+                                    <strong>@(string.IsNullOrEmpty(Model.SoDienThoai) ? "Chưa cập nhật" : Model.SoDienThoai)</strong>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="info-group-item">
+                                    <span class="label">Loại phòng:</span>
+                                    <strong>@Model.TenLoaiPhong</strong>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="info-group-item">
+                                    <span class="label">Ngày nhận phòng:</span>
+                                    <span><i class="fa-regular fa-calendar-check text-success me-1"></i>@Model.NgayNhan.ToString("dd/MM/yyyy HH:mm")</span>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="info-group-item">
+                                    <span class="label">Ngày trả (thực tế):</span>
+                                    <span><i class="fa-regular fa-calendar-xmark text-danger me-1"></i>@Model.NgayTraThucTe.ToString("dd/MM/yyyy HH:mm")</span>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="stay-duration-tag">
+                                    <i class="fa-solid fa-moon me-1"></i> Tổng thời gian lưu trú: <strong>@Model.SoDem đêm</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- KHỐI 2: BẢNG KÊ CHI TIẾT DỊCH VỤ & TIỀN PHÒNG -->
+                    <div class="checkout-card mb-4">
+                        <div class="card-title-box">
+                            <i class="fa-solid fa-receipt card-icon"></i>
+                            <div>
+                                <h3>Chi tiết tiền phòng & Dịch vụ</h3>
+                                <p>Danh sách các khoản chi phí phát sinh trong kỳ lưu trú</p>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table custom-invoice-table align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Khoản mục</th>
+                                        <th class="text-center">Số lượng</th>
+                                        <th class="text-end">Đơn giá</th>
+                                        <th class="text-end">Thành tiền</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <div class="fw-bold text-dark">Tiền phòng (@Model.TenLoaiPhong)</div>
+                                            <small class="text-muted">Phòng @Model.SoPhong</small>
+                                        </td>
+                                        <td class="text-center">@Model.SoDem đêm</td>
+                                        <td class="text-end">@Model.GiaTheoDem.ToString("N0") đ</td>
+                                        <td class="text-end fw-bold text-dark">@Model.TienPhong.ToString("N0") đ</td>
+                                    </tr>
+
+                                    @if (Model.DanhSachDichVu != null && Model.DanhSachDichVu.Any())
+                                    {
+                                        @foreach (var item in Model.DanhSachDichVu)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <div class="fw-semibold text-dark"><i class="fa-solid fa-concierge-bell text-warning me-1"></i>@item.TenDichVu</div>
+                                                </td>
+                                                <td class="text-center">@item.SoLuong</td>
+                                                <td class="text-end">@item.DonGia.ToString("N0") đ</td>
+                                                <td class="text-end fw-semibold">@item.ThanhTien.ToString("N0") đ</td>
+                                            </tr>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <tr>
+                                            <td colspan="4" class="text-center text-muted py-3 fst-italic">
+                                                <i class="fa-solid fa-circle-info me-1"></i> Không có dịch vụ phát sinh thêm trong quá trình lưu trú.
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- KHỐI 3: PHƯƠNG THỨC THANH TOÁN -->
+                    <div class="checkout-card mb-4">
+                        <div class="card-title-box">
+                            <i class="fa-solid fa-credit-card card-icon"></i>
+                            <div>
+                                <h3>Hình thức thanh toán</h3>
+                                <p>Chọn phương thức thanh toán mong muốn</p>
+                            </div>
+                        </div>
+
+                        <div class="payment-options-grid">
+                            <!-- Option Cash -->
+                            <label class="payment-option-card active" for="paymentCash">
+                                <input class="payment-radio" type="radio" asp-for="PhuongThucThanhToan" id="paymentCash" value="TienMat" checked onchange="togglePaymentMethod()" />
+                                <div class="payment-card-inner">
+                                    <div class="payment-card-head">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <i class="fa-solid fa-money-bill-wave fs-4 text-success"></i>
+                                            <strong>Thanh toán tiền mặt</strong>
+                                        </div>
+                                        <span class="badge bg-success-subtle text-success">Trực tiếp</span>
+                                    </div>
+                                    <p class="payment-desc mb-0">Thanh toán trực tiếp bằng tiền mặt tại quầy lễ tân khi nhận hóa đơn.</p>
+                                </div>
+                            </label>
+
+                            <!-- Option Transfer VietQR -->
+                            <label class="payment-option-card mt-3" for="paymentTransfer">
+                                <input class="payment-radio" type="radio" asp-for="PhuongThucThanhToan" id="paymentTransfer" value="ChuyenKhoan" onchange="togglePaymentMethod()" />
+                                <div class="payment-card-inner">
+                                    <div class="payment-card-head">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <i class="fa-solid fa-qrcode fs-4 text-primary"></i>
+                                            <strong>Chuyển khoản VietQR</strong>
+                                        </div>
+                                        <span class="badge bg-primary-subtle text-primary">Nhanh chóng & Nhanh gọn</span>
+                                    </div>
+                                    <p class="payment-desc mb-0">Quét mã QR qua ứng dụng Ngân hàng / Ví điện tử để hoàn tất thanh toán.</p>
+                                </div>
+                            </label>
+                        </div>
+
+                        <!-- Khối VietQR Chi Tiết (Ẩn mặc định, hiện khi chọn Chuyển khoản) -->
+                        <div id="qrCodeBlock" class="payment-qr-box mt-4" style="display: none;">
+                            <div class="qr-box-header">
+                                <i class="fa-solid fa-qrcode text-primary fs-4 me-2"></i>
+                                <h5 class="mb-0 fw-bold">QUÉT MÃ VIETQR ĐỂ THANH TOÁN</h5>
+                            </div>
+
+                            <div class="row align-items-center g-4 mt-1">
+                                <div class="col-md-5 text-center">
+                                    <div class="qr-image-wrapper">
+                                        <img src="@Model.VietQrImageUrl" alt="Mã VietQR Thanh Toán" class="vietqr-img" />
+                                    </div>
+                                    <small class="text-muted d-block mt-2">
+                                        <i class="fa-solid fa-camera me-1"></i> Sử dụng App Ngân hàng để quét
+                                    </small>
+                                </div>
+
+                                <div class="col-md-7">
+                                    <div class="bank-details-list">
+                                        <div class="bank-detail-row">
+                                            <span class="detail-label">Ngân hàng:</span>
+                                            <span class="detail-val fw-bold text-dark">
+                                                <i class="fa-solid fa-building-columns text-primary me-1"></i> @Model.NganHangMa
+                                            </span>
+                                        </div>
+
+                                        <div class="bank-detail-row">
+                                            <span class="detail-label">Số tài khoản:</span>
+                                            <div class="detail-val-copy">
+                                                <strong class="text-primary font-monospace fs-6">@Model.SoTaiKhoan</strong>
+                                                <button type="button" class="btn-copy" onclick="copyToClipboard('@Model.SoTaiKhoan', this)" title="Sao chép">
+                                                    <i class="fa-regular fa-copy"></i> Copy
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div class="bank-detail-row">
+                                            <span class="detail-label">Chủ tài khoản:</span>
+                                            <span class="detail-val fw-bold text-uppercase">@Model.TenChuTaiKhoan</span>
+                                        </div>
+
+                                        <div class="bank-detail-row">
+                                            <span class="detail-label">Số tiền:</span>
+                                            <div class="detail-val-copy">
+                                                <strong class="text-danger fs-6">@Model.TongThanhToan.ToString("N0") đ</strong>
+                                                <button type="button" class="btn-copy" onclick="copyToClipboard('@((long)Model.TongThanhToan)', this)" title="Sao chép">
+                                                    <i class="fa-regular fa-copy"></i> Copy
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div class="bank-detail-row highlight-memo">
+                                            <span class="detail-label">Nội dung CK:</span>
+                                            <div class="detail-val-copy">
+                                                <strong class="text-danger font-monospace fs-6">@Model.NoiDungChuyenKhoan</strong>
+                                                <button type="button" class="btn-copy btn-copy-memo" onclick="copyToClipboard('@Model.NoiDungChuyenKhoan', this)" title="Sao chép">
+                                                    <i class="fa-regular fa-copy"></i> Copy
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- CỘT PHẢI: BẢNG TỔNG KẾT TÍNH TIỀN & XÁC NHẬN -->
+                <div class="col-lg-5">
+                    <div class="checkout-summary-card sticky-top" style="top: 24px;">
+
+                        <div class="summary-header">
+                            <span class="sub-title">TỔNG HỢP CHI PHÍ</span>
+                            <h4>HÓA ĐƠN THANH TOÁN</h4>
+                        </div>
+
+                        <div class="summary-body">
+                            <div class="summary-item">
+                                <span class="label">Tiền phòng (@Model.SoDem đêm):</span>
+                                <span class="val fw-semibold">@Model.TienPhong.ToString("N0") đ</span>
+                            </div>
+
+                            <div class="summary-item">
+                                <span class="label">Tiền dịch vụ phát sinh:</span>
+                                <span class="val fw-semibold">@Model.TongTienDichVu.ToString("N0") đ</span>
+                            </div>
+
+                            <div class="summary-item">
+                                <span class="label">Tổng tiền trước thuế:</span>
+                                <span class="val">@((Model.TienPhong + Model.TongTienDichVu).ToString("N0")) đ</span>
+                            </div>
+
+                            <div class="summary-item">
+                                <span class="label">Thuế VAT (@Model.TiLeThuePercent%):</span>
+                                <span class="val text-muted">+@Model.TienThue.ToString("N0") đ</span>
+                            </div>
+
+                            <hr class="summary-divider" />
+
+                            <div class="summary-total">
+                                <div class="total-label">
+                                    <span>TỔNG THÀNH TOÁN</span>
+                                    <small>(Đã bao gồm VAT & Dịch vụ)</small>
+                                </div>
+                                <div class="total-amount">@Model.TongThanhToan.ToString("N0") đ</div>
+                            </div>
+
+                            <div class="checkout-policy-box">
+                                <h6><i class="fa-solid fa-shield-halved text-success me-1"></i> Lưu ý khi Check-out:</h6>
+                                <ul>
+                                    <li>Vui lòng kiểm tra kỹ chìa khóa phòng và tư trang cá nhân trước khi rời đi.</li>
+                                    <li>Hóa đơn đỏ VAT sẽ được gửi qua email sau khi hoàn tất thanh toán.</li>
+                                </ul>
+                            </div>
+
+                            <button type="submit" class="btn-confirm-checkout">
+                                <i class="fa-solid fa-check-circle me-2"></i> XÁC NHẬN THANH TOÁN & CHECK-OUT
+                            </button>
+
+                            <a asp-action="Index" class="btn-cancel-checkout">
+                                <i class="fa-solid fa-xmark me-1"></i> Hủy thao tác
+                            </a>
+
+                            <p class="secure-text text-center mt-3">
+                                <i class="fa-solid fa-lock me-1"></i> Giao dịch bảo mật & an toàn tuyệt đối.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </form>
+
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .checkout-page {
+            background: #f8f6f2;
+            min-height: 100vh;
+            padding: 40px 16px 80px;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: #2b231d;
+        }
+
+        .checkout-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* HEADER */
+        .checkout-header {
+            margin-bottom: 28px;
+        }
+
+        .btn-back-link {
+            display: inline-flex;
+            align-items: center;
+            color: #8c7764;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 14px;
+            transition: color 0.2s;
+        }
+
+            .btn-back-link:hover {
+                color: #4a3b2c;
+            }
+
+        .checkout-badge {
+            display: inline-block;
+            background: #e9decb;
+            color: #6e563b;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 20px;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .header-content h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #2b231d;
+            margin-bottom: 6px;
+        }
+
+        .header-content p {
+            color: #7b6f65;
+            font-size: 14.5px;
+            margin: 0;
+        }
+
+        /* CARDS */
+        .checkout-card {
+            background: #ffffff;
+            border: 1px solid #e7ded4;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(70, 55, 42, 0.04);
+        }
+
+        .card-title-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid #f0e9e1;
+        }
+
+        .card-icon {
+            font-size: 20px;
+            color: #b99a7e;
+            background: #fbf8f3;
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            border: 1px solid #ebdcd0;
+        }
+
+        .card-title-box h3 {
+            font-size: 17px;
+            font-weight: 700;
+            margin: 0;
+            color: #2b231d;
+        }
+
+        .card-title-box p {
+            margin: 2px 0 0;
+            font-size: 12.5px;
+            color: #8c7d71;
+        }
+
+        /* INFO ITEMS */
+        .info-group-item {
+            font-size: 14px;
+        }
+
+            .info-group-item .label {
+                display: block;
+                font-size: 12px;
+                color: #8c7d71;
+                margin-bottom: 2px;
+            }
+
+        .stay-duration-tag {
+            background: #fbf8f3;
+            border: 1px dashed #d6c6b2;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 13.5px;
+            color: #725e4c;
+        }
+
+        /* TABLE STYLING */
+        .custom-invoice-table {
+            margin-bottom: 0;
+            font-size: 14px;
+        }
+
+            .custom-invoice-table thead {
+                background: #fdfbf7;
+            }
+
+                .custom-invoice-table thead th {
+                    color: #7b6f65;
+                    font-weight: 600;
+                    border-bottom: 1px solid #e7ded4;
+                    padding: 12px;
+                }
+
+            .custom-invoice-table tbody td {
+                padding: 12px;
+                border-bottom: 1px solid #f0e9e1;
+            }
+
+        /* PAYMENT OPTIONS */
+        .payment-options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .payment-option-card {
+            border: 1.5px solid #e7ded4;
+            border-radius: 10px;
+            padding: 16px;
+            background: #ffffff;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            display: block;
+        }
+
+            .payment-option-card:hover {
+                border-color: #b99a7e;
+                background: #fdfaf6;
+            }
+
+            .payment-option-card.active {
+                border-color: #b99a7e;
+                background: #fcf8f3;
+                box-shadow: 0 0 0 2px rgba(185, 154, 126, 0.25);
+            }
+
+        .payment-radio {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .payment-card-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .payment-desc {
+            font-size: 13px;
+            color: #7b6f65;
+            padding-left: 32px;
+        }
+
+        /* VIETQR BOX */
+        .payment-qr-box {
+            background: #ffffff;
+            border: 2px solid #b99a7e;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 6px 20px rgba(185, 154, 126, 0.12);
+        }
+
+        .qr-box-header {
+            display: flex;
+            align-items: center;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #f0e9e1;
+        }
+
+        .qr-image-wrapper {
+            padding: 8px;
+            background: #ffffff;
+            border: 1px solid #e7ded4;
+            border-radius: 10px;
+            display: inline-block;
+        }
+
+        .vietqr-img {
+            max-width: 210px;
+            width: 100%;
+            height: auto;
+            border-radius: 6px;
+            display: block;
+        }
+
+        .bank-details-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .bank-detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 7px 10px;
+            background: #fdfbf7;
+            border-radius: 6px;
+            font-size: 13px;
+            border: 1px solid #f0e9e1;
+        }
+
+            .bank-detail-row.highlight-memo {
+                background: #fff5f5;
+                border-color: #ffcdd2;
+            }
+
+        .detail-label {
+            color: #7b6f65;
+            font-weight: 500;
+        }
+
+        .detail-val-copy {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-copy {
+            background: #ffffff;
+            border: 1px solid #dcd3c8;
+            color: #6a5d52;
+            font-size: 11.5px;
+            padding: 2px 7px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+            .btn-copy:hover {
+                background: #b99a7e;
+                color: #ffffff;
+                border-color: #b99a7e;
+            }
+
+        .btn-copy-memo {
+            background: #dc3545;
+            color: #ffffff;
+            border-color: #dc3545;
+            font-weight: 600;
+        }
+
+            .btn-copy-memo:hover {
+                background: #b02a37;
+                border-color: #b02a37;
+            }
+
+        /* SUMMARY CARD */
+        .checkout-summary-card {
+            background: #ffffff;
+            border: 1px solid #e7ded4;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(70, 55, 42, 0.08);
+        }
+
+        .summary-header {
+            background: #2b231d;
+            color: #ffffff;
+            padding: 20px 24px;
+        }
+
+            .summary-header .sub-title {
+                font-size: 11px;
+                letter-spacing: 1.5px;
+                color: #c9ad96;
+                font-weight: 700;
+                display: block;
+                margin-bottom: 4px;
+            }
+
+            .summary-header h4 {
+                margin: 0;
+                font-size: 19px;
+                font-weight: 700;
+                color: #ffffff;
+            }
+
+        .summary-body {
+            padding: 24px;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+            .summary-item .label {
+                color: #7b6f65;
+            }
+
+            .summary-item .val {
+                color: #2b231d;
+                text-align: right;
+            }
+
+        .summary-divider {
+            margin: 18px 0;
+            border-color: #ebdcd0;
+        }
+
+        .summary-total {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 20px;
+        }
+
+        .total-label span {
+            font-weight: 700;
+            font-size: 14px;
+            color: #2b231d;
+            display: block;
+        }
+
+        .total-label small {
+            font-size: 11px;
+            color: #8c7d71;
+        }
+
+        .total-amount {
+            font-size: 24px;
+            font-weight: 700;
+            color: #b05d1a;
+        }
+
+        .checkout-policy-box {
+            background: #fbf9f6;
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin-bottom: 20px;
+            font-size: 12px;
+        }
+
+            .checkout-policy-box h6 {
+                font-size: 12.5px;
+                font-weight: 600;
+                margin-bottom: 6px;
+                color: #2b231d;
+            }
+
+            .checkout-policy-box ul {
+                margin: 0;
+                padding-left: 16px;
+                color: #665b51;
+            }
+
+            .checkout-policy-box li {
+                margin-bottom: 4px;
+            }
+
+        .btn-confirm-checkout {
+            width: 100%;
+            padding: 15px;
+            background: #198754;
+            color: #ffffff;
+            border: 0;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 6px 18px rgba(25, 135, 84, 0.25);
+        }
+
+            .btn-confirm-checkout:hover {
+                background: #146c43;
+                transform: translateY(-2px);
+                box-shadow: 0 8px 22px rgba(20, 108, 67, 0.35);
+            }
+
+        .btn-cancel-checkout {
+            display: block;
+            width: 100%;
+            text-align: center;
+            padding: 10px;
+            margin-top: 8px;
+            color: #7b6f65;
+            background: #ffffff;
+            border: 1px solid #dcd3c8;
+            border-radius: 8px;
+            font-size: 13.5px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+            .btn-cancel-checkout:hover {
+                background: #f7f4ee;
+                color: #2b231d;
+            }
+
+        .secure-text {
+            font-size: 11.5px;
+            color: #928476;
+            margin: 0;
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        // Tắt/Mở khối VietQR khi đổi phương thức thanh toán
+        function togglePaymentMethod() {
+            var isTransfer = document.getElementById("paymentTransfer").checked;
+            var qrBlock = document.getElementById("qrCodeBlock");
+
+            // Toggle hiển thị khối VietQR
+            if (isTransfer) {
+                qrBlock.style.display = "block";
+            } else {
+                qrBlock.style.display = "none";
+            }
+
+            // Cập nhật viền Active cho các Card
+            document.querySelectorAll('.payment-option-card').forEach(function (card) {
+                card.classList.remove('active');
+            });
+
+            var checkedRadio = document.querySelector('.payment-radio:checked');
+            if (checkedRadio) {
+                var parentCard = checkedRadio.closest('.payment-option-card');
+                if (parentCard) parentCard.classList.add('active');
+            }
+        }
+
+        // Sao chép thông tin vào Clipboard
+        function copyToClipboard(text, btnElement) {
+            navigator.clipboard.writeText(text).then(function () {
+                var originalHtml = btnElement.innerHTML;
+                btnElement.innerHTML = '<i class="fa-solid fa-check"></i> Đã chép';
+                btnElement.classList.add('btn-success');
+                setTimeout(function () {
+                    btnElement.innerHTML = originalHtml;
+                    btnElement.classList.remove('btn-success');
+                }, 2000);
+            }).catch(function (err) {
+                console.error("Không thể sao chép:", err);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            togglePaymentMethod();
+        });
+    </script>
+}

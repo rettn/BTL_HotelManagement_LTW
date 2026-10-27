@@ -202,10 +202,10 @@
         <button type="button"
                 class="rp-main-btn"
                 onclick="thucHienThaoTacPhong(
-                    '@Url.Action("CheckIn", "DatPhong")',
-                    @datPhong.MaDatPhong,
-                    @Model.MaPhong,
-                    'Xác nhận nhận phòng cho khách?')">
+            '@Url.Action("CheckIn", "DatPhong")',
+            @datPhong.MaDatPhong,
+            @Model.MaPhong,
+            'Xác nhận nhận phòng cho khách?')">
             <i class="bi bi-box-arrow-in-right"></i>
             Nhận phòng
         </button>
@@ -213,10 +213,10 @@
         <button type="button"
                 class="rp-danger-btn"
                 onclick="thucHienThaoTacPhong(
-                    '@Url.Action("Cancel", "DatPhong")',
-                    @datPhong.MaDatPhong,
-                    @Model.MaPhong,
-                    'Bạn có chắc chắn muốn hủy phiếu đặt phòng này?')">
+            '@Url.Action("Cancel", "DatPhong")',
+            @datPhong.MaDatPhong,
+            @Model.MaPhong,
+            'Bạn có chắc chắn muốn hủy phiếu đặt phòng này?')">
             <i class="bi bi-calendar-x"></i>
             Hủy đặt phòng
         </button>
@@ -237,16 +237,13 @@
 
         @if (datPhong != null)
         {
-            <button type="button"
-                    class="rp-main-btn"
-                    onclick="thucHienThaoTacPhong(
-                            '@Url.Action("CheckOut", "DatPhong")',
-                            @datPhong.MaDatPhong,
-                            @Model.MaPhong,
-                            'Xác nhận trả phòng? Phòng sẽ chuyển sang trạng thái đang dọn dẹp.')">
+            <a asp-controller="DatPhong"
+               asp-action="Checkout"
+               asp-route-id="@datPhong.MaDatPhong"
+               class="rp-main-btn">
                 <i class="bi bi-box-arrow-right"></i>
                 Trả phòng
-            </button>
+            </a>
         }
     }
     else if (dangDon)
@@ -254,10 +251,10 @@
         <button type="button"
                 class="rp-main-btn"
                 onclick="thucHienThaoTacPhong(
-                    '@Url.Action("DonDepXong", "DatPhong")',
-                    0,
-                    @Model.MaPhong,
-                    'Xác nhận phòng đã dọn dẹp xong? Phòng sẽ chuyển về trạng thái trống.')">
+            '@Url.Action("DonDepXong", "DatPhong")',
+            0,
+            @Model.MaPhong,
+            'Xác nhận phòng đã dọn dẹp xong? Phòng sẽ chuyển về trạng thái trống.')">
             <i class="bi bi-check2-circle"></i>
             Dọn dẹp xong
         </button>
@@ -455,7 +452,7 @@
             background: #157347;
             color: #fff;
         }
-    
+
     .rp-booking-info {
         margin-bottom: 16px;
         padding: 20px;
@@ -516,9 +513,9 @@
         font-weight: 700;
     }
 
-    .rp-booking-dates i {
-        color: #94a3b8;
-    }
+        .rp-booking-dates i {
+            color: #94a3b8;
+        }
 
     .rp-booking-nights {
         margin-top: 7px;
@@ -539,9 +536,9 @@
         font-size: 14px;
     }
 
-    .rp-booking-sub i {
-        margin-right: 5px;
-    }
+        .rp-booking-sub i {
+            margin-right: 5px;
+        }
 
     .rp-no-booking {
         margin-bottom: 16px;
@@ -587,9 +584,9 @@
         cursor: pointer;
     }
 
-    .rp-danger-btn:hover {
-        background: #fecaca;
-    }
+        .rp-danger-btn:hover {
+            background: #fecaca;
+        }
 
     @@media (max-width: 800px) {
         .rp-info-grid {

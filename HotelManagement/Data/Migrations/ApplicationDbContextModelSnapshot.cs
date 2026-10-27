@@ -151,7 +151,13 @@ namespace HotelManagement.Data.Migrations
                     b.Property<DateTime>("NgayNhanDuKien")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<DateTime>("NgayNhanThucTe")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<DateTime>("NgayTraDuKien")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("NgayTraThucTe")
                         .HasColumnType("datetime(6)");
 
                     b.Property<decimal>("TienCoc")
