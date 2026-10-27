@@ -1,0 +1,501 @@
+﻿@model HotelManagement.ViewModels.HoaDonCheckoutViewModel
+
+@{
+    ViewData["Title"] = "Thanh toán & Check-out thành công";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var ngayThanhToan = DateTime.Now;
+    var maHoaDon = ViewBag.MaHoaDon as string ?? $"HD{Model.MaDatPhong}{ngayThanhToan:yyyyMMdd}";
+}
+
+<div class="checkout-success-page">
+    <div class="container-narrow">
+
+        <!-- THẺ CHÍNH: KẾT QUẢ THANH TOÁN & CHECK-OUT -->
+        <div class="success-card">
+
+            <!-- ICON HOÀN TẤT VỚI HIỆU ỨNG POP-IN -->
+            <div class="success-icon-box">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+
+            <span class="success-badge">CHECK-OUT & THANH TOÁN HOÀN TẤT</span>
+            <h2>Thanh toán thành công & Trả phòng hoàn tất!</h2>
+            <p class="success-subtitle">
+                Cảm ơn quý khách <strong>@Model.TenKhachHang</strong> đã lựa chọn lưu trú tại khách sạn của chúng tôi. Hóa đơn dịch vụ đã được quyết toán thành công.
+            </p>
+
+            <!-- HÓA ĐƠN / BIÊN NHẬN ĐIỆN TỬ (PRINTABLE TICKET) -->
+            <div class="invoice-ticket" id="printableInvoice">
+
+                <!-- CON DẤU ĐÃ THANH TOÁN -->
+                <div class="receipt-stamp">
+                    <div class="stamp-inner">
+                        <i class="fa-solid fa-check-double"></i>
+                        <span>ĐÃ THANH TOÁN</span>
+                    </div>
+                </div>
+
+                <div class="ticket-header">
+                    <div>
+                        <span class="ticket-code-label">MÃ HÓA ĐƠN DỊCH VỤ</span>
+                        <h3 class="ticket-code">#@maHoaDon</h3>
+                    </div>
+                    <div class="ticket-status">
+                        <span class="badge-status-paid">
+                            <i class="fa-solid fa-receipt me-1"></i> Giao dịch thành công
+                        </span>
+                    </div>
+                </div>
+
+                <div class="ticket-body">
+                    <!-- THÔNG TIN KHÁCH HÀNG & PHÒNG -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-sm-6">
+                            <div class="ticket-info-item">
+                                <span class="label">Khách hàng:</span>
+                                <strong>@Model.TenKhachHang</strong>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-6">
+                            <div class="ticket-info-item">
+                                <span class="label">Số điện thoại:</span>
+                                <strong>@(string.IsNullOrEmpty(Model.SoDienThoai) ? "Chưa cập nhật" : Model.SoDienThoai)</strong>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-6">
+                            <div class="ticket-info-item">
+                                <span class="label">Phòng nghỉ:</span>
+                                <strong>Phòng @Model.SoPhong (@Model.TenLoaiPhong)</strong>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-6">
+                            <div class="ticket-info-item">
+                                <span class="label">Thời gian lưu trú:</span>
+                                <strong>@Model.SoDem đêm (@Model.NgayNhan.ToString("dd/MM/yyyy") &rarr; @Model.NgayTraThucTe.ToString("dd/MM/yyyy"))</strong>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-6">
+                            <div class="ticket-info-item">
+                                <span class="label">Hình thức thanh toán:</span>
+                                <span class="fw-bold text-primary">
+                                    @if (Model.PhuongThucThanhToan == "ChuyenKhoan")
+                                    {
+                                        <i class="fa-solid fa-qrcode me-1"></i><span>Chuyển khoản VietQR</span>
+                                    }
+                                    else
+                                    {
+                                        <i class="fa-solid fa-money-bill-wave text-success me-1"></i><span>Tiền mặt tại quầy</span>
+                                    }
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-6">
+                            <div class="ticket-info-item">
+                                <span class="label">Thời gian thanh toán:</span>
+                                <span>@ngayThanhToan.ToString("HH:mm - dd/MM/yyyy")</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="ticket-divider" />
+
+                    <!-- BẢNG CHI TIẾT CÁC KHOẢN CHI PHÍ -->
+                    <h6 class="fw-bold text-dark mb-2 fs-6">
+                        <i class="fa-solid fa-list-check me-1 text-warning"></i> Chi tiết các khoản thanh toán:
+                    </h6>
+                    <div class="table-responsive">
+                        <table class="table custom-receipt-table align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Khoản mục</th>
+                                    <th class="text-center">Số lượng</th>
+                                    <th class="text-end">Đơn giá</th>
+                                    <th class="text-end">Thành tiền</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <span class="fw-bold text-dark">Tiền phòng (@Model.TenLoaiPhong)</span>
+                                        <small class="d-block text-muted">Phòng @Model.SoPhong</small>
+                                    </td>
+                                    <td class="text-center">@Model.SoDem đêm</td>
+                                    <td class="text-end">@Model.GiaTheoDem.ToString("N0") đ</td>
+                                    <td class="text-end fw-bold">@Model.TienPhong.ToString("N0") đ</td>
+                                </tr>
+
+                                @if (Model.DanhSachDichVu != null && Model.DanhSachDichVu.Any())
+                                {
+                                    @foreach (var item in Model.DanhSachDichVu)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <span class="fw-semibold text-dark"><i class="fa-solid fa-concierge-bell text-muted me-1"></i>@item.TenDichVu</span>
+                                            </td>
+                                            <td class="text-center">@item.SoLuong</td>
+                                            <td class="text-end">@item.DonGia.ToString("N0") đ</td>
+                                            <td class="text-end fw-semibold">@item.ThanhTien.ToString("N0") đ</td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- KHỐI TỔNG CỘNG HÓA ĐƠN -->
+                    <div class="receipt-summary-box mt-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-muted">Tiền phòng:</span>
+                            <span>@Model.TienPhong.ToString("N0") đ</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-muted">Tiền dịch vụ phát sinh:</span>
+                            <span>@Model.TongTienDichVu.ToString("N0") đ</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Thuế VAT (@Model.TiLeThuePercent%):</span>
+                            <span>+@Model.TienThue.ToString("N0") đ</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                            <strong class="fs-6 text-dark">TỔNG TIỀN ĐÃ THANH TOÁN:</strong>
+                            <strong class="total-grand-amount">@Model.TongThanhToan.ToString("N0") đ</strong>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- THÔNG TIN HỖ TRỢ & HÓA ĐƠN ĐỎ -->
+            <div class="contact-support-box mt-4">
+                <h6><i class="fa-solid fa-envelope-open-text me-2 text-warning"></i> Hóa đơn GTGT & Hỗ trợ sau dịch vụ</h6>
+                <p>Hóa đơn điện tử VAT (nếu có yêu cầu) sẽ được gửi trực tiếp qua Email của quý khách trong vòng 24 giờ. Vui lòng liên hệ lễ tân nếu cần hỗ trợ thêm.</p>
+            </div>
+
+            <!-- CÁC NÚT ĐIỀU HƯỚNG & IN HÓA ĐƠN -->
+            <div class="success-actions mt-4 no-print">
+                <button type="button" class="btn-print" onclick="window.print()">
+                    <i class="fa-solid fa-print me-1"></i> In hóa đơn / Tải PDF
+                </button>
+
+                <a asp-controller="Home" asp-action="Index" class="btn-home">
+                    <i class="fa-solid fa-house me-1"></i> Về trang chủ
+                </a>
+
+                <a asp-controller="DatPhongKhachHang" asp-action="Index" class="btn-book-more">
+                    <i class="fa-solid fa-calendar-plus me-1"></i> Danh sách đặt phòng
+                </a>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .checkout-success-page {
+            background: linear-gradient(135deg, #f7f4ee 0%, #ece5da 100%);
+            min-height: 100vh;
+            padding: 40px 16px 80px;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        .container-narrow {
+            max-width: 820px;
+            margin: 0 auto;
+        }
+
+        .success-card {
+            background: #ffffff;
+            border-radius: 16px;
+            width: 100%;
+            padding: 40px 32px;
+            box-shadow: 0 20px 60px rgba(70, 55, 42, 0.1);
+            border: 1px solid #e7ded4;
+            text-align: center;
+        }
+
+        .success-icon-box {
+            font-size: 56px;
+            color: #2e7d32;
+            margin-bottom: 10px;
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @@keyframes popIn {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .success-badge {
+            background: #e6f4ea;
+            color: #137333;
+            font-size: 11.5px;
+            font-weight: 700;
+            padding: 4px 14px;
+            border-radius: 20px;
+            letter-spacing: 1px;
+            display: inline-block;
+            margin-bottom: 12px;
+        }
+
+        .success-card h2 {
+            font-size: 26px;
+            font-weight: 700;
+            color: #2b231d;
+            margin-bottom: 8px;
+        }
+
+        .success-subtitle {
+            color: #7b6f65;
+            font-size: 14.5px;
+            line-height: 1.6;
+            max-width: 620px;
+            margin: 0 auto 28px;
+        }
+
+        /* INVOICE TICKET STYLING */
+        .invoice-ticket {
+            background: #fbf9f5;
+            border: 1.5px dashed #d6c6b2;
+            border-radius: 14px;
+            padding: 28px;
+            text-align: left;
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .receipt-stamp {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            pointer-events: none;
+            opacity: 0.85;
+        }
+
+        .stamp-inner {
+            border: 3px dashed #198754;
+            border-radius: 8px;
+            color: #198754;
+            padding: 6px 14px;
+            font-weight: 800;
+            font-size: 14px;
+            letter-spacing: 1px;
+            transform: rotate(-10deg);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .ticket-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ebdcd0;
+            padding-bottom: 14px;
+            margin-bottom: 18px;
+        }
+
+        .ticket-code-label {
+            font-size: 11px;
+            color: #8c7d71;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .ticket-code {
+            font-size: 22px;
+            font-weight: 700;
+            color: #b05d1a;
+            margin: 2px 0 0;
+            font-family: monospace;
+        }
+
+        .badge-status-paid {
+            background: #d4edda;
+            color: #155724;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 12px;
+        }
+
+        .ticket-info-item {
+            font-size: 13.5px;
+        }
+
+            .ticket-info-item .label {
+                color: #8c7d71;
+                display: block;
+                font-size: 11.5px;
+                margin-bottom: 2px;
+            }
+
+            .ticket-info-item strong {
+                color: #2b231d;
+            }
+
+        .ticket-divider {
+            margin: 18px 0;
+            border-color: #ebdcd0;
+        }
+
+        /* TABLE STYLING */
+        .custom-receipt-table {
+            font-size: 13.5px;
+            margin-bottom: 0;
+            background: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #ebdcd0;
+        }
+
+            .custom-receipt-table thead {
+                background: #f4efe6;
+            }
+
+                .custom-receipt-table thead th {
+                    color: #6e563b;
+                    font-weight: 600;
+                    padding: 10px 12px;
+                    border-bottom: 1px solid #ebdcd0;
+                }
+
+            .custom-receipt-table tbody td {
+                padding: 10px 12px;
+                border-bottom: 1px solid #f0e9e1;
+            }
+
+        .receipt-summary-box {
+            background: #ffffff;
+            border: 1px solid #ebdcd0;
+            border-radius: 8px;
+            padding: 14px 18px;
+            font-size: 13.5px;
+        }
+
+        .total-grand-amount {
+            font-size: 20px;
+            color: #b05d1a;
+            font-weight: 700;
+        }
+
+        /* SUPPORT BOX */
+        .contact-support-box {
+            background: #fdfaf5;
+            border: 1px solid #ebdcd0;
+            border-radius: 8px;
+            padding: 14px 20px;
+            text-align: left;
+            margin-bottom: 24px;
+        }
+
+            .contact-support-box h6 {
+                margin: 0 0 4px;
+                font-weight: 600;
+                color: #2b231d;
+                font-size: 14px;
+            }
+
+            .contact-support-box p {
+                margin: 0;
+                font-size: 13px;
+                color: #7b6f65;
+            }
+
+        /* ACTIONS BUTTONS */
+        .success-actions {
+            display: flex;
+            justify-content: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .btn-print {
+            background: #2b231d;
+            color: #ffffff;
+            padding: 12px 22px;
+            border-radius: 8px;
+            border: 0;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+            .btn-print:hover {
+                background: #4a3b2c;
+            }
+
+        .btn-home {
+            background: #b99a7e;
+            color: #ffffff;
+            padding: 12px 22px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+            .btn-home:hover {
+                background: #9d7d60;
+                color: #ffffff;
+            }
+
+        .btn-book-more {
+            background: #ffffff;
+            color: #7b6f65;
+            border: 1px solid #dcd3c8;
+            padding: 12px 22px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+            .btn-book-more:hover {
+                background: #f7f4ee;
+                color: #2b231d;
+            }
+
+        /* CẤU HÌNH IN TRANG (PRINT OPTIMIZATION) */
+        @@media print {
+            .no-print, nav, footer, .checkout-header, .btn-back-link {
+                display: none !important;
+            }
+
+            .checkout-success-page {
+                background: #ffffff !important;
+                padding: 0 !important;
+            }
+
+            .success-card {
+                box-shadow: none !important;
+                border: none !important;
+                padding: 0 !important;
+            }
+
+            .invoice-ticket {
+                border: 1px solid #000 !important;
+                background: #fff !important;
+            }
+        }
+    </style>
+}

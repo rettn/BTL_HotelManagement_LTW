@@ -41,7 +41,13 @@ namespace HotelManagement.ViewModels
         public string? GhiChu { get; set; }
 
         [Display(Name = "Hình thức thanh toán")]
-        public string PhuongThucThanhToan { get; set; } = "VietQR"; // "VietQR" hoặc "TrucTiep"
+        public string PhuongThucThanhToan { get; set; } = "VietQR"; 
+        [Display(Name = "Giới tính")]
+        public string? GioiTinh { get; set; }
+
+        [Display(Name = "Ngày sinh")]
+        [DataType(DataType.Date)]
+        public DateTime? NgaySinh { get; set; }
 
         // Dữ liệu hiển thị danh sách phòng cho khách chọn
         public List<PhongKhachHangItem> DanhSachPhongTrong { get; set; } = new();
@@ -60,5 +66,6 @@ namespace HotelManagement.ViewModels
         public decimal GiaTheoDem { get; set; }
         public int SoNguoiToiDa { get; set; }
         public string? MoTa { get; set; }
+
     }
 }

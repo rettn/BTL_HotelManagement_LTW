@@ -6,7 +6,7 @@
 
 <div class="customer-booking-page">
     <div class="booking-container">
-        
+
         <!-- HEADER TRANG ĐẶT PHÒNG -->
         <div class="booking-header">
             <a asp-controller="Home" asp-action="Index" class="btn-back-home">
@@ -39,10 +39,10 @@
             @Html.AntiForgeryToken()
 
             <div class="row g-4">
-                
+
                 <!-- CỘT TRÁI: FORM ĐIỀN THÔNG TIN -->
                 <div class="col-lg-7">
-                    
+
                     <!-- BƯỚC 1: THÔNG TIN KHÁCH HÀNG -->
                     <div class="booking-card mb-4">
                         <div class="card-title-box">
@@ -64,13 +64,26 @@
                             </div>
 
                             <div class="col-md-6">
-                                <label asp-for="Email" class="form-label required-mark">Địa chỉ Email</label>
+                                <label asp-for="GioiTinh" class="form-label">Giới tính</label>
                                 <div class="input-icon-wrap">
-                                    <i class="fa-solid fa-envelope"></i>
-                                    <input asp-for="Email" type="email" class="form-control" placeholder="email@gmail.com" required />
+                                    <i class="fa-solid fa-venus-mars"></i>
+                                    <select asp-for="GioiTinh" class="form-control">
+                                        <option value="">-- Chọn giới tính --</option>
+                                        <option value="Nam">Nam</option>
+                                        <option value="Nữ">Nữ</option>
+                                        <option value="Khác">Khác</option>
+                                    </select>
                                 </div>
-                                <span class="form-text text-muted small"><i class="fa-solid fa-circle-info text-secondary me-1"></i>Nhận xác nhận đặt phòng và hóa đơn</span>
-                                <span asp-validation-for="Email" class="text-danger small"></span>
+                                <span asp-validation-for="GioiTinh" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="NgaySinh" class="form-label">Ngày / Năm sinh</label>
+                                <div class="input-icon-wrap">
+                                    <i class="fa-solid fa-cake-candles"></i>
+                                    <input asp-for="NgaySinh" type="date" class="form-control" />
+                                </div>
+                                <span asp-validation-for="NgaySinh" class="text-danger small"></span>
                             </div>
 
                             <div class="col-md-6">
@@ -80,6 +93,16 @@
                                     <input asp-for="SoDienThoai" class="form-control" placeholder="09xxxxxxxx" required />
                                 </div>
                                 <span asp-validation-for="SoDienThoai" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="Email" class="form-label required-mark">Địa chỉ Email</label>
+                                <div class="input-icon-wrap">
+                                    <i class="fa-solid fa-envelope"></i>
+                                    <input asp-for="Email" type="email" class="form-control" placeholder="email@gmail.com" required />
+                                </div>
+                                <span class="form-text text-muted small"><i class="fa-solid fa-circle-info text-secondary me-1"></i>Nhận xác nhận đặt phòng và hóa đơn</span>
+                                <span asp-validation-for="Email" class="text-danger small"></span>
                             </div>
 
                             <div class="col-md-6">
@@ -154,16 +177,16 @@
                                 {
                                     var isChecked = p.MaPhong == Model.MaPhong;
                                     <label class="room-option-card @(isChecked ? "selected" : "")" for="room_@p.MaPhong">
-                                        <input type="radio" 
-                                               asp-for="MaPhong" 
-                                               value="@p.MaPhong" 
-                                               id="room_@p.MaPhong" 
-                                               class="room-radio" 
+                                        <input type="radio"
+                                               asp-for="MaPhong"
+                                               value="@p.MaPhong"
+                                               id="room_@p.MaPhong"
+                                               class="room-radio"
                                                data-room-number="@p.SoPhong"
                                                data-room-type="@p.TenLoaiPhong"
-                                               data-price="@p.GiaTheoDem" 
+                                               data-price="@p.GiaTheoDem"
                                                data-max-people="@p.SoNguoiToiDa" />
-                                        
+
                                         <div class="room-card-inner">
                                             <div class="room-card-head">
                                                 <span class="room-num">Phòng @p.SoPhong</span>
@@ -249,14 +272,14 @@
                 <!-- CỘT PHẢI: BẢNG TỔNG KẾT VÀ NÚT XÁC NHẬN -->
                 <div class="col-lg-5">
                     <div class="booking-summary-card sticky-top" style="top: 24px;">
-                        
+
                         <div class="summary-header">
                             <span class="sub-title">CHI TIẾT ĐẶT PHÒNG</span>
                             <h4>HÓA ĐƠN TẠM TÍNH</h4>
                         </div>
 
                         <div class="summary-body">
-                            
+
                             <div class="summary-item">
                                 <span class="label">Khách hàng:</span>
                                 <span class="val fw-semibold" id="sumCustomerName">@(string.IsNullOrEmpty(Model.HoTen) ? "Quý khách" : Model.HoTen)</span>
@@ -361,9 +384,9 @@
             transition: color 0.2s;
         }
 
-        .btn-back-home:hover {
-            color: #4a3b2c;
-        }
+            .btn-back-home:hover {
+                color: #4a3b2c;
+            }
 
         .booking-badge {
             display: inline-block;
@@ -446,18 +469,18 @@
             position: relative;
         }
 
-        .input-icon-wrap i {
-            position: absolute;
-            left: 14px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #a4978a;
-            font-size: 14px;
-        }
+            .input-icon-wrap i {
+                position: absolute;
+                left: 14px;
+                top: 50%;
+                transform: translateY(-50%);
+                color: #a4978a;
+                font-size: 14px;
+            }
 
-        .input-icon-wrap .form-control {
-            padding-left: 40px;
-        }
+            .input-icon-wrap .form-control {
+                padding-left: 40px;
+            }
 
         .form-control {
             border: 1.5px solid #dcd3c8;
@@ -467,10 +490,10 @@
             transition: all 0.2s;
         }
 
-        .form-control:focus {
-            border-color: #b99a7e;
-            box-shadow: 0 0 0 3px rgba(185, 154, 126, 0.18);
-        }
+            .form-control:focus {
+                border-color: #b99a7e;
+                box-shadow: 0 0 0 3px rgba(185, 154, 126, 0.18);
+            }
 
         .stay-duration-badge {
             background: #fbf8f3;
@@ -499,17 +522,17 @@
             display: block;
         }
 
-        .room-option-card:hover {
-            border-color: #c9ad96;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.06);
-        }
+            .room-option-card:hover {
+                border-color: #c9ad96;
+                transform: translateY(-2px);
+                box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+            }
 
-        .room-option-card.selected {
-            border-color: #b99a7e;
-            background: #fcf9f5;
-            box-shadow: 0 0 0 2px rgba(185, 154, 126, 0.3);
-        }
+            .room-option-card.selected {
+                border-color: #b99a7e;
+                background: #fcf9f5;
+                box-shadow: 0 0 0 2px rgba(185, 154, 126, 0.3);
+            }
 
         .room-radio {
             position: absolute;
@@ -578,21 +601,21 @@
             padding: 20px 24px;
         }
 
-        .summary-header .sub-title {
-            font-size: 11px;
-            letter-spacing: 1.5px;
-            color: #c9ad96;
-            font-weight: 700;
-            display: block;
-            margin-bottom: 4px;
-        }
+            .summary-header .sub-title {
+                font-size: 11px;
+                letter-spacing: 1.5px;
+                color: #c9ad96;
+                font-weight: 700;
+                display: block;
+                margin-bottom: 4px;
+            }
 
-        .summary-header h4 {
-            margin: 0;
-            font-size: 20px;
-            font-weight: 600;
-            color: #ffffff;
-        }
+            .summary-header h4 {
+                margin: 0;
+                font-size: 20px;
+                font-weight: 600;
+                color: #ffffff;
+            }
 
         .summary-body {
             padding: 24px;
@@ -606,14 +629,14 @@
             margin-bottom: 12px;
         }
 
-        .summary-item .label {
-            color: #7b6f65;
-        }
+            .summary-item .label {
+                color: #7b6f65;
+            }
 
-        .summary-item .val {
-            color: #2b231d;
-            text-align: right;
-        }
+            .summary-item .val {
+                color: #2b231d;
+                text-align: right;
+            }
 
         .summary-divider {
             margin: 20px 0;
@@ -653,22 +676,22 @@
             font-size: 12.5px;
         }
 
-        .booking-policy h6 {
-            font-size: 13px;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: #2b231d;
-        }
+            .booking-policy h6 {
+                font-size: 13px;
+                font-weight: 600;
+                margin-bottom: 8px;
+                color: #2b231d;
+            }
 
-        .booking-policy ul {
-            margin: 0;
-            padding-left: 18px;
-            color: #665b51;
-        }
+            .booking-policy ul {
+                margin: 0;
+                padding-left: 18px;
+                color: #665b51;
+            }
 
-        .booking-policy li {
-            margin-bottom: 4px;
-        }
+            .booking-policy li {
+                margin-bottom: 4px;
+            }
 
         .btn-confirm-booking {
             width: 100%;
@@ -685,11 +708,11 @@
             box-shadow: 0 6px 18px rgba(185, 154, 126, 0.35);
         }
 
-        .btn-confirm-booking:hover {
-            background: #9d7d60;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(157, 125, 96, 0.45);
-        }
+            .btn-confirm-booking:hover {
+                background: #9d7d60;
+                transform: translateY(-2px);
+                box-shadow: 0 8px 24px rgba(157, 125, 96, 0.45);
+            }
 
         .secure-text {
             font-size: 12px;
@@ -715,16 +738,16 @@
             display: block;
         }
 
-        .payment-option-card:hover {
-            border-color: #b99a7e;
-            background: #fdfaf6;
-        }
+            .payment-option-card:hover {
+                border-color: #b99a7e;
+                background: #fdfaf6;
+            }
 
-        .payment-option-card.active {
-            border-color: #b99a7e;
-            background: #fcf8f3;
-            box-shadow: 0 0 0 2px rgba(185, 154, 126, 0.25);
-        }
+            .payment-option-card.active {
+                border-color: #b99a7e;
+                background: #fcf8f3;
+                box-shadow: 0 0 0 2px rgba(185, 154, 126, 0.25);
+            }
 
         .payment-radio {
             position: absolute;

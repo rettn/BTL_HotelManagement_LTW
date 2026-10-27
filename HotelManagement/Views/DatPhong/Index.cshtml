@@ -355,7 +355,16 @@
                                        title="Xem chi tiết">
                                         <i class="bi bi-eye"></i>
                                     </a>
-
+                                    @if (datPhong.TrangThai == "DangLuuTru")
+                                    {
+                                        <a asp-controller="DatPhong"
+                                           asp-action="Checkout"
+                                           asp-route-id="@datPhong.MaDatPhong"
+                                           class="booking-action text-warning border-warning"
+                                           title="Check-out & Thanh toán">
+                                            <i class="bi bi-box-arrow-right"></i> Check-out
+                                        </a>
+                                    }
                                     @if (datPhong.TrangThai == "ChoXacNhan")
                                     {
                                         <a asp-controller="DatPhong"

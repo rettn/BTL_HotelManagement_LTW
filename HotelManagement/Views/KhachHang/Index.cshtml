@@ -147,7 +147,7 @@
                     @foreach (var kh in Model)
                     {
                         <tr>
-                            <td><span class="customer-code">KH@kh.MaKH.ToString("D4")</span></td>
+                            <td><span class="customer-code">@kh.MaKH.ToString("D4")</span></td>
                             <td>
                                 <div class="customer-name">@kh.HoTen</div>
                                 <div class="customer-muted">CCCD: @(string.IsNullOrWhiteSpace(kh.CCCD) ? "Chưa cập nhật" : kh.CCCD)</div>

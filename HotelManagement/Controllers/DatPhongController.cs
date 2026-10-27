@@ -13,13 +13,16 @@ namespace HotelManagement.Controllers
     {
         private readonly DatPhongService _service;
         private readonly ApplicationDbContext _context;
+        private readonly PaymentSettingService _paymentSettingService;
 
         public DatPhongController(
             DatPhongService service,
-            ApplicationDbContext context)
+            ApplicationDbContext context,
+            PaymentSettingService paymentSettingService)
         {
             _service = service;
             _context = context;
+            _paymentSettingService = paymentSettingService;
         }
 
         // GET: /DatPhong
@@ -56,7 +59,6 @@ namespace HotelManagement.Controllers
             return View(model);
         }
 
-
         // POST: /DatPhong/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -91,9 +93,7 @@ namespace HotelManagement.Controllers
 
             if (datPhong.TrangThai != "ChoXacNhan")
             {
-                TempData["Error"] =
-                    "Chỉ có thể sửa phiếu đang chờ xác nhận.";
-
+                TempData["Error"] = "Chỉ có thể sửa phiếu đang chờ xác nhận.";
                 return RedirectToAction(nameof(Index));
             }
 
@@ -121,8 +121,7 @@ namespace HotelManagement.Controllers
         // POST: /DatPhong/Edit/1
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(
-            int id, DatPhongViewModel model)
+        public async Task<IActionResult> Edit(int id, DatPhongViewModel model)
         {
             if (id != model.MaDatPhong)
                 return BadRequest();
@@ -159,39 +158,6 @@ namespace HotelManagement.Controllers
             return Json(new { success = true, message = result.Message });
         }
 
-        // Nap danh sach khach hang va phong cho bieu mau
-        private async Task NapDuLieuFormAsync(DatPhongViewModel model)
-        {
-            model.KhachHangs = await _context.KhachHangs
-                .AsNoTracking()
-                .OrderBy(k => k.HoTen)
-                .Select(k => new KhachHangOption
-                {
-                    MaKH = k.MaKH,
-                    HoTen = k.HoTen,
-                    SoDienThoai = k.SoDienThoai
-                })
-                .ToListAsync();
-
-            model.Phongs = await _context.Phongs
-                .AsNoTracking()
-                .Include(p => p.LoaiPhong)
-                .OrderBy(p => p.SoPhong)
-                .Select(p => new PhongOption
-                {
-                    MaPhong = p.MaPhong,
-                    SoPhong = p.SoPhong,
-                    TenLoaiPhong = p.LoaiPhong != null
-                        ? p.LoaiPhong.TenLoaiPhong
-                        : "Chưa phân loại",
-                    GiaTheoDem = p.LoaiPhong != null
-                        ? p.LoaiPhong.GiaTheoDem
-                        : 0,
-                    TrangThai = p.TrangThai
-                })
-                .ToListAsync();
-        }
-
         // GET: /DatPhong/Delete/5
         [HttpGet]
         public async Task<IActionResult> Delete(int id)
@@ -219,7 +185,7 @@ namespace HotelManagement.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-
+        // POST: /DatPhong/CheckIn
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CheckIn(int id, int maPhong)
@@ -241,7 +207,7 @@ namespace HotelManagement.Controllers
                 message = result.Message
             });
         }
-        
+
         // POST: /DatPhong/CheckOut
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -340,6 +306,181 @@ namespace HotelManagement.Controllers
 
             await _context.SaveChangesAsync();
             return Json(new { success = true, message = "Đã thêm dịch vụ." });
+        }
+
+        // GET: /DatPhong/Checkout/5
+        [HttpGet]
+        public async Task<IActionResult> Checkout(int id)
+        {
+            var model = await GetHoaDonCheckoutViewModelAsync(id);
+            if (model == null) return NotFound();
+
+            return View(model);
+        }
+
+        // POST: /DatPhong/XacNhanCheckout
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> XacNhanCheckout(HoaDonCheckoutViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                var currentModel = await GetHoaDonCheckoutViewModelAsync(model.MaDatPhong);
+                return View("Checkout", currentModel ?? model);
+            }
+
+            var datPhong = await _context.DatPhongs
+                .Include(dp => dp.ChiTietDatPhongs)
+                .FirstOrDefaultAsync(dp => dp.MaDatPhong == model.MaDatPhong);
+
+            if (datPhong != null)
+            {
+                datPhong.TrangThai = "DaThanhToan";
+                datPhong.NgayTraThucTe = DateTime.Now;
+
+                foreach (var ctdp in datPhong.ChiTietDatPhongs)
+                {
+                    var phong = await _context.Phongs.FindAsync(ctdp.MaPhong);
+                    if (phong != null)
+                    {
+                        phong.TrangThai = "Trong";
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+            }
+
+            return RedirectToAction(nameof(ThanhToanThanhCong), new { maDatPhong = model.MaDatPhong });
+        }
+
+        // GET: /DatPhong/ThanhToanThanhCong?maDatPhong=5
+        [HttpGet]
+        public async Task<IActionResult> ThanhToanThanhCong(int maDatPhong)
+        {
+            var viewModel = await GetHoaDonCheckoutViewModelAsync(maDatPhong);
+
+            if (viewModel == null)
+            {
+                return NotFound();
+            }
+
+            ViewBag.MaHoaDon = $"HD{maDatPhong}{DateTime.Now:yyyyMMdd}";
+            return View("ThanhToanThanhCong", viewModel);
+        }
+
+        // HÀM BỔ TRỢ LẤY DỮ LIỆU BẢNG KÊ CHECKOUT & HÓA ĐƠN
+        private async Task<HoaDonCheckoutViewModel?> GetHoaDonCheckoutViewModelAsync(int maDatPhong)
+        {
+            var datPhong = await _context.DatPhongs
+                .Include(dp => dp.KhachHang)
+                .Include(dp => dp.ChiTietDatPhongs)
+                    .ThenInclude(ct => ct.Phong)
+                        .ThenInclude(p => p.LoaiPhong)
+                .FirstOrDefaultAsync(dp => dp.MaDatPhong == maDatPhong);
+
+            if (datPhong == null) return null;
+
+            var chiTietPhong = datPhong.ChiTietDatPhongs.FirstOrDefault();
+            var phong = chiTietPhong?.Phong;
+            var loaiPhong = phong?.LoaiPhong;
+
+            DateTime ngayNhan = datPhong.NgayNhanThucTe != default ? datPhong.NgayNhanThucTe : datPhong.NgayNhanDuKien;
+            DateTime ngayTra = datPhong.NgayTraThucTe != default ? datPhong.NgayTraThucTe : DateTime.Now;
+
+            int soDem = (int)(ngayTra.Date - ngayNhan.Date).TotalDays;
+            if (soDem <= 0) soDem = 1;
+
+            decimal giaTheoDem = chiTietPhong?.DonGia ?? loaiPhong?.GiaTheoDem ?? 0;
+            decimal tienPhong = giaTheoDem * soDem;
+
+            // === TẢI CHI TIẾT DỊCH VỤ ĐÃ SỬ DỤNG TỪ CSDL THÔNG QUA LƯỢT LƯU TRÚ ===
+            var dsDichVu = await _context.ChiTietDichVus
+                .AsNoTracking()
+                .Include(cdv => cdv.DichVu)
+                .Where(cdv => _context.LuuTrus.Any(l => l.MaLuuTru == cdv.MaLuuTru
+                                                     && l.ChiTietDatPhong != null
+                                                     && l.ChiTietDatPhong.MaDatPhong == maDatPhong))
+                .Select(cdv => new ChiTietDichVuItemViewModel
+                {
+                    TenDichVu = cdv.DichVu != null ? cdv.DichVu.TenDichVu : "Dịch vụ",
+                    SoLuong = cdv.SoLuong,
+                    DonGia = cdv.DonGia,
+                    ThanhTien = cdv.SoLuong * cdv.DonGia
+                })
+                .ToListAsync();
+
+            decimal tongTienDichVu = dsDichVu.Sum(x => x.ThanhTien);
+            decimal tiLeThuePercent = 10; // VAT 10%
+            decimal tienThue = (tienPhong + tongTienDichVu) * (tiLeThuePercent / 100m);
+            decimal tongThanhToan = tienPhong + tongTienDichVu + tienThue;
+
+            // Lấy thông tin cài đặt ngân hàng thanh toán VietQR
+            var paymentSetting = _paymentSettingService.GetSettings();
+            string nganHangMa = paymentSetting?.NganHangMa ?? "";
+            string soTaiKhoan = paymentSetting?.SoTaiKhoan ?? "";
+            string tenChuTaiKhoan = paymentSetting?.TenChuTaiKhoan ?? "";
+            string noiDungCK = $"{paymentSetting?.NoiDungPrefix}{datPhong.MaDatPhong}";
+
+            string noiDungMaHoa = Uri.EscapeDataString(noiDungCK);
+            string tenTaiKhoanMaHoa = Uri.EscapeDataString(tenChuTaiKhoan);
+            string vietQrUrl = $"https://img.vietqr.io/image/{nganHangMa}-{soTaiKhoan}-compact2.png?amount={(long)tongThanhToan}&addInfo={noiDungMaHoa}&accountName={tenTaiKhoanMaHoa}";
+
+            return new HoaDonCheckoutViewModel
+            {
+                MaDatPhong = datPhong.MaDatPhong,
+                SoPhong = phong?.SoPhong ?? "---",
+                TenKhachHang = datPhong.KhachHang?.HoTen ?? "Khách vãng lai",
+                SoDienThoai = datPhong.KhachHang?.SoDienThoai ?? "",
+                TenLoaiPhong = loaiPhong?.TenLoaiPhong ?? "Tiêu chuẩn",
+                NgayNhan = ngayNhan,
+                NgayTraThucTe = ngayTra,
+                SoDem = soDem,
+                GiaTheoDem = giaTheoDem,
+                TienPhong = tienPhong,
+                DanhSachDichVu = dsDichVu,
+                TongTienDichVu = tongTienDichVu,
+                TiLeThuePercent = tiLeThuePercent,
+                TienThue = tienThue,
+                TongThanhToan = tongThanhToan,
+                PhuongThucThanhToan = "TienMat",
+
+                NganHangMa = nganHangMa,
+                SoTaiKhoan = soTaiKhoan,
+                TenChuTaiKhoan = tenChuTaiKhoan,
+                NoiDungChuyenKhoan = noiDungCK,
+                VietQrImageUrl = vietQrUrl
+            };
+        }      
+        private async Task NapDuLieuFormAsync(DatPhongViewModel model)
+        {
+            model.KhachHangs = await _context.KhachHangs
+                .AsNoTracking()
+                .OrderBy(k => k.HoTen)
+                .Select(k => new KhachHangOption
+                {
+                    MaKH = k.MaKH,
+                    HoTen = k.HoTen,
+                    SoDienThoai = k.SoDienThoai
+                })
+                .ToListAsync();
+
+            model.Phongs = await _context.Phongs
+                .AsNoTracking()
+                .Include(p => p.LoaiPhong)
+                .OrderBy(p => p.SoPhong)
+                .Select(p => new PhongOption
+                {
+                    MaPhong = p.MaPhong,
+                    SoPhong = p.SoPhong,
+                    TenLoaiPhong = p.LoaiPhong != null
+                        ? p.LoaiPhong.TenLoaiPhong
+                        : "Chưa phân loại",
+                    GiaTheoDem = p.LoaiPhong != null
+                        ? p.LoaiPhong.GiaTheoDem
+                        : 0,
+                    TrangThai = p.TrangThai
+                })
+                .ToListAsync();
         }
     }
 }

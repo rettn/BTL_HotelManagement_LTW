@@ -54,6 +54,8 @@ namespace HotelManagement.Controllers
                         model.Email = khachHang.Email ?? email ?? string.Empty;
                         model.SoDienThoai = khachHang.SoDienThoai ?? string.Empty;
                         model.CCCD = khachHang.CCCD;
+                        model.GioiTinh = khachHang.GioiTinh;
+                        model.NgaySinh = khachHang.NgaySinh;
                     }
                     else
                     {
@@ -123,6 +125,8 @@ namespace HotelManagement.Controllers
                     Email = model.Email.Trim(),
                     SoDienThoai = model.SoDienThoai.Trim(),
                     CCCD = model.CCCD?.Trim(),
+                    GioiTinh = model.GioiTinh,
+                    NgaySinh = model.NgaySinh,
                     NgayTao = DateTime.Now
                 };
                 _context.KhachHangs.Add(khachHang);
@@ -150,6 +154,16 @@ namespace HotelManagement.Controllers
                 if (!string.IsNullOrWhiteSpace(model.Email) && khachHang.Email != model.Email.Trim())
                 {
                     khachHang.Email = model.Email.Trim();
+                    modified = true;
+                }
+                if (!string.IsNullOrWhiteSpace(model.GioiTinh) && khachHang.GioiTinh != model.GioiTinh)
+                {
+                    khachHang.GioiTinh = model.GioiTinh;
+                    modified = true;
+                }
+                if (model.NgaySinh.HasValue && khachHang.NgaySinh != model.NgaySinh)
+                {
+                    khachHang.NgaySinh = model.NgaySinh;
                     modified = true;
                 }
 
