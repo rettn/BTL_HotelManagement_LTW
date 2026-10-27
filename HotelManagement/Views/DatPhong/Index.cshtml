@@ -9,7 +9,7 @@
         "ChoXacNhan" => "Chờ xác nhận",
         "DaXacNhan" => "Đã xác nhận",
         "DaHuy" => "Đã hủy",
-        "DangLuuTru" => "Đang lưu trú",
+        "DangLuuTru" => "Đã nhận phòng",
         "DaHoanThanh" => "Đã hoàn thành",
         _ => trangThai ?? "Chưa xác định"
     };
@@ -39,16 +39,16 @@
         margin-bottom: 24px;
     }
 
-    .booking-toolbar h2 {
-        font-size: 26px;
-        font-weight: 700;
-        margin-bottom: 6px;
-    }
+        .booking-toolbar h2 {
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
 
-    .booking-toolbar p {
-        color: #748198;
-        margin: 0;
-    }
+        .booking-toolbar p {
+            color: #748198;
+            margin: 0;
+        }
 
     .booking-panel {
         background: #fff;
@@ -67,9 +67,9 @@
         outline: none;
     }
 
-    .booking-search:focus {
-        border-color: #3997f5;
-    }
+        .booking-search:focus {
+            border-color: #3997f5;
+        }
 
     .booking-table-wrapper {
         overflow-x: auto;
@@ -81,25 +81,25 @@
         min-width: 1000px;
     }
 
-    .booking-table th {
-        background: #f7f9fc;
-        color: #65748b;
-        font-weight: 600;
-        font-size: 13px;
-        text-align: left;
-        padding: 14px 12px;
-        white-space: nowrap;
-    }
+        .booking-table th {
+            background: #f7f9fc;
+            color: #65748b;
+            font-weight: 600;
+            font-size: 13px;
+            text-align: left;
+            padding: 14px 12px;
+            white-space: nowrap;
+        }
 
-    .booking-table td {
-        padding: 15px 12px;
-        border-bottom: 1px solid #edf0f5;
-        vertical-align: middle;
-    }
+        .booking-table td {
+            padding: 15px 12px;
+            border-bottom: 1px solid #edf0f5;
+            vertical-align: middle;
+        }
 
-    .booking-table tbody tr:hover {
-        background: #fafcff;
-    }
+        .booking-table tbody tr:hover {
+            background: #fafcff;
+        }
 
     .booking-code {
         font-weight: 700;
@@ -188,9 +188,9 @@
         cursor: pointer;
     }
 
-    .booking-action:hover {
-        background: #f1f6fc;
-    }
+        .booking-action:hover {
+            background: #f1f6fc;
+        }
 
     .booking-action-danger {
         color: #c03939;
@@ -203,16 +203,16 @@
         color: #7b8798;
     }
 
-    .booking-empty i {
-        font-size: 38px;
-        display: block;
-        margin-bottom: 12px;
-    }
+        .booking-empty i {
+            font-size: 38px;
+            display: block;
+            margin-bottom: 12px;
+        }
 
-    .booking-empty h3 {
-        color: #344258;
-        font-size: 19px;
-    }
+        .booking-empty h3 {
+            color: #344258;
+            font-size: 19px;
+        }
 
     .booking-footer {
         display: flex;
@@ -238,13 +238,21 @@
         font-weight: 600;
     }
 
-    .booking-primary:hover {
-        background: #16834f;
-        color: white;
-    }
+        .booking-primary:hover {
+            background: #16834f;
+            color: white;
+        }
 </style>
 
 <div class="booking-page">
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
     <div class="booking-toolbar">
         <div>
             <h2>Danh sách đặt phòng</h2>
@@ -285,9 +293,9 @@
                     @foreach (var datPhong in Model)
                     {
                         var cacPhong = datPhong.ChiTietDatPhongs?
-                            .Where(ct => ct.Phong != null)
-                            .Select(ct => ct.Phong!.SoPhong)
-                            .ToList() ?? new List<string>();
+                        .Where(ct => ct.Phong != null)
+                        .Select(ct => ct.Phong!.SoPhong)
+                        .ToList() ?? new List<string>();
 
                         var tenKhach = datPhong.KhachHang?.HoTen ?? "Chưa có thông tin";
                         var tuKhoa = $"{datPhong.MaDatPhong} {tenKhach} {string.Join(" ", cacPhong)}";
@@ -368,6 +376,17 @@
                                                 <i class="bi bi-x-circle"></i>
                                             </button>
                                         </form>
+                                    }
+
+                                    @if (datPhong.TrangThai == "DaHuy")
+                                    {
+                                        <a asp-controller="DatPhong"
+                                           asp-action="Delete"
+                                           asp-route-id="@datPhong.MaDatPhong"
+                                           class="booking-action booking-action-danger"
+                                           title="Xóa phiếu đã hủy">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
                                     }
                                 </div>
                             </td>

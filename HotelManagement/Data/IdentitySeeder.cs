@@ -1,4 +1,4 @@
-﻿
+
 using Microsoft.AspNetCore.Identity;
 
 namespace HotelManagement.Data
@@ -18,7 +18,7 @@ namespace HotelManagement.Data
                 .GetRequiredService<UserManager<IdentityUser>>();
 
             // Tao cac vai tro neu chua ton tai
-            string[] roles = { "Admin", "NhanVien" };
+            string[] roles = { "Admin", "NhanVien", "KhachHang" };
 
             foreach (var role in roles)
             {

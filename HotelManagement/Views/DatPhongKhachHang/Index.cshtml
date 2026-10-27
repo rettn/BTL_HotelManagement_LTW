@@ -1,0 +1,865 @@
+@model HotelManagement.ViewModels.DatPhongKhachHangViewModel
+@{
+    ViewData["Title"] = "Đặt phòng trực tuyến";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="customer-booking-page">
+    <div class="booking-container">
+        
+        <!-- HEADER TRANG ĐẶT PHÒNG -->
+        <div class="booking-header">
+            <a asp-controller="Home" asp-action="Index" class="btn-back-home">
+                <i class="fa-solid fa-arrow-left"></i> Trang chủ
+            </a>
+            <div class="header-content">
+                <span class="booking-badge"><i class="fa-solid fa-crown me-1"></i> DÀNH CHO KHÁCH HÀNG</span>
+                <h1>PHIẾU ĐẶT PHÒNG TRỰC TUYẾN</h1>
+                <p>Cảm ơn bạn đã lựa chọn khách sạn chúng tôi. Vui lòng điền thông tin và lựa chọn phòng phù hợp nhất cho kỳ nghỉ của bạn.</p>
+            </div>
+        </div>
+
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fa-solid fa-circle-check me-2"></i> @TempData["Success"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+        @if (!ViewData.ModelState.IsValid && ViewData.ModelState.ErrorCount > 0)
+        {
+            <div class="alert alert-danger" role="alert">
+                <h6 class="fw-bold mb-2"><i class="fa-solid fa-triangle-exclamation me-2"></i>Vui lòng kiểm tra lại thông tin:</h6>
+                <div asp-validation-summary="All" class="text-danger small mb-0"></div>
+            </div>
+        }
+
+        <form asp-controller="DatPhongKhachHang" asp-action="Index" method="post" id="customerBookingForm">
+            @Html.AntiForgeryToken()
+
+            <div class="row g-4">
+                
+                <!-- CỘT TRÁI: FORM ĐIỀN THÔNG TIN -->
+                <div class="col-lg-7">
+                    
+                    <!-- BƯỚC 1: THÔNG TIN KHÁCH HÀNG -->
+                    <div class="booking-card mb-4">
+                        <div class="card-title-box">
+                            <span class="step-num">1</span>
+                            <div>
+                                <h3>Thông tin khách hàng</h3>
+                                <p>Quý khách vui lòng điền thông tin để đặt phòng (không bắt buộc đăng nhập)</p>
+                            </div>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="HoTen" class="form-label required-mark">Họ và tên</label>
+                                <div class="input-icon-wrap">
+                                    <i class="fa-solid fa-user"></i>
+                                    <input asp-for="HoTen" class="form-control" placeholder="Nhập họ và tên..." required />
+                                </div>
+                                <span asp-validation-for="HoTen" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="Email" class="form-label required-mark">Địa chỉ Email</label>
+                                <div class="input-icon-wrap">
+                                    <i class="fa-solid fa-envelope"></i>
+                                    <input asp-for="Email" type="email" class="form-control" placeholder="email@gmail.com" required />
+                                </div>
+                                <span class="form-text text-muted small"><i class="fa-solid fa-circle-info text-secondary me-1"></i>Nhận xác nhận đặt phòng và hóa đơn</span>
+                                <span asp-validation-for="Email" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="SoDienThoai" class="form-label required-mark">Số điện thoại liên hệ</label>
+                                <div class="input-icon-wrap">
+                                    <i class="fa-solid fa-phone"></i>
+                                    <input asp-for="SoDienThoai" class="form-control" placeholder="09xxxxxxxx" required />
+                                </div>
+                                <span asp-validation-for="SoDienThoai" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="CCCD" class="form-label">CCCD / Hộ chiếu (Tùy chọn)</label>
+                                <div class="input-icon-wrap">
+                                    <i class="fa-solid fa-id-card"></i>
+                                    <input asp-for="CCCD" class="form-control" placeholder="Số CCCD..." />
+                                </div>
+                                <span asp-validation-for="CCCD" class="text-danger small"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BƯỚC 2: THỜI GIAN LƯU TRÚ -->
+                    <div class="booking-card mb-4">
+                        <div class="card-title-box">
+                            <span class="step-num">2</span>
+                            <div>
+                                <h3>Thời gian lưu trú</h3>
+                                <p>Chọn ngày nhận và trả phòng dự kiến</p>
+                            </div>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="NgayNhan" class="form-label required-mark">Ngày nhận phòng (Check-in)</label>
+                                <div class="input-icon-wrap">
+                                    <i class="fa-solid fa-calendar-check"></i>
+                                    <input asp-for="NgayNhan" type="date" class="form-control" id="checkInDate" min="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+                                </div>
+                                <span asp-validation-for="NgayNhan" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="NgayTra" class="form-label required-mark">Ngày trả phòng (Check-out)</label>
+                                <div class="input-icon-wrap">
+                                    <i class="fa-solid fa-calendar-xmark"></i>
+                                    <input asp-for="NgayTra" type="date" class="form-control" id="checkOutDate" min="@DateTime.Today.AddDays(1).ToString("yyyy-MM-dd")" required />
+                                </div>
+                                <span asp-validation-for="NgayTra" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="stay-duration-badge" id="durationText">
+                                    <i class="fa-solid fa-clock me-1"></i> Số đêm lưu trú: <strong id="nightCount">1 đêm</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BƯỚC 3: CHỌN PHÒNG -->
+                    <div class="booking-card mb-4">
+                        <div class="card-title-box">
+                            <span class="step-num">3</span>
+                            <div>
+                                <h3>Chọn phòng còn trống</h3>
+                                <p>Chọn căn phòng mà bạn muốn đặt trong kỳ nghỉ</p>
+                            </div>
+                        </div>
+
+                        @if (!Model.DanhSachPhongTrong.Any())
+                        {
+                            <div class="alert alert-warning">
+                                <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                                Hiện tại không có phòng nào ở trạng thái trống. Vui lòng liên hệ hotline khách sạn: <strong>0379 868 686</strong> để được hỗ trợ.
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="room-selection-grid">
+                                @foreach (var p in Model.DanhSachPhongTrong)
+                                {
+                                    var isChecked = p.MaPhong == Model.MaPhong;
+                                    <label class="room-option-card @(isChecked ? "selected" : "")" for="room_@p.MaPhong">
+                                        <input type="radio" 
+                                               asp-for="MaPhong" 
+                                               value="@p.MaPhong" 
+                                               id="room_@p.MaPhong" 
+                                               class="room-radio" 
+                                               data-room-number="@p.SoPhong"
+                                               data-room-type="@p.TenLoaiPhong"
+                                               data-price="@p.GiaTheoDem" 
+                                               data-max-people="@p.SoNguoiToiDa" />
+                                        
+                                        <div class="room-card-inner">
+                                            <div class="room-card-head">
+                                                <span class="room-num">Phòng @p.SoPhong</span>
+                                                <span class="room-status-badge">Trống</span>
+                                            </div>
+                                            <div class="room-card-type">@p.TenLoaiPhong</div>
+                                            <div class="room-card-meta">
+                                                <span><i class="fa-solid fa-user-group me-1"></i>Tối đa @p.SoNguoiToiDa người</span>
+                                            </div>
+                                            <div class="room-card-price">
+                                                <strong>@p.GiaTheoDem.ToString("N0") đ</strong><small>/đêm</small>
+                                            </div>
+                                        </div>
+                                    </label>
+                                }
+                            </div>
+                            <span asp-validation-for="MaPhong" class="text-danger small mt-2 d-block"></span>
+                        }
+                    </div>
+
+                    <!-- BƯỚC 4: YÊU CẦU ĐẶC BIỆT -->
+                    <div class="booking-card mb-4">
+                        <div class="card-title-box">
+                            <span class="step-num">4</span>
+                            <div>
+                                <h3>Yêu cầu đặc biệt</h3>
+                                <p>Ghi chú cho khách sạn (giờ đến, tầng cao, nôi em bé...)</p>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <textarea asp-for="GhiChu" rows="3" class="form-control" placeholder="Ví dụ: Cần nhận phòng sớm khoảng 12h, phòng yên tĩnh tầng cao..."></textarea>
+                            <span asp-validation-for="GhiChu" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <!-- BƯỚC 5: HÌNH THỨC THANH TOÁN -->
+                    <div class="booking-card mb-4">
+                        <div class="card-title-box">
+                            <span class="step-num">5</span>
+                            <div>
+                                <h3>Hình thức thanh toán</h3>
+                                <p>Chọn phương thức thanh toán tiền phòng</p>
+                            </div>
+                        </div>
+
+                        <div class="payment-options-grid">
+                            <label class="payment-option-card active" for="payVietQr">
+                                <input type="radio" asp-for="PhuongThucThanhToan" value="VietQR" id="payVietQr" checked class="payment-radio" />
+                                <div class="payment-card-inner">
+                                    <div class="payment-card-head">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <i class="fa-solid fa-qrcode fs-4 text-primary"></i>
+                                            <strong>Quét mã QR (VietQR)</strong>
+                                        </div>
+                                        <span class="badge bg-success-subtle text-success">Khuyên dùng</span>
+                                    </div>
+                                    <p class="payment-desc mb-0">
+                                        Quét mã chuyển khoản qua mọi app ngân hàng. Hệ thống <strong>tự động xác nhận sau 3 giây</strong> qua SePay.
+                                    </p>
+                                </div>
+                            </label>
+
+                            <label class="payment-option-card mt-3" for="payTrucTiep">
+                                <input type="radio" asp-for="PhuongThucThanhToan" value="TrucTiep" id="payTrucTiep" class="payment-radio" />
+                                <div class="payment-card-inner">
+                                    <div class="payment-card-head">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <i class="fa-solid fa-hotel fs-4 text-secondary"></i>
+                                            <strong>Thanh toán tại quầy lễ tân</strong>
+                                        </div>
+                                    </div>
+                                    <p class="payment-desc mb-0">
+                                        Thanh toán bằng tiền mặt hoặc quẹt thẻ khi đến nhận phòng tại khách sạn.
+                                    </p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- CỘT PHẢI: BẢNG TỔNG KẾT VÀ NÚT XÁC NHẬN -->
+                <div class="col-lg-5">
+                    <div class="booking-summary-card sticky-top" style="top: 24px;">
+                        
+                        <div class="summary-header">
+                            <span class="sub-title">CHI TIẾT ĐẶT PHÒNG</span>
+                            <h4>HÓA ĐƠN TẠM TÍNH</h4>
+                        </div>
+
+                        <div class="summary-body">
+                            
+                            <div class="summary-item">
+                                <span class="label">Khách hàng:</span>
+                                <span class="val fw-semibold" id="sumCustomerName">@(string.IsNullOrEmpty(Model.HoTen) ? "Quý khách" : Model.HoTen)</span>
+                            </div>
+
+                            <div class="summary-item">
+                                <span class="label">Phòng đã chọn:</span>
+                                <span class="val fw-bold text-primary" id="sumRoomName">Chưa chọn</span>
+                            </div>
+
+                            <div class="summary-item">
+                                <span class="label">Loại phòng:</span>
+                                <span class="val" id="sumRoomType">--</span>
+                            </div>
+
+                            <div class="summary-item">
+                                <span class="label">Check-in:</span>
+                                <span class="val" id="sumCheckIn">--</span>
+                            </div>
+
+                            <div class="summary-item">
+                                <span class="label">Check-out:</span>
+                                <span class="val" id="sumCheckOut">--</span>
+                            </div>
+
+                            <div class="summary-item">
+                                <span class="label">Số đêm nghỉ:</span>
+                                <span class="val" id="sumNights">1 đêm</span>
+                            </div>
+
+                            <div class="summary-item">
+                                <span class="label">Đơn giá / đêm:</span>
+                                <span class="val" id="sumUnitPrice">0 đ</span>
+                            </div>
+
+                            <hr class="summary-divider" />
+
+                            <div class="summary-total">
+                                <div class="total-label">
+                                    <span>TỔNG TIỀN DỰ KIẾN</span>
+                                    <small>(Thanh toán trực tiếp tại khách sạn)</small>
+                                </div>
+                                <div class="total-amount" id="sumTotalAmount">0 đ</div>
+                            </div>
+
+                            <div class="booking-policy">
+                                <h6><i class="fa-solid fa-shield-halved text-success me-1"></i> Chính sách khách sạn:</h6>
+                                <ul>
+                                    <li>Hỗ trợ hủy phòng miễn phí trước 24 giờ.</li>
+                                    <li>Nhận phòng từ 14:00, trả phòng trước 12:00.</li>
+                                    <li>Nhân viên sẽ gọi điện xác nhận trong vòng 15 phút.</li>
+                                </ul>
+                            </div>
+
+                            <button type="submit" class="btn-confirm-booking" id="btnSubmitBooking">
+                                <i class="fa-solid fa-paper-plane me-2"></i> XÁC NHẬN ĐẶT PHÒNG
+                            </button>
+
+                            <p class="secure-text text-center mt-3">
+                                <i class="fa-solid fa-lock me-1"></i> Thông tin của bạn được bảo mật tuyệt đối.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </form>
+
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .customer-booking-page {
+            background: #f8f6f2;
+            min-height: 100vh;
+            padding: 40px 16px 80px;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: #2b231d;
+        }
+
+        .booking-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* HEADER */
+        .booking-header {
+            margin-bottom: 32px;
+            position: relative;
+        }
+
+        .btn-back-home {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #8c7764;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 14px;
+            margin-bottom: 16px;
+            transition: color 0.2s;
+        }
+
+        .btn-back-home:hover {
+            color: #4a3b2c;
+        }
+
+        .booking-badge {
+            display: inline-block;
+            background: #e9decb;
+            color: #6e563b;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 20px;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        .header-content h1 {
+            font-size: 32px;
+            font-weight: 700;
+            color: #2b231d;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .header-content p {
+            color: #7b6f65;
+            font-size: 15px;
+            max-width: 700px;
+            margin: 0;
+        }
+
+        /* CARDS */
+        .booking-card {
+            background: #ffffff;
+            border: 1px solid #e7ded4;
+            border-radius: 12px;
+            padding: 28px;
+            box-shadow: 0 4px 20px rgba(70, 55, 42, 0.04);
+        }
+
+        .card-title-box {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #f0e9e1;
+        }
+
+        .step-num {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #b99a7e;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .card-title-box h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0;
+            color: #2b231d;
+        }
+
+        .card-title-box p {
+            margin: 2px 0 0;
+            font-size: 13px;
+            color: #8c7d71;
+        }
+
+        .required-mark::after {
+            content: " *";
+            color: #dc3545;
+        }
+
+        .input-icon-wrap {
+            position: relative;
+        }
+
+        .input-icon-wrap i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #a4978a;
+            font-size: 14px;
+        }
+
+        .input-icon-wrap .form-control {
+            padding-left: 40px;
+        }
+
+        .form-control {
+            border: 1.5px solid #dcd3c8;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 14.5px;
+            transition: all 0.2s;
+        }
+
+        .form-control:focus {
+            border-color: #b99a7e;
+            box-shadow: 0 0 0 3px rgba(185, 154, 126, 0.18);
+        }
+
+        .stay-duration-badge {
+            background: #fbf8f3;
+            border: 1px dashed #d6c6b2;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #725e4c;
+        }
+
+        /* ROOM SELECTION GRID */
+        .room-selection-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 16px;
+        }
+
+        .room-option-card {
+            position: relative;
+            cursor: pointer;
+            border: 2px solid #e7ded4;
+            border-radius: 10px;
+            padding: 16px;
+            background: #ffffff;
+            transition: all 0.25s ease;
+            display: block;
+        }
+
+        .room-option-card:hover {
+            border-color: #c9ad96;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+        }
+
+        .room-option-card.selected {
+            border-color: #b99a7e;
+            background: #fcf9f5;
+            box-shadow: 0 0 0 2px rgba(185, 154, 126, 0.3);
+        }
+
+        .room-radio {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .room-card-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .room-num {
+            font-weight: 700;
+            font-size: 16px;
+            color: #2b231d;
+        }
+
+        .room-status-badge {
+            font-size: 11px;
+            background: #e6f4ea;
+            color: #137333;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+
+        .room-card-type {
+            font-size: 13.5px;
+            color: #8c7d71;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .room-card-meta {
+            font-size: 12px;
+            color: #665b51;
+            margin-bottom: 12px;
+        }
+
+        .room-card-price strong {
+            font-size: 16px;
+            color: #b05d1a;
+        }
+
+        .room-card-price small {
+            color: #8c7d71;
+            font-size: 12px;
+            margin-left: 2px;
+        }
+
+        /* SUMMARY CARD */
+        .booking-summary-card {
+            background: #ffffff;
+            border: 1px solid #e7ded4;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(70, 55, 42, 0.08);
+        }
+
+        .summary-header {
+            background: #2b231d;
+            color: #ffffff;
+            padding: 20px 24px;
+        }
+
+        .summary-header .sub-title {
+            font-size: 11px;
+            letter-spacing: 1.5px;
+            color: #c9ad96;
+            font-weight: 700;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .summary-header h4 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .summary-body {
+            padding: 24px;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .summary-item .label {
+            color: #7b6f65;
+        }
+
+        .summary-item .val {
+            color: #2b231d;
+            text-align: right;
+        }
+
+        .summary-divider {
+            margin: 20px 0;
+            border-color: #ebdcd0;
+        }
+
+        .summary-total {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 24px;
+        }
+
+        .total-label span {
+            font-weight: 700;
+            font-size: 14px;
+            color: #2b231d;
+            display: block;
+        }
+
+        .total-label small {
+            font-size: 11.5px;
+            color: #8c7d71;
+        }
+
+        .total-amount {
+            font-size: 24px;
+            font-weight: 700;
+            color: #b05d1a;
+        }
+
+        .booking-policy {
+            background: #fbf9f6;
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 24px;
+            font-size: 12.5px;
+        }
+
+        .booking-policy h6 {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #2b231d;
+        }
+
+        .booking-policy ul {
+            margin: 0;
+            padding-left: 18px;
+            color: #665b51;
+        }
+
+        .booking-policy li {
+            margin-bottom: 4px;
+        }
+
+        .btn-confirm-booking {
+            width: 100%;
+            padding: 16px;
+            background: #b99a7e;
+            color: #ffffff;
+            border: 0;
+            border-radius: 8px;
+            font-size: 15.5px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 6px 18px rgba(185, 154, 126, 0.35);
+        }
+
+        .btn-confirm-booking:hover {
+            background: #9d7d60;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(157, 125, 96, 0.45);
+        }
+
+        .secure-text {
+            font-size: 12px;
+            color: #928476;
+            margin: 0;
+        }
+
+        /* PAYMENT OPTIONS */
+        .payment-options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .payment-option-card {
+            border: 1.5px solid #e7ded4;
+            border-radius: 10px;
+            padding: 16px 20px;
+            background: #ffffff;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            display: block;
+        }
+
+        .payment-option-card:hover {
+            border-color: #b99a7e;
+            background: #fdfaf6;
+        }
+
+        .payment-option-card.active {
+            border-color: #b99a7e;
+            background: #fcf8f3;
+            box-shadow: 0 0 0 2px rgba(185, 154, 126, 0.25);
+        }
+
+        .payment-radio {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .payment-card-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .payment-desc {
+            font-size: 13px;
+            color: #7b6f65;
+            padding-left: 32px;
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const checkInInput = document.getElementById('checkInDate');
+            const checkOutInput = document.getElementById('checkOutDate');
+            const nightCountSpan = document.getElementById('nightCount');
+            const durationText = document.getElementById('durationText');
+            const roomRadios = document.querySelectorAll('.room-radio');
+
+            const sumRoomName = document.getElementById('sumRoomName');
+            const sumRoomType = document.getElementById('sumRoomType');
+            const sumCheckIn = document.getElementById('sumCheckIn');
+            const sumCheckOut = document.getElementById('sumCheckOut');
+            const sumNights = document.getElementById('sumNights');
+            const sumUnitPrice = document.getElementById('sumUnitPrice');
+            const sumTotalAmount = document.getElementById('sumTotalAmount');
+
+            function formatDateVN(dateStr) {
+                if (!dateStr) return '--';
+                const parts = dateStr.split('-');
+                if (parts.length === 3) {
+                    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+                }
+                return dateStr;
+            }
+
+            function formatCurrency(amount) {
+                return new Intl.NumberFormat('vi-VN').format(amount) + ' đ';
+            }
+
+            function calculateNights() {
+                const checkInVal = checkInInput.value;
+                const checkOutVal = checkOutInput.value;
+                if (!checkInVal || !checkOutVal) return 1;
+
+                const checkIn = new Date(checkInVal);
+                const checkOut = new Date(checkOutVal);
+                const diffTime = checkOut - checkIn;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                return diffDays > 0 ? diffDays : 1;
+            }
+
+            function updateSummary() {
+                const nights = calculateNights();
+                nightCountSpan.textContent = nights + ' đêm';
+                sumNights.textContent = nights + ' đêm';
+                sumCheckIn.textContent = formatDateVN(checkInInput.value);
+                sumCheckOut.textContent = formatDateVN(checkOutInput.value);
+
+                // Update min date for checkout
+                if (checkInInput.value) {
+                    const nextDay = new Date(checkInInput.value);
+                    nextDay.setDate(nextDay.getDate() + 1);
+                    checkOutInput.min = nextDay.toISOString().split('T')[0];
+                }
+
+                // Selected room
+                let selectedRadio = document.querySelector('.room-radio:checked');
+                if (!selectedRadio && roomRadios.length > 0) {
+                    roomRadios[0].checked = true;
+                    selectedRadio = roomRadios[0];
+                }
+
+                // Update card visual
+                document.querySelectorAll('.room-option-card').forEach(card => {
+                    card.classList.remove('selected');
+                });
+
+                if (selectedRadio) {
+                    const parentCard = selectedRadio.closest('.room-option-card');
+                    if (parentCard) parentCard.classList.add('selected');
+
+                    const roomNum = selectedRadio.dataset.roomNumber;
+                    const roomType = selectedRadio.dataset.roomType;
+                    const price = parseFloat(selectedRadio.dataset.price) || 0;
+
+                    sumRoomName.textContent = 'Phòng ' + roomNum;
+                    sumRoomType.textContent = roomType;
+                    sumUnitPrice.textContent = formatCurrency(price);
+
+                    const total = price * nights;
+                    sumTotalAmount.textContent = formatCurrency(total);
+                }
+            }
+
+            checkInInput.addEventListener('change', function () {
+                const nextDay = new Date(this.value);
+                nextDay.setDate(nextDay.getDate() + 1);
+                const nextDayStr = nextDay.toISOString().split('T')[0];
+                if (checkOutInput.value <= this.value) {
+                    checkOutInput.value = nextDayStr;
+                }
+                updateSummary();
+            });
+
+            checkOutInput.addEventListener('change', updateSummary);
+
+            roomRadios.forEach(radio => {
+                radio.addEventListener('change', updateSummary);
+            });
+
+            // Payment radio cards
+            const paymentRadios = document.querySelectorAll('.payment-radio');
+            paymentRadios.forEach(radio => {
+                radio.addEventListener('change', function () {
+                    document.querySelectorAll('.payment-option-card').forEach(c => c.classList.remove('active'));
+                    const parent = this.closest('.payment-option-card');
+                    if (parent) parent.classList.add('active');
+                });
+            });
+
+            // Initial calculation
+            updateSummary();
+        });
+    </script>
+}

@@ -45,11 +45,23 @@
                     }
                     else if (Model.TrangThai == "DaXacNhan")
                     {
-                        <span class="badge bg-success px-3 py-2 rounded-pill fw-normal">Đã xác nhận</span>
+                        <span class="badge bg-primary px-3 py-2 rounded-pill fw-normal">Đã xác nhận</span>
+                    }
+                    else if (Model.TrangThai == "DangLuuTru")
+                    {
+                        <span class="badge bg-success px-3 py-2 rounded-pill fw-normal">Đã nhận phòng</span>
+                    }
+                    else if (Model.TrangThai == "DaHoanThanh")
+                    {
+                        <span class="badge bg-info text-dark px-3 py-2 rounded-pill fw-normal">Đã hoàn thành</span>
+                    }
+                    else if (Model.TrangThai == "DaHuy")
+                    {
+                        <span class="badge bg-danger px-3 py-2 rounded-pill fw-normal">Đã hủy</span>
                     }
                     else
                     {
-                        <span class="badge bg-danger px-3 py-2 rounded-pill fw-normal">Đã hủy</span>
+                        <span class="badge bg-secondary px-3 py-2 rounded-pill fw-normal">@(Model.TrangThai ?? "Chưa xác định")</span>
                     }
                 </div>
             </div>
