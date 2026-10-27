@@ -326,6 +326,59 @@ namespace HotelManagement.Services
             }
         }
 
+        public async Task<(bool Success, string Message)> CheckOutAsync(
+    int maDatPhong,
+    int maPhong)
+        {
+            await using var transaction =
+                await _context.Database.BeginTransactionAsync();
+            try
+            {
+                var chiTiet = await _context.ChiTietDatPhongs
+                    .Include(c => c.DatPhong)
+                    .Include(c => c.Phong)
+                    .FirstOrDefaultAsync(c =>
+                        c.MaDatPhong == maDatPhong &&
+                        c.MaPhong == maPhong);
+
+                if (chiTiet == null || chiTiet.DatPhong == null || chiTiet.Phong == null)
+                    return (false, "Không tìm thấy chi tiết đặt phòng.");
+
+                var luuTru = await _context.LuuTrus
+                    .Where(l =>
+                        l.MaChiTietDatPhong == chiTiet.MaChiTietDatPhong &&
+                        l.ThoiGianNhanPhong != null &&
+                        l.ThoiGianTraPhong == null)
+                    .OrderByDescending(l => l.ThoiGianNhanPhong)
+                    .FirstOrDefaultAsync();
+
+                if (luuTru == null)
+                    return (false, "Phòng này chưa nhận hoặc đã trả phòng.");
+
+                luuTru.ThoiGianTraPhong = DateTime.Now;
+                chiTiet.Phong.TrangThai = "DangDon";
+                await _context.SaveChangesAsync();
+
+                var conPhongChuaTra = await _context.ChiTietDatPhongs
+                    .Where(c => c.MaDatPhong == maDatPhong)
+                    .AnyAsync(c => !c.DanhSachLuuTru
+                        .Any(l => l.ThoiGianTraPhong != null));
+
+                if (!conPhongChuaTra)
+                {
+                    chiTiet.DatPhong.TrangThai = "DaHoanThanh";
+                    await _context.SaveChangesAsync();
+                }
+
+                await transaction.CommitAsync();
+                return (true, "Trả phòng thành công. Phòng chuyển sang đang dọn dẹp.");
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                return (false, "Không thể trả phòng.");
+            }
+        }
 
         private async Task<string?> ValidateAsync(
             DatPhongViewModel model,

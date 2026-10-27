@@ -241,5 +241,105 @@ namespace HotelManagement.Controllers
                 message = result.Message
             });
         }
+        
+        // POST: /DatPhong/CheckOut
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CheckOut(int id, int maPhong)
+        {
+            var result = await _service.CheckOutAsync(id, maPhong);
+            if (!result.Success)
+                return BadRequest(new { success = false, message = result.Message });
+
+            return Json(new { success = true, message = result.Message });
+        }
+
+        // POST: /DatPhong/DonDepXong
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DonDepXong(int maPhong)
+        {
+            var phong = await _context.Phongs
+                .FirstOrDefaultAsync(p => p.MaPhong == maPhong);
+
+            if (phong == null)
+                return BadRequest(new { success = false, message = "Không tìm thấy phòng." });
+
+            var trangThai = phong.TrangThai?.Trim();
+            if (trangThai != "DangDon" && trangThai != "Đang dọn dẹp")
+                return BadRequest(new { success = false, message = "Phòng không ở trạng thái đang dọn dẹp." });
+
+            phong.TrangThai = "Trong";
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Phòng đã dọn dẹp xong và sẵn sàng đón khách." });
+        }
+
+        // GET: /DatPhong/DichVuLuuTru?maPhong=3
+        [HttpGet]
+        public async Task<IActionResult> DichVuLuuTru(int maPhong)
+        {
+            var luuTru = await _context.LuuTrus
+                .AsNoTracking()
+                .Include(l => l.ChiTietDatPhong)
+                    .ThenInclude(c => c!.Phong)
+                .Include(l => l.ChiTietDichVus)
+                    .ThenInclude(d => d.DichVu)
+                .Where(l =>
+                    l.ChiTietDatPhong != null &&
+                    l.ChiTietDatPhong.MaPhong == maPhong &&
+                    l.ThoiGianNhanPhong != null &&
+                    l.ThoiGianTraPhong == null)
+                .OrderByDescending(l => l.ThoiGianNhanPhong)
+                .FirstOrDefaultAsync();
+
+            if (luuTru == null)
+            {
+                return Content(
+                    "<div class='type-empty'><p>Phòng này hiện không có khách đang lưu trú.</p></div>",
+                    "text/html");
+            }
+
+            ViewBag.DanhSachDichVu = await _context.DichVus
+                .AsNoTracking()
+                .Where(d => d.TrangThai)
+                .OrderBy(d => d.TenDichVu)
+                .ToListAsync();
+
+            return PartialView("_DichVuLuuTru", luuTru);
+        }
+
+        // POST: /DatPhong/ThemDichVu
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ThemDichVu(int maLuuTru, int maDichVu, int soLuong)
+        {
+            if (soLuong < 1 || soLuong > 100)
+                return BadRequest(new { success = false, message = "Số lượng phải từ 1 đến 100." });
+
+            var luuTru = await _context.LuuTrus
+                .FirstOrDefaultAsync(l => l.MaLuuTru == maLuuTru);
+
+            if (luuTru == null || luuTru.ThoiGianTraPhong != null)
+                return BadRequest(new { success = false, message = "Phòng không còn khách đang lưu trú." });
+
+            var dichVu = await _context.DichVus
+                .FirstOrDefaultAsync(d => d.Id == maDichVu && d.TrangThai);
+
+            if (dichVu == null)
+                return BadRequest(new { success = false, message = "Dịch vụ không tồn tại hoặc đã ngừng cung cấp." });
+
+            _context.ChiTietDichVus.Add(new ChiTietDichVu
+            {
+                MaLuuTru = luuTru.MaLuuTru,
+                MaDichVu = dichVu.Id,
+                SoLuong = soLuong,
+                DonGia = dichVu.Gia,
+                ThoiGianSuDung = DateTime.Now
+            });
+
+            await _context.SaveChangesAsync();
+            return Json(new { success = true, message = "Đã thêm dịch vụ." });
+        }
     }
 }

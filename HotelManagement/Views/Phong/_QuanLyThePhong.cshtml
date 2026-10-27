@@ -227,6 +227,40 @@
             <i class="bi bi-person-check"></i>
             Khách đang lưu trú
         </span>
+
+        <button type="button"
+                class="rp-main-btn"
+                onclick="moDichVu(@Model.MaPhong)">
+            <i class="bi bi-cup-hot"></i>
+            Dịch vụ
+        </button>
+
+        @if (datPhong != null)
+        {
+            <button type="button"
+                    class="rp-main-btn"
+                    onclick="thucHienThaoTacPhong(
+                            '@Url.Action("CheckOut", "DatPhong")',
+                            @datPhong.MaDatPhong,
+                            @Model.MaPhong,
+                            'Xác nhận trả phòng? Phòng sẽ chuyển sang trạng thái đang dọn dẹp.')">
+                <i class="bi bi-box-arrow-right"></i>
+                Trả phòng
+            </button>
+        }
+    }
+    else if (dangDon)
+    {
+        <button type="button"
+                class="rp-main-btn"
+                onclick="thucHienThaoTacPhong(
+                    '@Url.Action("DonDepXong", "DatPhong")',
+                    0,
+                    @Model.MaPhong,
+                    'Xác nhận phòng đã dọn dẹp xong? Phòng sẽ chuyển về trạng thái trống.')">
+            <i class="bi bi-check2-circle"></i>
+            Dọn dẹp xong
+        </button>
     }
 </div>
 
@@ -523,6 +557,14 @@
         color: #15803d;
         font-size: 14px;
         font-weight: 600;
+    }
+
+    .rp-footer .rp-stay-label {
+        order: -1;
+        margin-right: auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
     }
 
     .rp-inline-form {

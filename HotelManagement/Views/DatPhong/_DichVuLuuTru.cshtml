@@ -1,0 +1,218 @@
+﻿@model HotelManagement.Models.LuuTru
+
+@{
+    var daDung = Model.ChiTietDichVus
+        .OrderByDescending(d => d.ThoiGianSuDung)
+        .ToList();
+    var tongTien = daDung.Sum(d => d.SoLuong * d.DonGia);
+    var danhSachDichVu = ViewBag.DanhSachDichVu as List<HotelManagement.Models.DichVu>
+        ?? new List<HotelManagement.Models.DichVu>();
+    var soPhong = Model.ChiTietDatPhong?.Phong?.SoPhong;
+}
+
+<div class="dv-header">
+    <h2>Dịch vụ phòng @soPhong</h2>
+    <button type="button" class="dv-close" onclick="dongDichVu()" aria-label="Đóng">
+        <i class="bi bi-x-lg"></i>
+    </button>
+</div>
+
+<div class="dv-body">
+    <h3 class="dv-title">Dịch vụ đã sử dụng</h3>
+
+    @if (daDung.Count == 0)
+    {
+        <p class="dv-empty">Chưa có dịch vụ nào được thêm.</p>
+    }
+    else
+    {
+        <div class="dv-table-wrap">
+            <table class="dv-table">
+                <thead>
+                    <tr>
+                        <th>Dịch vụ</th>
+                        <th>SL</th>
+                        <th>Đơn giá</th>
+                        <th>Thành tiền</th>
+                        <th>Thời gian</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var d in daDung)
+                    {
+                        <tr>
+                            <td>@(d.DichVu?.TenDichVu ?? "Dịch vụ đã xóa")</td>
+                            <td>@d.SoLuong</td>
+                            <td>@d.DonGia.ToString("N0") đ</td>
+                            <td>@((d.SoLuong * d.DonGia).ToString("N0")) đ</td>
+                            <td>@d.ThoiGianSuDung.ToString("HH:mm dd/MM")</td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="3">Tổng cộng</td>
+                        <td colspan="2">@tongTien.ToString("N0") đ</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    }
+
+    <h3 class="dv-title">Thêm dịch vụ</h3>
+
+    @if (danhSachDichVu.Count == 0)
+    {
+        <p class="dv-empty">Chưa có dịch vụ nào đang hoạt động. Hãy thêm ở mục Dịch vụ.</p>
+    }
+    else
+    {
+        <div class="dv-add">
+            <select id="dvChon">
+                <option value="">-- Chọn dịch vụ --</option>
+                @foreach (var dv in danhSachDichVu)
+                {
+                    <option value="@dv.Id">@dv.TenDichVu - @dv.Gia.ToString("N0") đ</option>
+                }
+            </select>
+            <input id="dvSoLuong" type="number" min="1" max="100" value="1" />
+            <button type="button" class="dv-btn" onclick="themDichVu(@Model.MaLuuTru)">
+                <i class="bi bi-plus-lg"></i> Thêm
+            </button>
+        </div>
+    }
+</div>
+
+<div class="dv-footer">
+    <button type="button" class="dv-btn-light" onclick="dongDichVu()">Đóng</button>
+</div>
+
+<style>
+    .dv-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 24px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+        .dv-header h2 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+    .dv-close {
+        border: 0;
+        background: #f1f4f8;
+        border-radius: 8px;
+        padding: 8px 10px;
+        cursor: pointer;
+    }
+
+    .dv-body {
+        padding: 20px 24px;
+    }
+
+    .dv-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: #166534;
+        margin: 18px 0 10px;
+    }
+
+        .dv-title:first-child {
+            margin-top: 0;
+        }
+
+    .dv-empty {
+        color: #7b8798;
+        font-size: 14px;
+        margin: 0 0 8px;
+    }
+
+    .dv-table-wrap {
+        overflow-x: auto;
+    }
+
+    .dv-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+    }
+
+        .dv-table th {
+            background: #f7f9fc;
+            color: #65748b;
+            font-size: 12px;
+            text-align: left;
+            padding: 10px;
+        }
+
+        .dv-table td {
+            padding: 10px;
+            border-bottom: 1px solid #edf0f5;
+        }
+
+        .dv-table tfoot td {
+            font-weight: 700;
+            color: #198754;
+            border-bottom: 0;
+        }
+
+    .dv-add {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+        .dv-add select {
+            flex: 1;
+            min-width: 200px;
+            padding: 10px;
+            border: 1px solid #dce3ed;
+            border-radius: 8px;
+        }
+
+        .dv-add input {
+            width: 80px;
+            padding: 10px;
+            border: 1px solid #dce3ed;
+            border-radius: 8px;
+        }
+
+    .dv-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 10px 18px;
+        border: 0;
+        border-radius: 8px;
+        background: #198754;
+        color: #fff;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+        .dv-btn:hover {
+            background: #157347;
+        }
+
+    .dv-footer {
+        display: flex;
+        justify-content: flex-end;
+        padding: 14px 24px;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .dv-btn-light {
+        padding: 10px 22px;
+        border: 0;
+        border-radius: 8px;
+        background: #eef1f6;
+        color: #263449;
+        font-weight: 600;
+        cursor: pointer;
+    }
+</style>

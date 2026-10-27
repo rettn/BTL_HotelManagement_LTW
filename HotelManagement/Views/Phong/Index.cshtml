@@ -163,6 +163,13 @@
         </section>
     </div>
 
+    <div id="dichVuModal" class="type-modal" aria-hidden="true">
+        <div class="type-modal-backdrop" onclick="dongDichVu()"></div>
+        <section class="type-modal-dialog" role="dialog" aria-modal="true">
+            <div id="dichVuContent"></div>
+        </section>
+    </div>
+
     <div id="loaiPhongModal" class="type-modal" aria-hidden="true">
         <div class="type-modal-backdrop" data-close-type-modal></div>
         <section class="type-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="loaiPhongModalTitle">
@@ -220,53 +227,22 @@
 </style>
 
 <script>
-    // Dùng chung cho nút "Nhận phòng" và "Hủy đặt phòng" trong popup phòng
-        async function thucHienThaoTacPhong(url, maDatPhong, maPhong, thongBaoXacNhan) {
-        // 1. Popup hỏi xác nhận giao diện đẹp
-        const result = await Swal.fire({
-            title: 'Xác nhận thao tác',
-            text: thongBaoXacNhan,
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#198754', // Màu xanh lá khớp giao diện
-            cancelButtonColor: '#dc3545',  // Màu đỏ cho nút Hủy
-            confirmButtonText: '<i class="bi bi-check-lg"></i> Đồng ý',
-            cancelButtonText: '<i class="bi bi-x-lg"></i> Hủy bỏ',
-            customClass: {
-                popup: 'rounded-4 shadow'
-            }
-        });
-
-        if (!result.isConfirmed) return;
+    // Nhận phòng / Hủy đặt phòng / Trả phòng trong popup phòng
+    async function thucHienThaoTacPhong(url, maDatPhong, maPhong, thongBaoXacNhan) {
+        if (!confirm(thongBaoXacNhan)) return;
 
         const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
         if (!token) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Lỗi bảo mật',
-                text: 'Thiếu mã bảo mật (anti-forgery token). Hãy tải lại trang.'
-            });
+            alert('Thiếu mã bảo mật (anti-forgery token). Hãy tải lại trang.');
             return;
         }
 
         const body = new URLSearchParams();
         body.append('id', maDatPhong);
-        if (maPhong !== null && maPhong !== undefined) {
-            body.append('maPhong', maPhong);
-        }
+        body.append('maPhong', maPhong);
         body.append('__RequestVerificationToken', token);
 
         try {
-            // 2. Hiện hiệu ứng Loading khi đang xử lý
-            Swal.fire({
-                title: 'Đang xử lý...',
-                text: 'Vui lòng chờ trong giây lát',
-                allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
-            });
-
             const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
@@ -277,34 +253,82 @@
             try { data = await response.json(); } catch { }
 
             if (!response.ok || !data || !data.success) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Thao tác thất bại',
-                    text: data?.message ?? 'Đã có lỗi xảy ra. Vui lòng thử lại.'
-                });
+                alert(data?.message ?? 'Thao tác thất bại. Vui lòng thử lại.');
                 return;
             }
 
-            // 3. Thông báo thành công & Tải lại trang
-            await Swal.fire({
-                icon: 'success',
-                title: 'Thành công!',
-                text: data.message,
-                timer: 1500,
-                showConfirmButton: false
-            });
-
+            alert(data.message);
             location.reload();
         } catch (err) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Lỗi kết nối',
-                text: 'Không thể kết nối đến máy chủ.'
-            });
+            alert('Không thể kết nối đến máy chủ.');
         }
     }
 
-    //
+    // Dịch vụ của phòng đang lưu trú
+    let dichVuMaPhong = null;
+
+    function moDichVu(maPhong) {
+        dichVuMaPhong = maPhong;
+        const modal = document.getElementById('dichVuModal');
+        const content = document.getElementById('dichVuContent');
+
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('type-modal-open');
+        content.innerHTML =
+            '<div class="type-loading"><i class="bi bi-arrow-repeat"></i> Đang tải dịch vụ...</div>';
+
+        fetch('/DatPhong/DichVuLuuTru?maPhong=' + maPhong)
+            .then(r => { if (!r.ok) throw new Error(); return r.text(); })
+            .then(html => { content.innerHTML = html; })
+            .catch(() => {
+                content.innerHTML =
+                    '<div class="type-empty"><p class="text-danger">Không thể tải danh sách dịch vụ.</p></div>';
+            });
+    }
+
+    function dongDichVu() {
+        const modal = document.getElementById('dichVuModal');
+        modal.classList.remove('show');
+        modal.setAttribute('aria-hidden', 'true');
+        if (!document.querySelector('.type-modal.show')) {
+            document.body.classList.remove('type-modal-open');
+        }
+    }
+
+    async function themDichVu(maLuuTru) {
+        const maDichVu = document.getElementById('dvChon').value;
+        const soLuong = document.getElementById('dvSoLuong').value;
+
+        if (!maDichVu) { alert('Vui lòng chọn dịch vụ.'); return; }
+
+        const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+        const body = new URLSearchParams();
+        body.append('maLuuTru', maLuuTru);
+        body.append('maDichVu', maDichVu);
+        body.append('soLuong', soLuong);
+        body.append('__RequestVerificationToken', token);
+
+        try {
+            const response = await fetch('/DatPhong/ThemDichVu', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+                body: body
+            });
+
+            let data = null;
+            try { data = await response.json(); } catch { }
+
+            if (!response.ok || !data || !data.success) {
+                alert(data?.message ?? 'Không thể thêm dịch vụ.');
+                return;
+            }
+
+            moDichVu(dichVuMaPhong);
+        } catch (err) {
+            alert('Không thể kết nối đến máy chủ.');
+        }
+    }
 </script>
 
 <script>

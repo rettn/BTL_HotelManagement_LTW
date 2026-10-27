@@ -1,5 +1,4 @@
-﻿
-@model IEnumerable<HotelManagement.Models.DatPhong>
+﻿@model IEnumerable<HotelManagement.Models.DatPhong>
 
 @{
     ViewData["Title"] = "Danh sách đặt phòng";
@@ -245,6 +244,8 @@
 </style>
 
 <div class="booking-page">
+
+    @* Thông báo sau khi xóa / hủy (nếu layout đã hiện TempData thì xóa 2 khối này đi) *@
     @if (TempData["Success"] != null)
     {
         <div class="alert alert-success">@TempData["Success"]</div>
@@ -253,6 +254,7 @@
     {
         <div class="alert alert-danger">@TempData["Error"]</div>
     }
+
     <div class="booking-toolbar">
         <div>
             <h2>Danh sách đặt phòng</h2>
@@ -368,7 +370,7 @@
                                               asp-action="Cancel"
                                               asp-route-id="@datPhong.MaDatPhong"
                                               method="post"
-                                              onsubmit="return confirm('Cậu có chắc muốn hủy lượt đặt phòng này?');">
+                                              onsubmit="return huyDatPhong(event, this);">
                                             @Html.AntiForgeryToken()
                                             <button type="submit"
                                                     class="booking-action booking-action-danger"
@@ -420,6 +422,36 @@
 
 @section Scripts {
     <script>
+        async function huyDatPhong(event, form) {
+            event.preventDefault();
+
+            if (!confirm('Cậu có chắc muốn hủy lượt đặt phòng này?')) {
+                return false;
+            }
+
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: new FormData(form)
+                });
+
+                let data = null;
+                try { data = await response.json(); } catch { }
+
+                if (!response.ok || !data || !data.success) {
+                    alert(data?.message ?? 'Hủy phiếu thất bại. Vui lòng thử lại.');
+                    return false;
+                }
+
+                alert(data.message);
+                location.reload();
+            } catch (err) {
+                alert('Không thể kết nối đến máy chủ.');
+            }
+
+            return false;
+        }
+
         (() => {
             const search = document.getElementById("bookingSearch");
             const rows = [...document.querySelectorAll("#bookingTableBody tr")];
