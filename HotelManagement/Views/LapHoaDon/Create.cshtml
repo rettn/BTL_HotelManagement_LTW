@@ -1,0 +1,69 @@
+﻿@model HotelManagement.ViewModels.LapHoaDonViewModel
+
+@{
+    ViewData["Title"] = "Lập hóa đơn";
+}
+
+<h2>Lập hóa đơn</h2>
+
+@if (TempData["ThongBao"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["ThongBao"]
+    </div>
+}
+
+@if (TempData["Loi"] != null)
+{
+    <div class="alert alert-danger">
+        @TempData["Loi"]
+    </div>
+}
+
+<form asp-action="Preview" method="get">
+
+    <div asp-validation-summary="All"
+         class="text-danger"></div>
+
+    <div class="mb-3">
+        <label asp-for="MaLuuTru" class="form-label">
+            Chọn lượt lưu trú
+        </label>
+
+        <select asp-for="MaLuuTru"
+                asp-items="Model.DanhSachLuuTru"
+                class="form-select">
+            <option value="">-- Chọn lượt lưu trú --</option>
+        </select>
+
+        <span asp-validation-for="MaLuuTru"
+              class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="GiamGia" class="form-label">
+            Số tiền giảm giá (VNĐ)
+        </label>
+
+        <input asp-for="GiamGia"
+               type="number"
+               min="0"
+               step="1000"
+               class="form-control"
+               value="0" />
+
+        <span asp-validation-for="GiamGia"
+              class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">
+        Xem trước hóa đơn
+    </button>
+
+</form>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

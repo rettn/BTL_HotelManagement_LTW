@@ -55,9 +55,9 @@ builder.Services.AddScoped<PhongService>();
 builder.Services.AddScoped<KhachHangRepository>();
 builder.Services.AddScoped<KhachHangService>();
 
-//Quan li dat phong
-builder.Services.AddScoped<DatPhongRepository>();
-builder.Services.AddScoped<DatPhongService>();
+builder.Services.AddScoped<GhiNhanDichVuService>();
+
+builder.Services.AddScoped<LapHoaDonService>();
 
 var app = builder.Build();
 await IdentitySeeder.SeedAsync(

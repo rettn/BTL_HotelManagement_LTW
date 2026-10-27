@@ -1,0 +1,82 @@
+﻿@model IEnumerable<HotelManagement.Models.HoaDon>
+
+@{
+    ViewData["Title"] = "Danh sách hóa đơn";
+}
+
+<h2 class="mb-4">Danh sách hóa đơn</h2>
+
+@if (TempData["ThongBao"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["ThongBao"]
+    </div>
+}
+
+@if (TempData["Loi"] != null)
+{
+    <div class="alert alert-danger">
+        @TempData["Loi"]
+    </div>
+}
+
+<div class="mb-3">
+    <a asp-action="Create" class="btn btn-primary">
+        Lập hóa đơn mới
+    </a>
+</div>
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Mã hóa đơn</th>
+            <th>Ngày lập</th>
+            <th>Khách hàng</th>
+            <th>Tiền phòng</th>
+            <th>Tiền dịch vụ</th>
+            <th>Giảm giá</th>
+            <th>Tổng tiền</th>
+            <th>Trạng thái</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        @if (Model.Any())
+        {
+            @foreach (var hd in Model)
+            {
+                <tr>
+                    <td>@hd.MaHD</td>
+                    <td>@hd.NgayLap.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>
+                        @(hd.DatPhong?.KhachHang?.HoTen
+                            ?? "Chưa có thông tin")
+                    </td>
+                    <td class="text-end">
+                        @hd.TienPhong.ToString("N0") VNĐ
+                    </td>
+                    <td class="text-end">
+                        @hd.TienDichVu.ToString("N0") VNĐ
+                    </td>
+                    <td class="text-end">
+                        @hd.GiamGia.ToString("N0") VNĐ
+                    </td>
+                    <td class="text-end">
+                        <strong>
+                            @hd.TongTien.ToString("N0") VNĐ
+                        </strong>
+                    </td>
+                    <td>@hd.TrangThai</td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="8" class="text-center">
+                    Chưa có hóa đơn nào.
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

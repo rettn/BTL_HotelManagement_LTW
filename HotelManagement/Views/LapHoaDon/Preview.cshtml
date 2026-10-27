@@ -1,0 +1,122 @@
+﻿@model HotelManagement.ViewModels.LapHoaDonViewModel
+
+@{
+    ViewData["Title"] = "Xem trước hóa đơn";
+}
+
+<h2 class="mb-4">Xem trước hóa đơn</h2>
+
+@if (TempData["Loi"] != null)
+{
+    <div class="alert alert-danger">
+        @TempData["Loi"]
+    </div>
+}
+
+<div class="card mb-4">
+    <div class="card-header">
+        <strong>Thông tin khách hàng và lưu trú</strong>
+    </div>
+
+    <div class="card-body">
+        <p>
+            <strong>Mã lưu trú:</strong>
+            @Model.MaLuuTru
+        </p>
+
+        <p>
+            <strong>Khách hàng:</strong>
+            @Model.TenKhachHang
+        </p>
+
+        <p>
+            <strong>Số phòng:</strong>
+            @Model.SoPhong
+        </p>
+
+        <p>
+            <strong>Thời gian nhận phòng:</strong>
+            @Model.ThoiGianNhanPhong.ToString("dd/MM/yyyy HH:mm")
+        </p>
+
+        <p>
+            <strong>Thời gian trả phòng:</strong>
+            @Model.ThoiGianTraPhong.ToString("dd/MM/yyyy HH:mm")
+        </p>
+
+        <p>
+            <strong>Số đêm tính tiền:</strong>
+            @Model.SoDem
+        </p>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <strong>Chi tiết chi phí</strong>
+    </div>
+
+    <div class="card-body">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Khoản thu</th>
+                    <th class="text-end">Số tiền</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr>
+                    <td>
+                        Tiền phòng
+                        (@Model.SoDem đêm ×
+                        @Model.DonGiaPhong.ToString("N0") VNĐ)
+                    </td>
+                    <td class="text-end">
+                        @Model.TienPhong.ToString("N0") VNĐ
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>Tiền dịch vụ</td>
+                    <td class="text-end">
+                        @Model.TienDichVu.ToString("N0") VNĐ
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>Giảm giá</td>
+                    <td class="text-end">
+                        -@Model.GiamGia.ToString("N0") VNĐ
+                    </td>
+                </tr>
+
+                <tr class="table-primary">
+                    <th>TỔNG THANH TOÁN</th>
+                    <th class="text-end">
+                        @Model.TongTien.ToString("N0") VNĐ
+                    </th>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<form asp-action="Confirm" method="post">
+    @Html.AntiForgeryToken()
+
+    <input type="hidden" name="maLuuTru"
+           value="@Model.MaLuuTru" />
+
+    <input type="hidden" name="giamGia"
+           value="@Model.GiamGia" />
+
+    <button type="submit" class="btn btn-success"
+            onclick="return confirm('Anh có chắc chắn muốn lập hóa đơn này không?');">
+        Xác nhận lập hóa đơn
+    </button>
+
+    <a asp-action="Create" class="btn btn-secondary">
+        Quay lại
+    </a>
+</form>

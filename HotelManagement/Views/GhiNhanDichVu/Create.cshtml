@@ -1,0 +1,105 @@
+﻿@model HotelManagement.ViewModels.GhiNhanDichVuViewModel
+
+@{
+    ViewData["Title"] = "Ghi nhận dịch vụ";
+}
+
+<div class="container mt-4">
+    <h2>Ghi nhận dịch vụ khách sử dụng</h2>
+    <hr />
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    <form asp-controller="GhiNhanDichVu"
+          asp-action="Create"
+          method="post">
+
+        @Html.AntiForgeryToken()
+
+        <div asp-validation-summary="ModelOnly"
+             class="text-danger mb-3"></div>
+
+        <div class="mb-3">
+            <label asp-for="MaLuuTru"
+                   class="form-label">
+                Lượt lưu trú
+            </label>
+
+            <select asp-for="MaLuuTru"
+                    asp-items="Model.DanhSachLuuTru"
+                    class="form-select">
+                <option value="">-- Chọn lượt lưu trú --</option>
+            </select>
+
+            <span asp-validation-for="MaLuuTru"
+                  class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="MaDichVu"
+                   class="form-label">
+                Dịch vụ
+            </label>
+
+            <select asp-for="MaDichVu"
+                    asp-items="Model.DanhSachDichVu"
+                    class="form-select">
+                <option value="">-- Chọn dịch vụ --</option>
+            </select>
+
+            <span asp-validation-for="MaDichVu"
+                  class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="SoLuong"
+                   class="form-label">
+                Số lượng
+            </label>
+
+            <input asp-for="SoLuong"
+                   type="number"
+                   min="1"
+                   max="1000"
+                   class="form-control" />
+
+            <span asp-validation-for="SoLuong"
+                  class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="GhiChu"
+                   class="form-label">
+                Ghi chú
+            </label>
+
+            <textarea asp-for="GhiChu"
+                      class="form-control"
+                      rows="3"></textarea>
+
+            <span asp-validation-for="GhiChu"
+                  class="text-danger"></span>
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+            Lưu dịch vụ
+        </button>
+
+        <a asp-controller="Home"
+           asp-action="Index"
+           class="btn btn-secondary">
+            Quay lại
+        </a>
+    </form>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
