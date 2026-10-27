@@ -835,6 +835,7 @@ a {
 }
 
 
+/* CoreUI theme: green accent */
 :root {
     --cui-primary: #209c60;
     --cui-primary-rgb: 32, 156, 96;
@@ -882,12 +883,10 @@ a {
     --cui-btn-disabled-border-color: #cfd5df;
 }
 
-
 .list-group {
     --cui-list-group-active-bg: #209c60;
     --cui-list-group-active-border-color: #209c60;
 }
-
 
 .form-control:focus,
 .form-select:focus {
@@ -900,6 +899,8 @@ a {
     border-color: #209c60;
 }
 
+
+/* Password field */
 .password-field {
     position: relative;
 }
@@ -934,6 +935,7 @@ input[type="password"]::-ms-clear {
     display: none;
 }
 
+/* Settings list */
 .settings-list {
     display: flex;
     flex-direction: column;
@@ -996,4 +998,3 @@ input[type="password"]::-ms-clear {
     color: #8a93a5;
     font-size: 13px;
 }
-

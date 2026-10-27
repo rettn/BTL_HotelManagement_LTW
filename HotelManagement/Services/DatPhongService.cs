@@ -60,14 +60,15 @@ namespace HotelManagement.Services
                         .Include(p => p.LoaiPhong)
                         .FirstAsync(p => p.MaPhong == maPhong);
 
-                    datPhong.ChiTietDatPhongs.Add(
-                        new ChiTietDatPhong
-                        {
-                            MaPhong = maPhong,
-                            NgayNhan = model.NgayNhan.Date,
-                            NgayTra = model.NgayTra.Date,
-                            DonGia = phong.LoaiPhong!.GiaTheoDem
-                        });
+                    datPhong.ChiTietDatPhongs.Add(new ChiTietDatPhong
+                    {
+                        MaPhong = maPhong,
+                        NgayNhan = model.NgayNhan.Date,
+                        NgayTra = model.NgayTra.Date,
+                        DonGia = phong.LoaiPhong!.GiaTheoDem
+                    });
+
+                    phong.TrangThai = "DaDat";
                 }
 
                 _context.DatPhongs.Add(datPhong);
@@ -162,24 +163,71 @@ namespace HotelManagement.Services
 
         public async Task<(bool Success, string Message)> CancelAsync(int id)
         {
-            var datPhong = await _repository.GetByIdAsync(id);
+            await using var transaction =
+                await _context.Database.BeginTransactionAsync();
 
-            if (datPhong == null)
-                return (false, "Không tìm thấy phiếu đặt phòng.");
+            try
+            {
+                var datPhong = await _context.DatPhongs
+                    .Include(d => d.ChiTietDatPhongs)
+                        .ThenInclude(c => c.Phong)
+                    .FirstOrDefaultAsync(d => d.MaDatPhong == id);
 
-            if (datPhong.TrangThai == "DaHuy")
-                return (false, "Phiếu đặt phòng đã được hủy trước đó.");
+                if (datPhong == null)
+                    return (false, "Không tìm thấy phiếu đặt phòng.");
 
-            if (datPhong.TrangThai != "ChoXacNhan")
-                return (false,
-                    "Chỉ có thể hủy phiếu đang chờ xác nhận.");
+                if (datPhong.TrangThai == "DaHuy")
+                    return (false, "Phiếu đặt phòng đã được hủy trước đó.");
 
-            datPhong.TrangThai = "DaHuy";
+                if (datPhong.TrangThai != "ChoXacNhan")
+                    return (false, "Chỉ có thể hủy phiếu đang chờ xác nhận.");
 
-            await _repository.UpdateAsync(datPhong);
+                var maPhongList = datPhong.ChiTietDatPhongs
+                    .Select(c => c.MaPhong)
+                    .Distinct()
+                    .ToList();
 
-            return (true, "Hủy phiếu đặt phòng thành công.");
+                datPhong.TrangThai = "DaHuy";
+
+                await _context.SaveChangesAsync();
+
+                foreach (var maPhong in maPhongList)
+                {
+                    var phong = await _context.Phongs
+                        .FirstOrDefaultAsync(p => p.MaPhong == maPhong);
+
+                    if (phong == null)
+                        continue;
+
+                    var dangCoLuuTru = await _context.LuuTrus
+                        .AnyAsync(l =>
+                            l.ChiTietDatPhong != null &&
+                            l.ChiTietDatPhong.MaPhong == maPhong &&
+                            l.ThoiGianTraPhong == null);
+
+                    var conDatPhong = await _context.ChiTietDatPhongs
+                        .AnyAsync(c =>
+                            c.MaPhong == maPhong &&
+                            c.MaDatPhong != id &&
+                            c.DatPhong != null &&
+                            c.DatPhong.TrangThai != "DaHuy");
+
+                    if (!dangCoLuuTru && !conDatPhong)
+                        phong.TrangThai = "Trong";
+                }
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return (true, "Hủy phiếu đặt phòng thành công.");
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                return (false, "Không thể hủy phiếu đặt phòng.");
+            }
         }
+
 
         public async Task<(bool Success, string Message)> DeleteAsync(int id)
         {
@@ -314,8 +362,13 @@ namespace HotelManagement.Services
                 if (phong.LoaiPhong == null)
                     return $"Phòng {phong.SoPhong} chưa có loại phòng hợp lệ.";
 
-                if (phong.TrangThai != "Trong")
+                var trangThaiPhong = phong.TrangThai?.Trim();
+
+                if (trangThaiPhong != "Trong" &&
+                    trangThaiPhong != "Trống")
+                {
                     return $"Phòng {phong.SoPhong} hiện không ở trạng thái trống.";
+                }
 
                 if (await _repository.PhongBiTrungLichAsync(
                     maPhong,

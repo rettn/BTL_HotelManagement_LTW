@@ -1,0 +1,55 @@
+﻿
+@model HotelManagement.Models.KhachHang
+
+@{
+    ViewData["Title"] = "Xóa khách hàng";
+}
+
+<div class="container-fluid">
+    <h2 class="fw-bold mb-2">Xóa khách hàng</h2>
+    <p class="text-secondary">Kiểm tra thông tin trước khi xác nhận.</p>
+
+    <div class="card border-0 shadow-sm rounded-3 mt-4">
+        <div class="card-body p-4">
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle"></i>
+                Khách hàng đã có phiếu đặt phòng sẽ không thể bị xóa.
+            </div>
+
+            <dl class="row">
+                <dt class="col-sm-3">Mã khách hàng</dt>
+                <dd class="col-sm-9">KH@Model.MaKH.ToString("D4")</dd>
+
+                <dt class="col-sm-3">Họ và tên</dt>
+                <dd class="col-sm-9">@Model.HoTen</dd>
+
+                <dt class="col-sm-3">Số điện thoại</dt>
+                <dd class="col-sm-9">@(Model.SoDienThoai ?? "Chưa cập nhật")</dd>
+
+                <dt class="col-sm-3">Email</dt>
+                <dd class="col-sm-9">@(Model.Email ?? "Chưa cập nhật")</dd>
+
+                <dt class="col-sm-3">CCCD</dt>
+                <dd class="col-sm-9">@(Model.CCCD ?? "Chưa cập nhật")</dd>
+            </dl>
+
+            <form asp-action="Delete"
+                  asp-route-id="@Model.MaKH"
+                  method="post">
+                @Html.AntiForgeryToken()
+
+                <div class="d-flex gap-2 justify-content-end">
+                    <a asp-action="Index" class="btn btn-outline-secondary">
+                        Không, quay lại
+                    </a>
+
+                    <button type="submit"
+                            class="btn btn-danger"
+                            onclick="return confirm('Cậu có chắc chắn muốn xóa hồ sơ khách hàng này?');">
+                        <i class="bi bi-trash"></i> Xác nhận xóa
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

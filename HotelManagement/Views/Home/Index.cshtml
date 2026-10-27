@@ -1,4 +1,4 @@
-﻿@{
+@{
     ViewData["Title"] = "Trang chủ khách sạn";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
@@ -25,11 +25,52 @@
                     <span id="themeIcon">☾</span>
                 </button>
 
-                <a class="login-button"
-                   asp-controller="Account"
-                   asp-action="Login">
-                    ĐĂNG NHẬP
-                </a>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <a class="login-button book-btn-highlight"
+                       asp-controller="DatPhongKhachHang"
+                       asp-action="Index">
+                        <i class="fa-solid fa-calendar-plus me-1"></i> ĐẶT PHÒNG
+                    </a>
+
+                    @if (User.IsInRole("Admin") || User.IsInRole("NhanVien"))
+                    {
+                        <a class="login-button"
+                           asp-controller="Dashboard"
+                           asp-action="Index">
+                            QUẢN TRỊ
+                        </a>
+                    }
+                    else
+                    {
+                        <a class="login-button"
+                           asp-controller="Account"
+                           asp-action="Profile"
+                           title="Tài khoản cá nhân">
+                            <i class="fa-solid fa-user me-1"></i> TÀI KHOẢN
+                        </a>
+                    }
+
+                    <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="logout-btn-header" title="Đăng xuất">
+                            <i class="fa-solid fa-right-from-bracket"></i>
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    <a class="login-button book-btn-highlight"
+                       asp-controller="DatPhongKhachHang"
+                       asp-action="Index">
+                        <i class="fa-solid fa-calendar-plus me-1"></i> ĐẶT PHÒNG
+                    </a>
+                    <a class="login-button"
+                       asp-controller="Account"
+                       asp-action="Login">
+                        ĐĂNG NHẬP
+                    </a>
+                }
             </div>
         </div>
 
@@ -47,10 +88,15 @@
                 Không gian tinh tế, dịch vụ tận tâm, trải nghiệm khác biệt.
             </p>
 
-            <a class="hero-button" href="#discover">
-                KHÁM PHÁ KHÁCH SẠN
-                <span>↗</span>
-            </a>
+            <div class="hero-buttons-group">
+                <a class="hero-button booking-cta" asp-controller="DatPhongKhachHang" asp-action="Index">
+                    <i class="fa-solid fa-calendar-check me-2"></i> ĐẶT PHÒNG NGAY
+                </a>
+                <a class="hero-button hero-button-secondary" href="#discover">
+                    KHÁM PHÁ KHÁCH SẠN
+                    <span>↗</span>
+                </a>
+            </div>
         </div>
 
         <!-- Chuyển banner -->
@@ -91,6 +137,7 @@
 
         <div class="nav-links">
             <a href="#discover">Trang chủ</a>
+            <a asp-controller="DatPhongKhachHang" asp-action="Index">Đặt phòng</a>
             <a href="#rooms">Phòng nghỉ</a>
             <a href="#services">Dịch vụ</a>
             <a href="#dining">Ẩm thực</a>
@@ -163,6 +210,68 @@
     </footer>
 
 </main>
+
+@section Styles {
+    <style>
+        .book-btn-highlight {
+            background: #b99a7e !important;
+            border-color: #b99a7e !important;
+            color: #ffffff !important;
+            font-weight: 600;
+        }
+
+        .book-btn-highlight:hover {
+            background: #9d7d60 !important;
+            color: #ffffff !important;
+        }
+
+        .logout-btn-header {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #ffffff;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .logout-btn-header:hover {
+            background: rgba(220, 53, 69, 0.85);
+            border-color: #dc3545;
+            color: #ffffff;
+        }
+
+        .hero-buttons-group {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .booking-cta {
+            background: #b99a7e !important;
+            color: #ffffff !important;
+            border: 1px solid #b99a7e !important;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 15px rgba(185, 154, 126, 0.4);
+        }
+
+        .booking-cta:hover {
+            background: #9d7d60 !important;
+            border-color: #9d7d60 !important;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(157, 125, 96, 0.55);
+        }
+
+        .hero-button-secondary {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            color: #ffffff;
+        }
+    </style>
+}
 
 @section Scripts {
     <script src="~/js/hotel-home.js" asp-append-version="true"></script>

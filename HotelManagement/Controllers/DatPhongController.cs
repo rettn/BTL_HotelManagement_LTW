@@ -153,12 +153,10 @@ namespace HotelManagement.Controllers
         {
             var result = await _service.CancelAsync(id);
 
-            if (result.Success)
-                TempData["Success"] = result.Message;
-            else
-                TempData["Error"] = result.Message;
+            if (!result.Success)
+                return BadRequest(new { success = false, message = result.Message });
 
-            return RedirectToAction(nameof(Index));
+            return Json(new { success = true, message = result.Message });
         }
 
         // Nap danh sach khach hang va phong cho bieu mau
@@ -220,6 +218,7 @@ namespace HotelManagement.Controllers
             TempData[result.Success ? "Success" : "Error"] = result.Message;
             return RedirectToAction(nameof(Index));
         }
+
 
         [HttpPost]
         [ValidateAntiForgeryToken]

@@ -94,8 +94,10 @@
                     <i class="bi bi-calendar2-check"></i><span>Danh sách đặt phòng</span>
                 </a>
 
-                <a href="#" class="sidebar-link disabled-link" aria-disabled="true">
-                    <i class="bi bi-people"></i><span>Khách hàng</span>
+                <a asp-controller="KhachHang" asp-action="Index"
+                   class="sidebar-link @(currentController.Equals("KhachHang", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
+                    <i class="bi bi-people"></i>
+                    <span>Khách hàng</span>
                 </a>
 
                 <a asp-controller="DichVu" asp-action="Index"
