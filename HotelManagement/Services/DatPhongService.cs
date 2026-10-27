@@ -210,7 +210,9 @@ namespace HotelManagement.Services
                             c.MaPhong == maPhong &&
                             c.MaDatPhong != id &&
                             c.DatPhong != null &&
-                            c.DatPhong.TrangThai != "DaHuy");
+                            c.DatPhong.TrangThai != "DaHuy" &&
+                            c.DatPhong.TrangThai != "DaThanhToan" &&
+                            c.DatPhong.TrangThai != "DaHoanThanh");
 
                     if (!dangCoLuuTru && !conDatPhong)
                         phong.TrangThai = "Trong";

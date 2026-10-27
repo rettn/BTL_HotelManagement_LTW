@@ -68,7 +68,9 @@ namespace HotelManagement.Repositories
                 .Include(ct => ct.DatPhong)
                 .AnyAsync(ct => ct.MaPhong == maPhong
                     && ct.DatPhong != null
-                    && ct.DatPhong.TrangThai != "DaHuy");
+                    && ct.DatPhong.TrangThai != "DaHuy"
+                    && ct.DatPhong.TrangThai != "DaThanhToan" 
+                    && ct.DatPhong.TrangThai != "DaHoanThanh");
         }
 
         // Lay ds kem loai phong

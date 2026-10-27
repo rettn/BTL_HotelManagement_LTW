@@ -83,68 +83,6 @@ namespace HotelManagement.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: /DatPhong/Edit/1
-        public async Task<IActionResult> Edit(int id)
-        {
-            var datPhong = await _service.GetByIdAsync(id);
-
-            if (datPhong == null)
-                return NotFound();
-
-            if (datPhong.TrangThai != "ChoXacNhan")
-            {
-                TempData["Error"] = "Chỉ có thể sửa phiếu đang chờ xác nhận.";
-                return RedirectToAction(nameof(Index));
-            }
-
-            var chiTiet = datPhong.ChiTietDatPhongs.ToList();
-
-            var model = new DatPhongViewModel
-            {
-                MaDatPhong = datPhong.MaDatPhong,
-                MaKH = datPhong.MaKH,
-                NgayNhan = chiTiet.Count > 0
-                    ? chiTiet.Min(c => c.NgayNhan)
-                    : datPhong.NgayNhanDuKien,
-                NgayTra = chiTiet.Count > 0
-                    ? chiTiet.Max(c => c.NgayTra)
-                    : datPhong.NgayTraDuKien,
-                TienCoc = datPhong.TienCoc,
-                GhiChu = datPhong.GhiChu,
-                MaPhongs = chiTiet.Select(c => c.MaPhong).ToList()
-            };
-
-            await NapDuLieuFormAsync(model);
-            return View(model);
-        }
-
-        // POST: /DatPhong/Edit/1
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, DatPhongViewModel model)
-        {
-            if (id != model.MaDatPhong)
-                return BadRequest();
-
-            if (!ModelState.IsValid)
-            {
-                await NapDuLieuFormAsync(model);
-                return View(model);
-            }
-
-            var result = await _service.UpdateAsync(model);
-
-            if (!result.Success)
-            {
-                ModelState.AddModelError(string.Empty, result.Message);
-                await NapDuLieuFormAsync(model);
-                return View(model);
-            }
-
-            TempData["Success"] = result.Message;
-            return RedirectToAction(nameof(Index));
-        }
-
         // POST: /DatPhong/Cancel/1
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -343,7 +281,7 @@ namespace HotelManagement.Controllers
                     var phong = await _context.Phongs.FindAsync(ctdp.MaPhong);
                     if (phong != null)
                     {
-                        phong.TrangThai = "Trong";
+                        phong.TrangThai = "DangDon";
                     }
                 }
 

@@ -1,12 +1,13 @@
-﻿
-@model HotelManagement.ViewModels.DatPhongViewModel
+﻿@model HotelManagement.ViewModels.DatPhongViewModel
 @using HotelManagement.Models
+@using System.Globalization
 
 @{
     ViewData["Title"] = "Tạo phiếu đặt phòng";
+    var inv = CultureInfo.InvariantCulture;
 }
 
-<div class="room-create-card">
+<div class="room-create-card booking-form">
     <div class="room-create-heading">
         <h2>Tạo phiếu đặt phòng</h2>
         <p>Lựa chọn khách hàng, phòng trống và thời gian lưu trú tương ứng.</p>
@@ -14,151 +15,524 @@
 
     <form asp-action="Create" method="post">
         @Html.AntiForgeryToken()
-
         <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
-        <div class="row mb-3">
-            <div class="col-md-6">
-                <label asp-for="MaKH" class="form-label">Khách hàng</label>
-
-                <select asp-for="MaKH" class="form-select" required>
-                    <option value="">-- Chọn khách hàng --</option>
-                    @foreach (var kh in Model.KhachHangs)
+        <!-- Khách hàng & phòng -->
+        <div class="form-section">
+            <div class="form-section-title"><i class="bi bi-person-lines-fill"></i> Khách hàng &amp; phòng</div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="MaKH" class="form-label">Khách hàng</label>
+                    <select asp-for="MaKH" id="MaKHSelect" class="form-select select2-basic" required style="width: 100%;">
+                        <option value="">-- Chọn khách hàng --</option>
+                        @foreach (var kh in Model.KhachHangs)
+                        {
+                            <option value="@kh.MaKH" data-ten="@kh.HoTen" data-sdt="@kh.SoDienThoai">
+                                @kh.HoTen (@kh.SoDienThoai)
+                            </option>
+                        }
+                    </select>
+                    <span asp-validation-for="MaKH" class="text-danger"></span>
+                    @if (!Model.KhachHangs.Any())
                     {
-                        <option value="@kh.MaKH">
-                            @kh.HoTen (@kh.SoDienThoai)
-                        </option>
+                        <div class="text-danger mt-1 small">
+                            Chưa có khách hàng. Hãy thêm khách hàng trước.
+                        </div>
                     }
-                </select>
+                </div>
 
-                <span asp-validation-for="MaKH" class="text-danger"></span>
-
-                @if (!Model.KhachHangs.Any())
-                {
-                    <div class="text-danger mt-1 small">
-                        Chưa có khách hàng. Hãy thêm khách hàng trước.
-                    </div>
-                }
-            </div>
-
-            <div class="col-md-6">
-                <label asp-for="MaPhongs" class="form-label">
-                    Chọn phòng trống
-                </label>
-
-                <select asp-for="MaPhongs"
-                        class="form-select"
-                        multiple
-                        size="5"
-                        required>
-                    @foreach (var p in Model.Phongs.Where(p =>
-                        p.TrangThai == "Trong" ||
-                        p.TrangThai == "Trống"))
+                <div class="col-md-6">
+                    <label asp-for="MaPhongs" class="form-label">Chọn phòng trống</label>
+                    <select asp-for="MaPhongs" id="MaPhongsSelect" class="form-select select2-multiple" multiple="multiple" required style="width: 100%;">
+                        @foreach (var p in Model.Phongs.Where(p => p.TrangThai == "Trong" || p.TrangThai == "Trống"))
+                        {
+                            <option value="@p.MaPhong"
+                                    data-gia="@p.GiaTheoDem.ToString("0", inv)"
+                                    data-so="@p.SoPhong"
+                                    data-loai="@p.TenLoaiPhong"
+                                    data-giatext="@p.GiaTheoDem.ToString("N0", inv)">
+                                Phòng @p.SoPhong - @p.TenLoaiPhong (@p.GiaTheoDem.ToString("N0", inv) đ/đêm)
+                            </option>
+                        }
+                    </select>
+                    <span asp-validation-for="MaPhongs" class="text-danger d-block mt-1"></span>
+                    @if (!Model.Phongs.Any(p => p.TrangThai == "Trong" || p.TrangThai == "Trống"))
                     {
-                        <option value="@p.MaPhong">
-                            Phòng @p.SoPhong - @p.TenLoaiPhong
-                            (@p.GiaTheoDem.ToString("N0") đ/đêm)
-                        </option>
+                        <div class="text-danger mt-1 small">Hiện không có phòng trống.</div>
                     }
-                </select>
-
-                <small class="text-secondary">
-                    Có thể chọn nhiều phòng. Giữ Ctrl khi chọn thêm phòng.
-                </small>
-
-                <span asp-validation-for="MaPhongs"
-                      class="text-danger d-block"></span>
-
-                @if (!Model.Phongs.Any(p =>
-                    p.TrangThai == "Trong" ||
-                    p.TrangThai == "Trống"))
-                {
-                    <div class="text-danger mt-1 small">
-                        Hiện không có phòng trống.
-                    </div>
-                }
+                </div>
             </div>
         </div>
 
-        <div class="row mb-3">
-            <div class="col-md-4">
-                <label asp-for="NgayNhan" class="form-label">
-                    Ngày nhận dự kiến
-                </label>
-
-                <input asp-for="NgayNhan"
-                       type="date"
-                       class="form-control"
-                       required />
-
-                <span asp-validation-for="NgayNhan"
-                      class="text-danger"></span>
+        <!-- Thời gian & tiền cọc -->
+        <div class="form-section">
+            <div class="form-section-title"><i class="bi bi-calendar-event"></i> Thời gian lưu trú &amp; tiền cọc</div>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label asp-for="NgayNhan" class="form-label">Ngày nhận dự kiến</label>
+                    <input asp-for="NgayNhan" id="NgayNhan" type="date" class="form-control" required />
+                    <span asp-validation-for="NgayNhan" class="text-danger"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="NgayTra" class="form-label">Ngày trả dự kiến</label>
+                    <input asp-for="NgayTra" id="NgayTra" type="date" class="form-control" required />
+                    <span asp-validation-for="NgayTra" class="text-danger"></span>
+                </div>
+                <div class="col-md-4">
+                    <label for="TienCocDisplay" class="form-label">Tiền cọc (VNĐ)</label>
+                    <!-- Ô hiển thị có dấu phẩy; giá trị thật gửi lên server nằm ở input ẩn -->
+                    <input type="text" id="TienCocDisplay" inputmode="numeric" autocomplete="off"
+                           class="form-control" placeholder="0" />
+                    <input asp-for="TienCoc" id="TienCoc" type="hidden" />
+                    <span asp-validation-for="TienCoc" class="text-danger"></span>
+                </div>
             </div>
 
-            <div class="col-md-4">
-                <label asp-for="NgayTra" class="form-label">
-                    Ngày trả dự kiến
-                </label>
-
-                <input asp-for="NgayTra"
-                       type="date"
-                       class="form-control"
-                       required />
-
-                <span asp-validation-for="NgayTra"
-                      class="text-danger"></span>
-            </div>
-
-            <div class="col-md-4">
-                <label asp-for="TienCoc" class="form-label">
-                    Tiền cọc (VNĐ)
-                </label>
-
-                <input asp-for="TienCoc"
-                       type="number"
-                       min="0"
-                       class="form-control" />
-
-                <span asp-validation-for="TienCoc"
-                      class="text-danger"></span>
+            <div class="stay-summary" id="staySummary" style="display:none;">
+                <div><span class="muted">Số đêm</span><strong id="sumDem">0</strong></div>
+                <div><span class="muted">Số phòng</span><strong id="sumPhong">0</strong></div>
+                <div><span class="muted">Tạm tính</span><strong id="sumTong">0 đ</strong></div>
             </div>
         </div>
 
-        <div class="row mb-3">
-            <div class="col-12">
-                <label asp-for="GhiChu" class="form-label">
-                    Ghi chú
-                </label>
 
-                <textarea asp-for="GhiChu"
-                          class="form-control"
-                          rows="2"
-                          placeholder="Thông tin bổ sung (nếu có)"></textarea>
-
-                <span asp-validation-for="GhiChu"
-                      class="text-danger"></span>
-            </div>
+        <div class="form-section">
+            <div class="form-section-title"><i class="bi bi-chat-left-text"></i> Ghi chú</div>
+            <textarea asp-for="GhiChu" class="form-control" rows="3" placeholder="Thông tin bổ sung (nếu có)"></textarea>
+            <span asp-validation-for="GhiChu" class="text-danger"></span>
         </div>
 
-        <div class="room-create-actions">
-            <a asp-action="Index" class="btn btn-light">
-                Quay lại
-            </a>
-
-            <button type="submit" class="room-add-button">
-                <i class="bi bi-check-lg"></i>
-                Lưu phiếu đặt phòng
+        <div class="room-create-actions mt-4">
+            <a asp-action="Index" class="btn btn-light me-2">Quay lại</a>
+            <button type="submit" class="btn btn-success room-add-button">
+                <i class="bi bi-check-lg"></i> Lưu phiếu đặt phòng
             </button>
         </div>
     </form>
 </div>
 
 @section Styles {
-    <link rel="stylesheet"
-          href="~/css/room-map.css"
-          asp-append-version="true" />
-}
+    <link rel="stylesheet" href="~/css/room-map.css" asp-append-version="true" />
 
+    <!-- Nhúng CSS thư viện Select2 -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        /* ===== Bố cục form ===== */
+        .booking-form .form-section {
+            background: #fafbfc;
+            border: 1px solid #eceff3;
+            border-radius: 12px;
+            padding: 18px 20px 20px;
+            margin-bottom: 16px;
+        }
+
+        .booking-form .form-section-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #1f2d3d;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+            .booking-form .form-section-title i {
+                color: #198754;
+            }
+
+        .booking-form .form-label {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #475569;
+            margin-bottom: 6px;
+        }
+
+        .booking-form .form-control {
+            border-radius: 10px;
+            min-height: 46px;
+            border-color: #dfe3e8;
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+
+        .booking-form textarea.form-control {
+            min-height: 90px;
+        }
+
+        .booking-form .form-control:focus {
+            border-color: #198754;
+            box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.15);
+        }
+
+
+        .stay-summary {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+
+            .stay-summary > div {
+                flex: 1 1 140px;
+                background: #fff;
+                border: 1px dashed #cfe8da;
+                border-radius: 10px;
+                padding: 10px 14px;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .stay-summary .muted {
+                font-size: 0.75rem;
+                color: #7b8794;
+            }
+
+            .stay-summary strong {
+                font-size: 1.05rem;
+                color: #146c43;
+            }
+
+        .select2-container {
+            width: 100% !important;
+        }
+
+        .select2-container--default .select2-selection--multiple,
+        .select2-container--default .select2-selection--single {
+            border: 1px solid #dfe3e8;
+            border-radius: 10px;
+            min-height: 46px;
+            background-color: #fff;
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+
+        .select2-container--default.select2-container--focus .select2-selection--multiple,
+        .select2-container--default.select2-container--focus .select2-selection--single,
+        .select2-container--default.select2-container--open .select2-selection--single,
+        .select2-container--default.select2-container--open .select2-selection--multiple {
+            border-color: #198754;
+            box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.15);
+            outline: 0;
+        }
+
+
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 44px;
+            padding-left: 14px;
+            padding-right: 52px;
+            color: #1f2d3d;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__placeholder {
+            color: #8a94a3;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 44px;
+            right: 8px;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__clear {
+            position: absolute;
+            right: 30px;
+            top: 0;
+            height: 44px;
+            line-height: 44px;
+            margin: 0;
+            font-size: 18px;
+            color: #9aa5b1;
+        }
+
+            .select2-container--default .select2-selection--single .select2-selection__clear:hover {
+                color: #dc3545;
+            }
+
+        .sel-name {
+            font-weight: 500;
+            color: #1f2d3d;
+        }
+
+        .sel-sub {
+            color: #7b8794;
+            font-size: 0.85em;
+            margin-left: 6px;
+        }
+
+
+        .select2-dropdown {
+            border: 1px solid #dfe3e8;
+            border-radius: 10px;
+            box-shadow: 0 10px 28px rgba(15, 23, 42, 0.12);
+            overflow: hidden;
+            margin-top: 4px;
+        }
+
+        .select2-container--default .select2-search--dropdown {
+            padding: 10px;
+        }
+
+            .select2-container--default .select2-search--dropdown .select2-search__field {
+                border: 1px solid #dfe3e8;
+                border-radius: 8px;
+                padding: 8px 10px;
+                outline: none;
+            }
+
+                .select2-container--default .select2-search--dropdown .select2-search__field:focus {
+                    border-color: #198754;
+                }
+
+        .select2-container--default .select2-results__option {
+            padding: 9px 14px;
+        }
+
+        .select2-container--default .select2-results__option--highlighted.select2-results__option--selectable {
+            background-color: #198754;
+            color: #fff;
+        }
+
+            .select2-container--default .select2-results__option--highlighted.select2-results__option--selectable .sel-name,
+            .select2-container--default .select2-results__option--highlighted.select2-results__option--selectable .sel-sub {
+                color: #fff;
+            }
+
+        .select2-container--default .select2-results__option--selected {
+            background-color: #e8f5ee;
+        }
+
+        .room-opt {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        /* ===== Select2: chọn nhiều (phòng) ===== */
+        .select2-container--default .select2-selection--multiple {
+            padding: 4px 8px 4px 6px;
+        }
+
+            .select2-container--default .select2-selection--multiple .select2-selection__rendered {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 6px;
+                padding: 0;
+                margin: 0;
+            }
+
+            .select2-container--default .select2-selection--multiple .select2-selection__choice {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                margin: 2px 0 !important;
+                padding: 4px 10px !important;
+                background-color: #e8f5ee;
+                border: 1px solid #b7dfc8;
+                border-radius: 999px;
+                color: #146c43;
+                font-size: 0.88rem;
+                line-height: 1.4;
+            }
+
+            /* Nút x: nằm riêng một ô, không đè lên chữ */
+            .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+                position: static !important;
+                order: 2;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 18px;
+                height: 18px;
+                margin: 0 !important;
+                padding: 0 !important;
+                border: none !important;
+                border-radius: 50%;
+                background: transparent;
+                color: #5f8f77;
+                font-size: 15px;
+                line-height: 1;
+            }
+
+                .select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover {
+                    background-color: #dc3545;
+                    color: #fff;
+                }
+
+            .select2-container--default .select2-selection--multiple .select2-selection__choice__display {
+                padding: 0 !important;
+                order: 1;
+            }
+
+            .select2-container--default .select2-selection--multiple .select2-search--inline .select2-search__field {
+                margin-top: 0;
+                min-height: 34px;
+                font-family: inherit !important;
+                font-size: 1rem !important;
+                font-weight: 400;
+                color: #1f2d3d;
+                line-height: 1.5;
+            }
+
+                /* Chữ placeholder "Nhấp để chọn phòng..." cùng font với các ô khác */
+                .select2-container--default .select2-selection--multiple .select2-search--inline .select2-search__field::placeholder {
+                    font-family: inherit;
+                    font-size: 1rem;
+                    color: #8a94a3;
+                    opacity: 1;
+                }
+
+        .select2-container--default .select2-search--dropdown .select2-search__field,
+        .select2-container--default .select2-results__option {
+            font-family: inherit;
+            font-size: 1rem;
+        }
+
+        .select2-container--default .select2-selection--multiple .select2-selection__clear {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            margin: 0;
+            font-size: 18px;
+            color: #9aa5b1;
+        }
+
+            .select2-container--default .select2-selection--multiple .select2-selection__clear:hover {
+                color: #dc3545;
+            }
+    </style>
+}
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        jQuery(document).ready(function ($) {
+
+          
+            function fmt(n) {
+                return Number(n).toLocaleString('en-US');
+            }
+
+            function khResult(data) {
+                if (!data.id) return data.text;
+                var $el = $(data.element);
+                var ten = $el.data('ten') || data.text;
+                var sdt = $el.data('sdt') || '';
+                var $w = $('<span></span>');
+                $('<span class="sel-name"></span>').text(ten).appendTo($w);
+                if (sdt) $('<span class="sel-sub"></span>').text(sdt).appendTo($w);
+                return $w;
+            }
+
+            $('.select2-basic').select2({
+                placeholder: "-- Chọn khách hàng --",
+                allowClear: true,
+                width: '100%',
+                templateResult: khResult,
+                templateSelection: khResult,
+                language: {
+                    noResults: function () { return "Không tìm thấy khách hàng"; }
+                }
+            });
+
+
+            function roomResult(data) {
+                if (!data.id) return data.text;
+                var $el = $(data.element);
+                var $w = $('<div class="room-opt"></div>');
+                $('<span class="sel-name"></span>')
+                    .text('Phòng ' + $el.data('so') + ' - ' + $el.data('loai'))
+                    .appendTo($w);
+                $('<span class="sel-sub"></span>')
+                    .text($el.data('giatext') + ' đ/đêm')
+                    .appendTo($w);
+                return $w;
+            }
+
+            function roomSelection(data) {
+                if (!data.id) return data.text;
+                var $el = $(data.element);
+                return 'Phòng ' + $el.data('so');
+            }
+
+            $('.select2-multiple').select2({
+                placeholder: "Nhấp để chọn phòng...",
+                allowClear: true,
+                closeOnSelect: false,
+                width: '100%',
+                templateResult: roomResult,
+                templateSelection: roomSelection,
+                language: {
+                    noResults: function () { return "Không có phòng phù hợp"; }
+                }
+            });
+
+            // ---------- Tiền cọc (có dấu phẩy) ----------
+            function setDeposit(n) {
+                n = Math.round(Number(n) || 0);
+                $('#TienCoc').val(n);
+                $('#TienCocDisplay').val(n > 0 ? fmt(n) : '');
+            }
+
+            // Người dùng tự gõ: chỉ giữ chữ số, hiển thị lại có dấu phẩy
+            $('#TienCocDisplay').on('input', function () {
+                var digits = this.value.replace(/\D/g, '');
+                var n = digits ? parseInt(digits, 10) : 0;
+                $('#TienCoc').val(n);
+                this.value = digits ? fmt(n) : '';
+            });
+
+            // Giá trị ban đầu từ server
+            (function initDeposit() {
+                var raw = parseFloat($('#TienCoc').val());
+                if (!isNaN(raw) && raw > 0) setDeposit(raw);
+            })();
+
+            function calculate() {
+                var dNhanStr = $('#NgayNhan').val();
+                var dTraStr = $('#NgayTra').val();
+                var dNhan = new Date(dNhanStr);
+                var dTra = new Date(dTraStr);
+
+                if (dNhanStr && !isNaN(dNhan)) {
+                    var minTra = new Date(dNhan.getTime() + 24 * 60 * 60 * 1000);
+                    $('#NgayTra').attr('min', minTra.toISOString().split('T')[0]);
+                }
+
+                var soPhong = $('#MaPhongsSelect option:selected').length;
+
+                if (!dNhanStr || !dTraStr || isNaN(dNhan) || isNaN(dTra) || dNhan >= dTra) {
+                    $('#staySummary').hide();
+                    return;
+                }
+
+                var soDem = Math.round((dTra - dNhan) / (1000 * 60 * 60 * 24));
+                if (soDem < 1) soDem = 1;
+
+                var tongGiaTheoDem = 0;
+                $('#MaPhongsSelect option:selected').each(function () {
+                    tongGiaTheoDem += parseFloat($(this).attr('data-gia')) || 0;
+                });
+
+                if (tongGiaTheoDem > 0) {
+                    var tongTien = tongGiaTheoDem * soDem;
+                    setDeposit(tongTien * 0.10);
+
+                    $('#sumDem').text(soDem);
+                    $('#sumPhong').text(soPhong);
+                    $('#sumTong').text(fmt(tongTien) + ' đ');
+                    $('#staySummary').show();
+                } else {
+                    setDeposit(0);
+                    $('#staySummary').hide();
+                }
+            }
+
+            $('#NgayNhan, #NgayTra').on('change', calculate);
+            $('#MaPhongsSelect').on('change', calculate);
+
+            calculate();
+        });
+    </script>
 }

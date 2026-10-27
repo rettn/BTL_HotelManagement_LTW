@@ -7,9 +7,11 @@
     {
         "ChoXacNhan" => "Chờ xác nhận",
         "DaXacNhan" => "Đã xác nhận",
-        "DaHuy" => "Đã hủy",
+        "DaCoc" => "Đã đặt cọc",
+        "DaThanhToan" => "Đã thanh toán",
         "DangLuuTru" => "Đã nhận phòng",
         "DaHoanThanh" => "Đã hoàn thành",
+        "DaHuy" => "Đã hủy",
         _ => trangThai ?? "Chưa xác định"
     };
 
@@ -17,14 +19,31 @@
     {
         "ChoXacNhan" => "badge-pending",
         "DaXacNhan" => "badge-confirmed",
-        "DaHuy" => "badge-cancelled",
+        "DaCoc" => "badge-confirmed",
+        "DaThanhToan" => "badge-completed",
         "DangLuuTru" => "badge-staying",
         "DaHoanThanh" => "badge-completed",
+        "DaHuy" => "badge-cancelled",
         _ => "badge-pending"
     };
+
+    bool DangDonDep(HotelManagement.Models.DatPhong dp)
+    {
+        if (dp.TrangThai != "DaThanhToan" && dp.TrangThai != "DaHoanThanh")
+            return false;
+
+        return dp.ChiTietDatPhongs != null && dp.ChiTietDatPhongs.Any(ct =>
+            ct.Phong != null &&
+            (ct.Phong.TrangThai?.Trim() == "DangDon" ||
+             ct.Phong.TrangThai?.Trim() == "Đang dọn dẹp"));
+    }
 }
 
 <style>
+    .badge-cleaning {
+        background: #e9f2ff;
+        color: #2563b7;
+    }
     .booking-page {
         color: #263449;
     }
@@ -162,8 +181,8 @@
     }
 
     .badge-completed {
-        background: #e9eafc;
-        color: #5556a8;
+        background: #e4f8ed;
+        color: #16804a;
     }
 
     .booking-actions {
@@ -245,7 +264,6 @@
 
 <div class="booking-page">
 
-    @* Thông báo sau khi xóa / hủy (nếu layout đã hiện TempData thì xóa 2 khối này đi) *@
     @if (TempData["Success"] != null)
     {
         <div class="alert alert-success">@TempData["Success"]</div>
@@ -341,9 +359,16 @@
                             </td>
 
                             <td>
-                                <span class="booking-status @MauTrangThai(datPhong.TrangThai)">
-                                    @TenTrangThai(datPhong.TrangThai)
-                                </span>
+                                @if (DangDonDep(datPhong))
+                                {
+                                    <span class="booking-status badge-cleaning">Đang dọn dẹp</span>
+                                }
+                                else
+                                {
+                                    <span class="booking-status @MauTrangThai(datPhong.TrangThai)">
+                                        @TenTrangThai(datPhong.TrangThai)
+                                    </span>
+                                }
                             </td>
 
                             <td>
@@ -367,14 +392,6 @@
                                     }
                                     @if (datPhong.TrangThai == "ChoXacNhan")
                                     {
-                                        <a asp-controller="DatPhong"
-                                           asp-action="Edit"
-                                           asp-route-id="@datPhong.MaDatPhong"
-                                           class="booking-action"
-                                           title="Chỉnh sửa">
-                                            <i class="bi bi-pencil"></i>
-                                        </a>
-
                                         <form asp-controller="DatPhong"
                                               asp-action="Cancel"
                                               asp-route-id="@datPhong.MaDatPhong"
@@ -434,7 +451,7 @@
         async function huyDatPhong(event, form) {
             event.preventDefault();
 
-            if (!confirm('Cậu có chắc muốn hủy lượt đặt phòng này?')) {
+            if (!confirm('Bạn có chắc muốn hủy lượt đặt phòng này?')) {
                 return false;
             }
 
