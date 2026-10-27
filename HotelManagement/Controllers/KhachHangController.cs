@@ -25,17 +25,6 @@ namespace HotelManagement.Controllers
             return View(danhSach);
         }
 
-        // GET: /KhachHang/Details/1
-        public async Task<IActionResult> Details(int id)
-        {
-            var khachHang = await _service.GetByIdAsync(id);
-
-            if (khachHang == null)
-                return NotFound();
-
-            return View(khachHang);
-        }
-
         // GET: /KhachHang/Create
         public IActionResult Create()
         {
@@ -120,6 +109,17 @@ namespace HotelManagement.Controllers
                 TempData["Success"] = result.Message;
 
             return RedirectToAction(nameof(Index));
+        }
+
+        // GET: /KhachHang/Details/1
+        public async Task<IActionResult> Details(int id)
+        {   
+            var khachHang = await _service.GetByIdWithBookingsAsync(id);
+
+            if (khachHang == null)
+                return NotFound();
+
+            return View(khachHang);
         }
     }
 }

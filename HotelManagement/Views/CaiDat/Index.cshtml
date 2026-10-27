@@ -1,14 +1,82 @@
-﻿@{
+@{
     ViewData["Title"] = "Cài đặt";
 }
 
-<div class="settings-list">
-    <a asp-controller="QuanTri" asp-action="Index" class="settings-item">
-        <span class="settings-icon"><i class="bi bi-person-gear"></i></span>
-        <span class="settings-text">
-            <strong>Quản lý tài khoản nhân sự</strong>
-            <small>Tạo tài khoản, phân quyền, đặt lại mật khẩu, khóa và mở khóa</small>
-        </span>
-        <i class="bi bi-chevron-right settings-chevron"></i>
-    </a>
+<div class="container mt-4">
+    <h3 class="mb-4">Cài đặt hệ thống</h3>
+
+    <div class="settings-list">
+        <!-- Cài đặt 1: Quản lý nhân sự (Giữ nguyên code của bạn) -->
+        <a asp-controller="QuanTri" asp-action="Index" class="settings-item text-decoration-none">
+            <span class="settings-icon"><i class="bi bi-person-gear text-primary"></i></span>
+            <span class="settings-text">
+                <strong>Quản lý tài khoản nhân sự</strong>
+                <small>Tạo tài khoản, phân quyền, đặt lại mật khẩu, khóa và mở khóa</small>
+            </span>
+            <i class="bi bi-chevron-right settings-chevron"></i>
+        </a>
+
+        <!-- Cài đặt thanh toán -->
+        <a asp-controller="ThanhToan" asp-action="Index" class="settings-item text-decoration-none">
+            <span class="settings-icon"><i class="bi bi-qr-code-scan text-success"></i></span>
+            <span class="settings-text">
+                <strong>Cấu hình thanh toán VietQR & SePay</strong>
+                <small>Thiết lập API Key, mã ngân hàng, số tài khoản nhận tiền</small>
+            </span>
+            <i class="bi bi-chevron-right settings-chevron"></i>
+        </a>
+    </div>
 </div>
+
+<style>
+    .settings-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        max-width: 800px;
+    }
+
+    .settings-item {
+        display: flex;
+        align-items: center;
+        padding: 16px 20px;
+        background-color: #fff;
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        color: #333;
+        transition: all 0.2s ease-in-out;
+    }
+
+        .settings-item:hover {
+            background-color: #f8f9fa;
+            border-color: #cdd4da;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            color: #333;
+        }
+
+    .settings-icon {
+        font-size: 28px;
+        margin-right: 20px;
+    }
+
+    .settings-text {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+        .settings-text strong {
+            font-size: 16px;
+            margin-bottom: 2px;
+        }
+
+        .settings-text small {
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+    .settings-chevron {
+        font-size: 18px;
+        color: #adb5bd;
+    }
+</style>

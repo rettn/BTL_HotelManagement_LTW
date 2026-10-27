@@ -1,0 +1,256 @@
+﻿@model HotelManagement.Models.PaymentSetting
+@{
+    ViewData["Title"] = "Cấu hình thanh toán";
+    // Đảm bảo bạn đã khai báo Layout đúng với dự án của bạn
+    // Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    var banks = HotelManagement.Models.PaymentSetting.DanhSachNganHang;
+}
+
+<div class="container-fluid mt-4 mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center gap-3">
+            <span class="badge bg-success-subtle text-success p-3 rounded-3">
+                <i class="bi bi-qr-code-scan fs-4"></i>
+            </span>
+            <div>
+                <h3 class="fw-bold mb-0 text-dark">Cấu hình thanh toán</h3>
+                <p class="text-muted mb-0">Quản lý số tài khoản VietQR và tích hợp API SePay</p>
+            </div>
+        </div>
+
+        <!-- Nút quay lại menu cài đặt chung -->
+        <a href="javascript:history.back()" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Quay lại
+        </a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row g-4">
+        <!-- CỘT TRÁI: FORM CẤU HÌNH -->
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow-sm border-0 rounded-3">
+                <div class="card-body p-4">
+                    <!-- Trỏ form về ThanhToanController -->
+                    <form asp-controller="ThanhToan" asp-action="LuuCaiDat" method="post" id="formPaymentSettings">
+                        @Html.AntiForgeryToken()
+
+                        <!-- KHỐI 1: TÀI KHOẢN NGÂN HÀNG -->
+                        <div class="settings-group mb-4 pb-3 border-bottom">
+                            <h6 class="fw-bold text-dark mb-4">
+                                <i class="bi bi-bank2 text-primary me-2"></i>1. Thông tin tài khoản nhận tiền (VietQR)
+                            </h6>
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label asp-for="NganHangMa" class="form-label fw-semibold">Ngân hàng thụ hưởng <span class="text-danger">*</span></label>
+                                    <select asp-for="NganHangMa" class="form-select" id="selectBank">
+                                        @foreach (var b in banks)
+                                        {
+                                            <option value="@b.Ma" data-name="@b.Ten">@b.Ma - @b.Ten</option>
+                                        }
+                                    </select>
+                                    <input type="hidden" asp-for="TenNganHang" id="inputTenNganHang" />
+                                    <span asp-validation-for="NganHangMa" class="text-danger small"></span>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label asp-for="SoTaiKhoan" class="form-label fw-semibold">Số tài khoản <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light"><i class="bi bi-credit-card-2-front"></i></span>
+                                        <input asp-for="SoTaiKhoan" class="form-control" id="inputSoTaiKhoan" placeholder="Ví dụ: 0379868686" required />
+                                    </div>
+                                    <span asp-validation-for="SoTaiKhoan" class="text-danger small"></span>
+                                </div>
+
+                                <div class="col-md-8">
+                                    <label asp-for="TenChuTaiKhoan" class="form-label fw-semibold">Tên chủ tài khoản <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light"><i class="bi bi-person-badge"></i></span>
+                                        <input asp-for="TenChuTaiKhoan" class="form-control text-uppercase" id="inputTenChuTK" placeholder="Ví dụ: NGUYEN THE TOAN" required />
+                                    </div>
+                                    <small class="text-muted">Viết in hoa không dấu (trùng khớp thông tin thẻ ngân hàng)</small>
+                                    <span asp-validation-for="TenChuTaiKhoan" class="text-danger small d-block"></span>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label asp-for="TiLeThanhToanPercent" class="form-label fw-semibold">Yêu cầu thu trước</label>
+                                    <div class="input-group">
+                                        <input asp-for="TiLeThanhToanPercent" type="number" min="1" max="100" class="form-control" />
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                    <small class="text-muted">100% = Toàn bộ tiền</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- KHỐI 2: API SEPAY -->
+                        <div class="settings-group mb-4 pb-2">
+                            <h6 class="fw-bold text-dark mb-4">
+                                <i class="bi bi-cpu text-success me-2"></i>2. Tích hợp API SePay (Tự động xác nhận)
+                            </h6>
+
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label asp-for="SePayApiKey" class="form-label fw-semibold">SePay API Token / Key</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light"><i class="bi bi-key"></i></span>
+                                        <input asp-for="SePayApiKey" type="password" class="form-control font-monospace" id="inputApiKey" placeholder="Dán mã API Token từ SePay (ví dụ: SP_...)" />
+                                        <button class="btn btn-outline-secondary" type="button" id="btnToggleApiKey" title="Ẩn/Hiện">
+                                            <i class="bi bi-eye" id="eyeIcon"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-8">
+                                    <label asp-for="SePayApiUrl" class="form-label fw-semibold">SePay API URL</label>
+                                    <input asp-for="SePayApiUrl" class="form-control font-monospace text-muted" placeholder="https://my.sepay.vn/userapi/transactions/list" />
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label asp-for="NoiDungPrefix" class="form-label fw-semibold">Tiền tố mã TT</label>
+                                    <input asp-for="NoiDungPrefix" class="form-control text-uppercase font-monospace" id="inputPrefix" placeholder="DP" maxlength="10" />
+                                </div>
+
+                                <div class="col-12 mt-3">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <button type="button" class="btn btn-sm btn-outline-info rounded-pill px-3" id="btnTestSePay">
+                                            <i class="bi bi-lightning-charge me-1"></i> Test kết nối SePay
+                                        </button>
+                                        <span id="testSePayResult" class="small"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                            <button type="submit" class="btn btn-primary px-4 fw-semibold rounded-pill">
+                                <i class="bi bi-save me-1"></i> Lưu cấu hình
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- CỘT PHẢI: XEM TRƯỚC MÃ QR -->
+        <div class="col-xl-4 col-lg-5">
+            <div class="card shadow-sm border-0 rounded-3 sticky-top" style="top: 20px;">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-eye text-primary me-2"></i>Xem trước VietQR</h6>
+                </div>
+                <div class="card-body p-4 text-center">
+                    <div class="qr-preview-box p-3 bg-light rounded-3 d-inline-block border mb-3">
+                        <img id="qrPreviewImg"
+                             src="https://img.vietqr.io/image/@(Model.NganHangMa)-@(Model.SoTaiKhoan)-compact2.png?amount=500000&addInfo=@(Model.NoiDungPrefix)88&accountName=@Uri.EscapeDataString(Model.TenChuTaiKhoan ?? "")"
+                             alt="Mã QR VietQR"
+                             class="img-fluid rounded"
+                             style="max-width: 220px; height: auto;" />
+                    </div>
+
+                    <div class="text-start small bg-light p-3 rounded-3">
+                        <div class="d-flex justify-content-between py-1 border-bottom">
+                            <span class="text-muted">Ngân hàng:</span>
+                            <strong id="previewBankName">@Model.NganHangMa</strong>
+                        </div>
+                        <div class="d-flex justify-content-between py-1 border-bottom">
+                            <span class="text-muted">Số tài khoản:</span>
+                            <strong id="previewAccNo">@Model.SoTaiKhoan</strong>
+                        </div>
+                        <div class="d-flex justify-content-between py-1 border-bottom">
+                            <span class="text-muted">Chủ tài khoản:</span>
+                            <strong id="previewAccName">@Model.TenChuTaiKhoan</strong>
+                        </div>
+                        <div class="d-flex justify-content-between py-1 pt-2">
+                            <span class="text-muted">Nội dung ví dụ:</span>
+                            <strong class="text-danger fs-6" id="previewMemo">@(Model.NoiDungPrefix)88</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Toggle hiện / ẩn API Key
+        const btnToggleApiKey = document.getElementById('btnToggleApiKey');
+        const inputApiKey = document.getElementById('inputApiKey');
+        const eyeIcon = document.getElementById('eyeIcon');
+
+        if (btnToggleApiKey && inputApiKey && eyeIcon) {
+            btnToggleApiKey.addEventListener('click', () => {
+                const isPassword = inputApiKey.getAttribute('type') === 'password';
+                inputApiKey.setAttribute('type', isPassword ? 'text' : 'password');
+                eyeIcon.className = isPassword ? 'bi bi-eye-slash' : 'bi bi-eye';
+            });
+        }
+
+        // Cập nhật tên ngân hàng ẩn khi đổi dropdown
+        const selectBank = document.getElementById('selectBank');
+        const inputTenNganHang = document.getElementById('inputTenNganHang');
+        if (selectBank && inputTenNganHang) {
+            selectBank.addEventListener('change', () => {
+                const opt = selectBank.options[selectBank.selectedIndex];
+                inputTenNganHang.value = opt.getAttribute('data-name') || opt.text;
+                updateQrPreview();
+            });
+        }
+
+        // Cập nhật Preview QR
+        function updateQrPreview() {
+            const bank = document.getElementById('selectBank')?.value || 'MB';
+            const acc = document.getElementById('inputSoTaiKhoan')?.value || '';
+            const name = document.getElementById('inputTenChuTK')?.value || '';
+            const prefix = document.getElementById('inputPrefix')?.value || 'DP';
+
+            document.getElementById('previewBankName').innerText = bank;
+            document.getElementById('previewAccNo').innerText = acc || '---';
+            document.getElementById('previewAccName').innerText = name || '---';
+            document.getElementById('previewMemo').innerText = prefix + '88';
+
+            const url = `https://img.vietqr.io/image/${encodeURIComponent(bank)}-${encodeURIComponent(acc)}-compact2.png?amount=500000&addInfo=${encodeURIComponent(prefix + '88')}&accountName=${encodeURIComponent(name)}`;
+            const img = document.getElementById('qrPreviewImg');
+            if (img) img.src = url;
+        }
+
+        document.getElementById('inputSoTaiKhoan')?.addEventListener('input', updateQrPreview);
+        document.getElementById('inputTenChuTK')?.addEventListener('input', updateQrPreview);
+        document.getElementById('inputPrefix')?.addEventListener('input', updateQrPreview);
+
+        // Kiểm tra kết nối SePay - Đã trỏ API về ThanhToanController
+        const btnTestSePay = document.getElementById('btnTestSePay');
+        const testSePayResult = document.getElementById('testSePayResult');
+        if (btnTestSePay && testSePayResult) {
+            btnTestSePay.addEventListener('click', async () => {
+                testSePayResult.innerHTML = '<span class="text-primary"><i class="bi bi-arrow-repeat spin"></i> Đang kết nối...</span>';
+                btnTestSePay.disabled = true;
+
+                try {
+                    const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+                    const res = await fetch('/ThanhToan/KiemTraKetNoiSePay', {
+                        method: 'POST',
+                        headers: {
+                            'RequestVerificationToken': token,
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        }
+                    });
+                    const data = await res.json();
+                    testSePayResult.innerHTML = `<span class="fw-semibold text-dark"><i class="bi bi-info-circle me-1"></i>${data.message}</span>`;
+                } catch (e) {
+                    testSePayResult.innerHTML = '<span class="text-danger"><i class="bi bi-x-circle me-1"></i>Lỗi kết nối</span>';
+                } finally {
+                    btnTestSePay.disabled = false;
+                }
+            });
+        }
+    </script>
+}

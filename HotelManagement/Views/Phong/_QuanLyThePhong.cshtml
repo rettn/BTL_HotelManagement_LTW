@@ -2,7 +2,28 @@
 
 @{
     var tt = Model.TrangThai?.Trim() ?? "";
+
     bool laTrong = tt == "Trong" || tt == "Trống";
+    bool daDat = tt == "DaDat" || tt == "Đã đặt";
+    bool dangSuDung = tt == "DangSuDung" || tt == "Đang sử dụng";
+    bool dangDon = tt == "DangDon" || tt == "Đang dọn dẹp";
+
+    var chiTiet = ViewBag.ChiTietDatPhong
+        as HotelManagement.Models.ChiTietDatPhong;
+
+    var datPhong = chiTiet?.DatPhong;
+    var khachHang = ViewBag.KhachHang
+        as HotelManagement.Models.KhachHang;
+
+    var luuTru = ViewBag.LuuTru
+        as HotelManagement.Models.LuuTru;
+
+    var ngayNhan = chiTiet?.NgayNhan;
+    var ngayTra = chiTiet?.NgayTra;
+
+    var soDem = ngayNhan.HasValue && ngayTra.HasValue
+        ? Math.Max(0, (ngayTra.Value.Date - ngayNhan.Value.Date).Days)
+        : 0;
 
     string tenTrangThai = tt switch
     {
@@ -58,6 +79,94 @@
         </div>
     </div>
 
+    @if (chiTiet != null && datPhong != null)
+    {
+        <div class="rp-booking-info">
+            <div class="rp-booking-heading">
+                <i class="bi bi-calendar-check"></i>
+                Thông tin đặt phòng
+            </div>
+
+            <div class="rp-booking-row">
+                <div class="rp-booking-icon">
+                    <i class="bi bi-clock"></i>
+                </div>
+
+                <div class="rp-booking-content">
+                    <div class="rp-booking-label">Thời gian lưu trú dự kiến</div>
+
+                    <div class="rp-booking-dates">
+                        @chiTiet.NgayNhan.ToString("dd/MM/yyyy")
+                        <i class="bi bi-arrow-right"></i>
+                        @chiTiet.NgayTra.ToString("dd/MM/yyyy")
+                    </div>
+
+                    <div class="rp-booking-nights">
+                        <i class="bi bi-moon-stars"></i>
+                        @soDem đêm
+                    </div>
+                </div>
+            </div>
+
+            <div class="rp-booking-row">
+                <div class="rp-booking-icon">
+                    <i class="bi bi-person"></i>
+                </div>
+
+                <div class="rp-booking-content">
+                    <div class="rp-booking-label">Khách hàng</div>
+
+                    <div class="rp-booking-value">
+                        @(khachHang?.HoTen ?? "Chưa có thông tin khách hàng")
+                    </div>
+
+                    <div class="rp-booking-sub">
+                        <i class="bi bi-telephone"></i>
+                        @(string.IsNullOrWhiteSpace(khachHang?.SoDienThoai)
+                            ? "Chưa có số điện thoại"
+                            : khachHang.SoDienThoai)
+                    </div>
+                </div>
+            </div>
+
+            <div class="rp-booking-row">
+                <div class="rp-booking-icon">
+                    <i class="bi bi-journal-text"></i>
+                </div>
+
+                <div class="rp-booking-content">
+                    <div class="rp-booking-label">Ghi chú đặt phòng</div>
+
+                    @if (string.IsNullOrWhiteSpace(datPhong.GhiChu))
+                    {
+                        <div class="rp-muted">Không có ghi chú</div>
+                    }
+                    else
+                    {
+                        <div class="rp-booking-value">@datPhong.GhiChu</div>
+                    }
+                </div>
+            </div>
+
+            @if (dangSuDung && luuTru != null)
+            {
+                <div class="rp-stay-status">
+                    <i class="bi bi-check-circle-fill"></i>
+                    Đã nhận phòng lúc
+                    @(luuTru.ThoiGianNhanPhong?.ToString("HH:mm dd/MM/yyyy")
+                        ?? "Chưa xác định")
+                </div>
+            }
+        </div>
+    }
+    else if (laTrong)
+    {
+        <div class="rp-no-booking">
+            <i class="bi bi-calendar-plus"></i>
+            Phòng hiện chưa có thông tin đặt phòng.
+        </div>
+    }
+
     <div class="rp-note">
         <div class="rp-info-label"><i class="bi bi-journal-text"></i> Ghi chú phòng</div>
         @if (string.IsNullOrWhiteSpace(Model.GhiChu))
@@ -72,12 +181,52 @@
 </div>
 
 <div class="rp-footer">
-    <button type="button" class="rp-secondary-btn" id="closeRoomModalFooterBtn">Đóng</button>
+    <button type="button"
+            class="rp-secondary-btn"
+            id="closeRoomModalFooterBtn">
+        Đóng
+    </button>
+
     @if (laTrong)
     {
-        <a asp-controller="DatPhong" asp-action="Create" class="rp-main-btn">
-            <i class="bi bi-calendar-plus"></i> Đặt phòng
+        <a asp-controller="DatPhong"
+           asp-action="Create"
+           asp-route-maPhong="@Model.MaPhong"
+           class="rp-main-btn">
+            <i class="bi bi-calendar-plus"></i>
+            Đặt phòng
         </a>
+    }
+    else if (daDat && datPhong != null)
+    {
+        <button type="button"
+                class="rp-main-btn"
+                onclick="thucHienThaoTacPhong(
+                    '@Url.Action("CheckIn", "DatPhong")',
+                    @datPhong.MaDatPhong,
+                    @Model.MaPhong,
+                    'Xác nhận nhận phòng cho khách?')">
+            <i class="bi bi-box-arrow-in-right"></i>
+            Nhận phòng
+        </button>
+
+        <button type="button"
+                class="rp-danger-btn"
+                onclick="thucHienThaoTacPhong(
+                    '@Url.Action("Cancel", "DatPhong")',
+                    @datPhong.MaDatPhong,
+                    @Model.MaPhong,
+                    'Bạn có chắc chắn muốn hủy phiếu đặt phòng này?')">
+            <i class="bi bi-calendar-x"></i>
+            Hủy đặt phòng
+        </button>
+    }
+    else if (dangSuDung)
+    {
+        <span class="rp-stay-label">
+            <i class="bi bi-person-check"></i>
+            Khách đang lưu trú
+        </span>
     }
 </div>
 
@@ -272,6 +421,133 @@
             background: #157347;
             color: #fff;
         }
+    
+    .rp-booking-info {
+        margin-bottom: 16px;
+        padding: 20px;
+        border: 1px solid #dcefe3;
+        border-radius: 12px;
+        background: #fbfefc;
+    }
+
+    .rp-booking-heading {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin-bottom: 18px;
+        color: #166534;
+        font-size: 16px;
+        font-weight: 700;
+    }
+
+    .rp-booking-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        padding: 14px 0;
+        border-top: 1px solid #e5eee8;
+    }
+
+    .rp-booking-icon {
+        display: flex;
+        flex-shrink: 0;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: #e7f7ed;
+        color: #15803d;
+        font-size: 18px;
+    }
+
+    .rp-booking-content {
+        min-width: 0;
+        flex: 1;
+    }
+
+    .rp-booking-label {
+        margin-bottom: 5px;
+        color: #64748b;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .rp-booking-dates {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 9px;
+        color: #1f2937;
+        font-weight: 700;
+    }
+
+    .rp-booking-dates i {
+        color: #94a3b8;
+    }
+
+    .rp-booking-nights {
+        margin-top: 7px;
+        color: #15803d;
+        font-size: 14px;
+        font-weight: 700;
+    }
+
+    .rp-booking-value {
+        color: #1f2937;
+        font-weight: 600;
+        overflow-wrap: anywhere;
+    }
+
+    .rp-booking-sub {
+        margin-top: 5px;
+        color: #64748b;
+        font-size: 14px;
+    }
+
+    .rp-booking-sub i {
+        margin-right: 5px;
+    }
+
+    .rp-no-booking {
+        margin-bottom: 16px;
+        padding: 18px;
+        border: 1px dashed #cbd5e1;
+        border-radius: 12px;
+        color: #64748b;
+        text-align: center;
+    }
+
+    .rp-stay-status,
+    .rp-stay-label {
+        color: #15803d;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .rp-inline-form {
+        display: inline-flex;
+        margin: 0;
+    }
+
+    .rp-danger-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 12px 20px;
+        border: 0;
+        border-radius: 8px;
+        background: #fee2e2;
+        color: #b91c1c;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .rp-danger-btn:hover {
+        background: #fecaca;
+    }
 
     @@media (max-width: 800px) {
         .rp-info-grid {

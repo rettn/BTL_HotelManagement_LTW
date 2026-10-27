@@ -1,56 +1,96 @@
-﻿
 @{
     ViewData["Title"] = "Đăng nhập";
     Layout = "~/Views/Shared/_Layout.cshtml";
+    var returnUrl = ViewBag.ReturnUrl as string ?? Url.Action("Index", "DatPhongKhachHang");
 }
 
 <div class="login-page">
-    <form asp-controller="Account"
-          asp-action="Login"
-          method="post"
-          class="login-card">
-
-        @Html.AntiForgeryToken()
+    <div class="login-card">
 
         <div class="login-icon">
-            <img src="~/images/logo.png" alt="Logo" style="width: 43px; height: 43px; object-fit: contain;" />
+            <img src="~/images/logo.png" alt="Logo" style="width: 50px; height: 50px; object-fit: contain;" />
         </div>
 
         <h2>Đăng nhập</h2>
+        <p class="login-subtitle">Đăng nhập tài khoản để đặt phòng và trải nghiệm dịch vụ khách sạn</p>
+
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger mb-3">
+                @TempData["Error"]
+            </div>
+        }
+
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success mb-3">
+                @TempData["Success"]
+            </div>
+        }
 
         @if (ViewBag.Error != null)
         {
-            <div class="alert alert-danger">
+            <div class="alert alert-danger mb-3">
                 @ViewBag.Error
             </div>
         }
 
-        <label for="email">Email đăng nhập</label>
-        <input id="email"
-               name="email"
-               type="email"
-               class="form-control"
-               autocomplete="username"
-               required />
+        <!-- NÚT DÀNH CHO KHÁCH HÀNG: ĐIỀN FORM ĐẶT PHÒNG KHÔNG CẦN ĐĂNG NHẬP -->
+        <div class="guest-booking-callout mb-4">
+            <div class="callout-icon">
+                <i class="fa-solid fa-calendar-check"></i>
+            </div>
+            <div class="callout-content">
+                <strong>Bạn là khách đặt phòng?</strong>
+                <p>Không cần đăng nhập tài khoản. Điền thông tin vào phiếu đặt phòng trực tuyến chỉ mất 1 phút!</p>
+            </div>
+            <a asp-controller="DatPhongKhachHang" asp-action="Index" class="btn-guest-booking">
+                <i class="fa-solid fa-file-pen me-1"></i> Điền form đặt phòng ngay
+            </a>
+        </div>
 
-        <label for="password" class="mt-3">Mật khẩu</label>
-        <input id="password"
-               name="password"
-               type="password"
-               class="form-control"
-               autocomplete="current-password"
-               required />
+        <div class="divider">
+            <span>HOẶC ĐĂNG NHẬP QUẢN TRỊ / NHÂN SỰ</span>
+        </div>
 
-        <button type="submit" class="btn-login">
-            ĐĂNG NHẬP
-        </button>
+        <!-- FORM ĐĂNG NHẬP TRUYỀN THỐNG -->
+        <form asp-controller="Account" asp-action="Login" method="post" class="traditional-login-form">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="returnUrl" value="@returnUrl" />
+
+            <div class="form-group mb-3">
+                <label for="email" class="form-label">Email đăng nhập</label>
+                <input id="email"
+                       name="email"
+                       type="email"
+                       class="form-control"
+                       placeholder="example@gmail.com"
+                       autocomplete="username"
+                       required />
+            </div>
+
+            <div class="form-group mb-3">
+                <label for="password" class="form-label">Mật khẩu</label>
+                <input id="password"
+                       name="password"
+                       type="password"
+                       class="form-control"
+                       placeholder="••••••••"
+                       autocomplete="current-password"
+                       required />
+            </div>
+
+            <button type="submit" class="btn-login">
+                ĐĂNG NHẬP HỆ THỐNG
+            </button>
+        </form>
 
         <a asp-controller="Home"
            asp-action="Index"
            class="back-home">
-            ← Quay lại trang chủ
+            <i class="fa-solid fa-arrow-left me-1"></i> Quay lại trang chủ khách sạn
         </a>
-    </form>
+    </div>
 </div>
 
 @section Styles {
@@ -59,66 +99,184 @@
             min-height: 100vh;
             display: grid;
             place-items: center;
-            padding: 24px;
-            background: #f4f0eb;
+            padding: 32px 16px;
+            background: linear-gradient(135deg, #f7f4ee 0%, #ece5da 100%);
         }
 
         .login-card {
             width: 100%;
-            max-width: 430px;
-            padding: 38px;
-            background: white;
-            border: 1px solid #e5d9ce;
-            box-shadow: 0 15px 50px #46372a12;
+            max-width: 450px;
+            padding: 40px 36px;
+            background: #ffffff;
+            border: 1px solid #e7ded4;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(70, 55, 42, 0.1);
         }
 
         .login-icon {
-            color: #b99a7e;
-            font-size: 36px;
             text-align: center;
+            margin-bottom: 12px;
         }
 
         .login-card h2 {
-            margin-top: 14px;
             text-align: center;
-            font-weight: 400;
+            font-weight: 600;
+            color: #2b231d;
+            letter-spacing: 1px;
+            font-size: 26px;
+            margin-bottom: 6px;
         }
 
-        .login-card > p {
+        .login-subtitle {
             text-align: center;
+            font-size: 13.5px;
             color: #81766c;
-            margin-bottom: 28px;
+            margin-bottom: 24px;
+            line-height: 1.5;
         }
 
-        .login-card label {
+        /* GUEST BOOKING CALLOUT */
+        .guest-booking-callout {
+            background: linear-gradient(135deg, #fdfbf7 0%, #f7f0e6 100%);
+            border: 1.5px solid #d9c5b2;
+            border-radius: 10px;
+            padding: 18px 20px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 14px rgba(185, 154, 126, 0.12);
+        }
+
+        .callout-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: #b99a7e;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .callout-content strong {
             display: block;
-            margin-bottom: 8px;
+            color: #2b231d;
+            font-size: 15px;
+            margin-bottom: 2px;
         }
 
-        .login-card .form-control {
-            border-radius: 0;
-            padding: 12px;
+        .callout-content p {
+            color: #7b6f65;
+            font-size: 13px;
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        .btn-guest-booking {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 11px 18px;
+            background: #b99a7e;
+            color: #ffffff;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            text-decoration: none;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 12px rgba(185, 154, 126, 0.3);
+        }
+
+        .btn-guest-booking:hover {
+            background: #9d7d60;
+            color: #ffffff;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(157, 125, 96, 0.4);
+        }
+
+        /* DIVIDER */
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: 22px 0;
+            color: #a4978a;
+            font-size: 11px;
+            letter-spacing: 1px;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid #e7ded4;
+        }
+
+        .divider span {
+            padding: 0 14px;
+        }
+
+        /* FORM */
+        .form-label {
+            font-size: 13.5px;
+            font-weight: 500;
+            color: #493f35;
+            margin-bottom: 6px;
+        }
+
+        .form-control {
+            border-radius: 6px;
+            border: 1px solid #dcd3c8;
+            padding: 11px 14px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .form-control:focus {
+            border-color: #b99a7e;
+            box-shadow: 0 0 0 3px rgba(185, 154, 126, 0.2);
+            outline: none;
         }
 
         .btn-login {
             width: 100%;
-            margin-top: 24px;
-            padding: 14px;
+            margin-top: 18px;
+            padding: 13px;
             border: 0;
-            background: #c9ad96;
+            border-radius: 6px;
+            background: #b99a7e;
             color: white;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            font-size: 14.5px;
+            cursor: pointer;
+            transition: all 0.25s;
         }
 
         .btn-login:hover {
-            background: #9e7f63;
+            background: #9d7d60;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(157, 125, 96, 0.25);
         }
 
         .back-home {
-            display: block;
-            margin-top: 20px;
+            display: inline-block;
+            width: 100%;
+            margin-top: 24px;
             text-align: center;
-            color: #776759;
+            color: #8c7b6d;
             text-decoration: none;
+            font-size: 13.5px;
+            transition: color 0.2s;
+        }
+
+        .back-home:hover {
+            color: #493f35;
+            text-decoration: underline;
         }
     </style>
 }

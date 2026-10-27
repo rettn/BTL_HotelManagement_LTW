@@ -1,0 +1,151 @@
+﻿
+@model HotelManagement.Models.KhachHang
+
+@{
+    ViewData["Title"] = "Chi tiết khách hàng";
+    var danhSachDatPhong = Model.DanhSachDatPhong?
+        .OrderByDescending(dp => dp.NgayDat)
+        .ToList() ?? new List<HotelManagement.Models.DatPhong>();
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <h2 class="fw-bold">Chi tiết khách hàng</h2>
+            <p class="text-secondary mb-0">Hồ sơ và lịch sử đặt phòng</p>
+        </div>
+
+        <a asp-action="Edit" asp-route-id="@Model.MaKH"
+           class="btn btn-success">
+            <i class="bi bi-pencil"></i> Chỉnh sửa
+        </a>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-3 mb-4">
+        <div class="card-body p-4">
+            <h5 class="fw-bold mb-4">Thông tin cá nhân</h5>
+
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="text-secondary small">Mã khách hàng</div>
+                    <div class="fw-semibold">KH@Model.MaKH.ToString("D4")</div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-secondary small">Họ và tên</div>
+                    <div class="fw-semibold">@Model.HoTen</div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-secondary small">Giới tính</div>
+                    <div>@(Model.GioiTinh ?? "Chưa cập nhật")</div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-secondary small">Ngày sinh</div>
+                    <div>@(Model.NgaySinh?.ToString("dd/MM/yyyy") ?? "Chưa cập nhật")</div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-secondary small">Số điện thoại</div>
+                    <div>@(Model.SoDienThoai ?? "Chưa cập nhật")</div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-secondary small">Email</div>
+                    <div>@(Model.Email ?? "Chưa cập nhật")</div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-secondary small">CCCD</div>
+                    <div>@(Model.CCCD ?? "Chưa cập nhật")</div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-secondary small">Ngày tạo hồ sơ</div>
+                    <div>@Model.NgayTao.ToString("dd/MM/yyyy HH:mm")</div>
+                </div>
+
+                <div class="col-12">
+                    <div class="text-secondary small">Địa chỉ</div>
+                    <div>@(Model.DiaChi ?? "Chưa cập nhật")</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-3">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0">Lịch sử đặt phòng</h5>
+                <span class="badge text-bg-primary">
+                    @danhSachDatPhong.Count lượt
+                </span>
+            </div>
+
+            @if (!danhSachDatPhong.Any())
+            {
+                <div class="text-center text-secondary py-4">
+                    <i class="bi bi-calendar2-x fs-1"></i>
+                    <p class="mt-2 mb-0">Khách hàng chưa có lịch sử đặt phòng.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Mã đặt phòng</th>
+                                <th>Phòng</th>
+                                <th>Ngày đặt</th>
+                                <th>Ngày nhận</th>
+                                <th>Ngày trả</th>
+                                <th>Tiền cọc</th>
+                                <th>Trạng thái</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var dp in danhSachDatPhong)
+                            {
+                                var cacPhong = dp.ChiTietDatPhongs?
+                                    .Where(ct => ct.Phong != null)
+                                    .Select(ct => ct.Phong!.SoPhong)
+                                    .ToList() ?? new List<string>();
+
+                                <tr>
+                                    <td class="fw-semibold">DP-@dp.MaDatPhong</td>
+                                    <td>
+                                        @(cacPhong.Any()
+                                            ? string.Join(", ", cacPhong)
+                                            : "Chưa gán phòng")
+                                    </td>
+                                    <td>@dp.NgayDat.ToString("dd/MM/yyyy")</td>
+                                    <td>@dp.NgayNhanDuKien.ToString("dd/MM/yyyy")</td>
+                                    <td>@dp.NgayTraDuKien.ToString("dd/MM/yyyy")</td>
+                                    <td>@dp.TienCoc.ToString("N0") đ</td>
+                                    <td>@dp.TrangThai</td>
+                                    <td>
+                                        <a asp-controller="DatPhong"
+                                           asp-action="Details"
+                                           asp-route-id="@dp.MaDatPhong"
+                                           class="btn btn-sm btn-outline-primary">
+                                            Chi tiết
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="mt-3">
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Quay lại danh sách
+        </a>
+    </div>
+</div>

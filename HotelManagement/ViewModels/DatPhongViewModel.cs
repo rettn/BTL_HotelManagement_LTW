@@ -10,15 +10,18 @@ namespace HotelManagement.ViewModels
         [Required(ErrorMessage = "Vui lòng chọn khách hàng.")]
         public int MaKH { get; set; }
 
+        public DateTime NgayDat { get; set; } = DateTime.Now;
+
         [Required(ErrorMessage = "Vui lòng chọn ngày nhận phòng.")]
         public DateTime NgayNhan { get; set; } = DateTime.Today;
 
         [Required(ErrorMessage = "Vui lòng chọn ngày trả phòng.")]
         public DateTime NgayTra { get; set; } = DateTime.Today.AddDays(1);
 
-        [Range(0, 1000000000,
-            ErrorMessage = "Tiền cọc không hợp lệ.")]
+        [Range(0, 1000000000, ErrorMessage = "Tiền cọc không hợp lệ.")]
         public decimal TienCoc { get; set; }
+
+        public string? TrangThai { get; set; } = "ChoXacNhan";
 
         [StringLength(500)]
         public string? GhiChu { get; set; }

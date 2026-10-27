@@ -87,6 +87,14 @@ namespace HotelManagement.Services
         private async Task<string?> ValidateAsync(
             KhachHang khachHang, int? excludeId = null)
         {
+            khachHang.HoTen = khachHang.HoTen?.Trim() ?? "";
+            khachHang.SoDienThoai = khachHang.SoDienThoai?.Trim();
+            khachHang.Email = string.IsNullOrWhiteSpace(khachHang.Email)
+                ? null
+                : khachHang.Email.Trim();
+            khachHang.CCCD = khachHang.CCCD?.Trim();
+            khachHang.DiaChi = khachHang.DiaChi?.Trim();
+
             if (string.IsNullOrWhiteSpace(khachHang.HoTen))
                 return "Vui lòng nhập họ tên khách hàng.";
 
@@ -110,6 +118,11 @@ namespace HotelManagement.Services
                 return "Ngày sinh không được ở tương lai.";
 
             return null;
+        }
+
+        public Task<KhachHang?> GetByIdWithBookingsAsync(int id)
+        {
+            return _repository.GetByIdWithBookingsAsync(id);
         }
     }
 }

@@ -96,5 +96,15 @@ namespace HotelManagement.Repositories
                 k.CCCD == cccd &&
                 (excludeId == null || k.MaKH != excludeId.Value));
         }
+
+        public async Task<KhachHang?> GetByIdWithBookingsAsync(int id)
+        {
+            return await _context.KhachHangs
+                .AsNoTracking()
+                .Include(k => k.DanhSachDatPhong)
+                    .ThenInclude(dp => dp.ChiTietDatPhongs)
+                        .ThenInclude(ct => ct.Phong)
+                .FirstOrDefaultAsync(k => k.MaKH == id);
+        }
     }
 }
