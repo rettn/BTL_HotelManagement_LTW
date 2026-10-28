@@ -178,8 +178,11 @@ namespace HotelManagement.Services
                 if (datPhong.TrangThai == "DaHuy")
                     return (false, "Phiếu đặt phòng đã được hủy trước đó.");
 
-                if (datPhong.TrangThai != "ChoXacNhan")
-                    return (false, "Chỉ có thể hủy phiếu đang chờ xác nhận.");
+                if (datPhong.TrangThai != "ChoXacNhan" &&datPhong.TrangThai != "DaCoc")
+                {
+                    return (false,
+                        "Chỉ có thể hủy phiếu đang chờ xác nhận hoặc đã đặt cọc.");
+                }
 
                 var maPhongList = datPhong.ChiTietDatPhongs
                     .Select(c => c.MaPhong)
