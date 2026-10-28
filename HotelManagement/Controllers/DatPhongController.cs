@@ -375,6 +375,7 @@ namespace HotelManagement.Controllers
             return RedirectToAction(nameof(ThanhToanThanhCong), new { maDatPhong = model.MaDatPhong });
         }
 
+
         // GET: /DatPhong/ThanhToanThanhCong?maDatPhong=5
         [HttpGet]
         public async Task<IActionResult> ThanhToanThanhCong(int maDatPhong)
@@ -503,6 +504,20 @@ namespace HotelManagement.Controllers
                     TrangThai = p.TrangThai
                 })
                 .ToListAsync();
+        }
+        [HttpGet]
+        public async Task<IActionResult> XuatHoaDon(int id)
+        {
+            var viewModel = await GetHoaDonCheckoutViewModelAsync(id);
+            if (viewModel == null)
+            {
+                return NotFound("Không tìm thấy thông tin hóa đơn.");
+            }
+
+            ViewBag.MaHoaDon = $"HD{id}{DateTime.Now:yyyyMMdd}";
+
+            // Bỏ qua điều kiện AJAX, luôn trả về View XuatHoaDon để hiển thị trực tiếp
+            return View("XuatHoaDon", viewModel);
         }
     }
 }

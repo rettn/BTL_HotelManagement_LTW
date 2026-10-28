@@ -1,0 +1,321 @@
+﻿@model HotelManagement.ViewModels.HoaDonCheckoutViewModel
+
+@{
+    ViewData["Title"] = "Hóa đơn thanh toán";
+}
+
+<style>
+    body {
+        background-color: #f7f9fc;
+    }
+
+    .success-container {
+        max-width: 820px;
+        margin: 30px auto;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+        padding: 40px;
+        color: #263449;
+        text-align: center;
+    }
+
+    /* Icon check xanh ở đầu */
+    .success-icon-wrapper {
+        width: 60px;
+        height: 60px;
+        background: #198754;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 15px auto;
+        color: white;
+        font-size: 28px;
+    }
+
+    .success-badge-top {
+        display: inline-block;
+        background: #e4f8ed;
+        color: #16804a;
+        padding: 5px 14px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 12px;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+    }
+
+    .success-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 6px;
+    }
+
+    .success-desc {
+        color: #64748b;
+        font-size: 14px;
+        margin-bottom: 30px;
+        max-width: 550px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    /* Khung hóa đơn nền be nhạt */
+    .invoice-card {
+        background: #fcfbfa;
+        border: 1px solid #e9e3dc;
+        border-radius: 12px;
+        padding: 30px;
+        text-align: left;
+        position: relative;
+        margin-bottom: 25px;
+    }
+
+    .invoice-code-label {
+        font-size: 11px;
+        color: #64748b;
+        text-transform: uppercase;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        margin-bottom: 2px;
+    }
+
+    .invoice-code-val {
+        font-size: 18px;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 20px;
+    }
+
+    /* Con dấu đã thanh toán */
+    .status-stamp-right {
+        position: absolute;
+        top: 25px;
+        right: 25px;
+        border: 2px dashed #16804a;
+        color: #16804a;
+        padding: 5px 12px;
+        font-weight: 700;
+        font-size: 13px;
+        border-radius: 8px;
+        transform: rotate(6deg);
+        background: #e4f8ed;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .status-stamp-sub {
+        font-size: 9px;
+        display: block;
+        font-weight: 500;
+        letter-spacing: -0.2px;
+    }
+
+    .info-grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px 24px;
+        margin-bottom: 20px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #e9e3dc;
+    }
+
+    .info-item-box label {
+        font-size: 12px;
+        color: #64748b;
+        display: block;
+        margin-bottom: 2px;
+    }
+
+    .info-item-box span {
+        font-size: 14px;
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+    .section-subtitle {
+        font-weight: 700;
+        font-size: 14px;
+        color: #334155;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .table-details {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+    }
+
+        .table-details th {
+            background: #f4efe6;
+            color: #475569;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            padding: 10px 12px;
+            text-align: left;
+        }
+
+        .table-details td {
+            padding: 12px;
+            border-bottom: 1px solid #e9e3dc;
+            font-size: 13px;
+            color: #1e293b;
+            vertical-align: middle;
+        }
+
+    /* Khung tính tiền tổng kết */
+    .calculation-box {
+        background: #fff;
+        border: 1px solid #e9e3dc;
+        border-radius: 8px;
+        padding: 16px 20px;
+    }
+
+    .calc-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-size: 13px;
+        color: #64748b;
+    }
+
+    .calc-total-row {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 2px solid #cbd5e1;
+        font-size: 17px;
+        font-weight: 700;
+        color: #1e293b;
+    }
+
+    .action-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+        margin-top: 25px;
+    }
+</style>
+
+<div class="success-container">
+    <!-- Icon check và tiêu đề trạng thái -->
+    <div class="success-icon-wrapper">
+        <i class="bi bi-check-lg"></i>
+    </div>
+    <div class="success-badge-top">Thông tin hóa đơn lưu trú</div>
+    <h2 class="success-title">Hóa Đơn Chi Tiết</h2>
+    <p class="success-desc">Dưới đây là toàn bộ thông tin chi tiết và các khoản phí dịch vụ đã được quyết toán cho lượt đặt phòng này.</p>
+
+    <!-- Khung hóa đơn tổng thể -->
+    <div class="invoice-card">
+        <!-- Con dấu góc phải -->
+        <div class="status-stamp-right">
+            Đã thanh toán
+            <span class="status-stamp-sub">Giao dịch thành công</span>
+        </div>
+
+        <div class="invoice-code-label">Mã hóa đơn dịch vụ</div>
+        <div class="invoice-code-val">#@ViewBag.MaHoaDon</div>
+
+        <div class="info-grid-2">
+            <div class="info-item-box">
+                <label>Khách hàng:</label>
+                <span>@Model.TenKhachHang</span>
+            </div>
+            <div class="info-item-box">
+                <label>Số điện thoại:</label>
+                <span>@(string.IsNullOrEmpty(Model.SoDienThoai) ? "Chưa có" : Model.SoDienThoai)</span>
+            </div>
+            <div class="info-item-box">
+                <label>Phòng nghỉ:</label>
+                <span>Phòng @Model.SoPhong (@Model.TenLoaiPhong)</span>
+            </div>
+            <div class="info-item-box">
+                <label>Thời gian lưu trú:</label>
+                <span>@Model.SoDem đêm (@Model.NgayNhan.ToString("dd/MM/yyyy") → @Model.NgayTraThucTe.ToString("dd/MM/yyyy"))</span>
+            </div>
+            <div class="info-item-box">
+                <label>Hình thức thanh toán:</label>
+                <span class="text-success"><i class="bi bi-wallet2"></i> Tiền mặt / Chuyển khoản</span>
+            </div>
+            <div class="info-item-box">
+                <label>Thời gian xuất hóa đơn:</label>
+                <span>@DateTime.Now.ToString("HH:mm - dd/MM/yyyy")</span>
+            </div>
+        </div>
+
+        <!-- Chi tiết các khoản thanh toán -->
+        <div class="section-subtitle">
+            <i class="bi bi-list-check text-warning"></i> Chi tiết các khoản thanh toán:
+        </div>
+
+        <table class="table-details">
+            <thead>
+                <tr>
+                    <th>Khoản mục</th>
+                    <th class="text-center">Số lượng</th>
+                    <th class="text-end">Đơn giá</th>
+                    <th class="text-end">Thành tiền</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Tiền phòng (@Model.TenLoaiPhong)</strong><br /><small class="text-muted">Phòng @Model.SoPhong</small></td>
+                    <td class="text-center">@Model.SoDem đêm</td>
+                    <td class="text-end">@Model.GiaTheoDem.ToString("N0") đ</td>
+                    <td class="text-end">@Model.TienPhong.ToString("N0") đ</td>
+                </tr>
+                @if (Model.DanhSachDichVu != null && Model.DanhSachDichVu.Any())
+                {
+                    foreach (var dv in Model.DanhSachDichVu)
+                    {
+                        <tr>
+                            <td>Dịch vụ: @dv.TenDichVu</td>
+                            <td class="text-center">@dv.SoLuong</td>
+                            <td class="text-end">@dv.DonGia.ToString("N0") đ</td>
+                            <td class="text-end">@dv.ThanhTien.ToString("N0") đ</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+
+        <!-- Khung tổng tiền dưới cùng rộng rãi -->
+        <div class="calculation-box">
+            <div class="calc-row">
+                <span>Tiền phòng:</span>
+                <span>@Model.TienPhong.ToString("N0") đ</span>
+            </div>
+            <div class="calc-row">
+                <span>Tiền dịch vụ phát sinh:</span>
+                <span>@Model.TongTienDichVu.ToString("N0") đ</span>
+            </div>
+            <div class="calc-row">
+                <span>Thuế VAT (@Model.TiLeThuePercent%):</span>
+                <span>+@Model.TienThue.ToString("N0") đ</span>
+            </div>
+            <div class="calc-total-row">
+                <span>TỔNG TIỀN ĐÃ THANH TOÁN:</span>
+                <span class="text-danger">@Model.TongThanhToan.ToString("N0") đ</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nút thao tác dưới cùng -->
+    <div class="action-buttons no-print">
+        <button onclick="window.print()" class="btn btn-success px-4 py-2 fw-semibold">
+            <i class="bi bi-printer"></i> In lại hóa đơn
+        </button>
+        <a href="/DatPhong/History" class="btn btn-secondary px-4 py-2 fw-semibold">
+            Đóng trang
+        </a>
+    </div>
+</div>
