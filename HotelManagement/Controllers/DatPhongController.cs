@@ -28,8 +28,34 @@ namespace HotelManagement.Controllers
         // GET: /DatPhong
         public async Task<IActionResult> Index()
         {
-            var danhSach = await _service.GetAllAsync();
-            return View(danhSach);
+            var datPhongs = await _context.DatPhongs
+                .Include(dp => dp.KhachHang)
+                .Include(dp => dp.ChiTietDatPhongs)
+                    .ThenInclude(ct => ct.Phong)
+                .Where(dp =>
+                    dp.TrangThai == "ChoXacNhan" ||
+                    dp.TrangThai == "DaCoc" ||
+                    dp.TrangThai == "DangLuuTru")
+                .OrderByDescending(dp => dp.MaDatPhong)
+                .ToListAsync();
+
+            return View(datPhongs);
+        }
+
+        public async Task<IActionResult> History()
+        {
+            var datPhongs = await _context.DatPhongs
+                .Include(dp => dp.KhachHang)
+                .Include(dp => dp.ChiTietDatPhongs)
+                    .ThenInclude(ct => ct.Phong)
+                .Where(dp =>
+                    dp.TrangThai == "DaHuy" ||
+                    dp.TrangThai == "DaThanhToan" ||
+                    dp.TrangThai == "DaHoanThanh")
+                .OrderByDescending(dp => dp.MaDatPhong)
+                .ToListAsync();
+
+            return View("History", datPhongs);
         }
 
         // GET: /DatPhong/Details/1

@@ -272,12 +272,21 @@
             <p>Quản lý các lượt đặt phòng và thông tin khách hàng</p>
         </div>
 
-        <a asp-controller="DatPhong"
-           asp-action="Create"
-           class="booking-primary">
-            <i class="bi bi-plus-lg"></i>
-            Tạo lượt đặt phòng
-        </a>
+        <div class="d-flex gap-2">
+            <a asp-controller="DatPhong"
+               asp-action="History"
+               class="btn btn-outline-secondary">
+                <i class="bi bi-clock-history"></i>
+                Lịch sử đặt phòng
+            </a>
+
+            <a asp-controller="DatPhong"
+               asp-action="Create"
+               class="booking-primary">
+                <i class="bi bi-plus-lg"></i>
+                Tạo lượt đặt phòng
+            </a>
+        </div>
     </div>
 
     <div class="booking-panel">
