@@ -1,0 +1,88 @@
+﻿@model HotelManagement.ViewModels.HoaDonCheckoutViewModel
+
+<div class="modal-header bg-light">
+    <h5 class="modal-title fw-bold text-primary">
+        <i class="bi bi-receipt"></i> Hóa đơn thanh toán - Mã #@Model.MaDatPhong
+    </h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+
+<div class="modal-body p-4" id="printableInvoice">
+    <div class="text-center mb-4">
+        <h3 class="fw-bold text-uppercase">Hóa Đơn Khách Sạn</h3>
+        <p class="text-muted mb-1">Mã hóa đơn: <strong>HD@(Model.MaDatPhong)@DateTime.Now.ToString("yyyyMMdd")</strong></p>
+        <p class="text-muted">Ngày xuất: @DateTime.Now.ToString("dd/MM/yyyy HH:mm")</p>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-sm-6">
+            <p class="mb-1"><strong>Khách hàng:</strong> @Model.TenKhachHang</p>
+            <p class="mb-1"><strong>Số điện thoại:</strong> @Model.SoDienThoai</p>
+        </div>
+        <div class="col-sm-6 text-sm-end">
+            <p class="mb-1"><strong>Phòng:</strong> @Model.SoPhong (@Model.TenLoaiPhong)</p>
+            <p class="mb-1"><strong>Thời gian ở:</strong> @Model.NgayNhan.ToString("dd/MM/yyyy") - @Model.NgayTraThucTe.ToString("dd/MM/yyyy") (@Model.SoDem đêm)</p>
+        </div>
+    </div>
+
+    <table class="table table-bordered align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Khoản mục</th>
+                <th class="text-center">Số lượng</th>
+                <th class="text-end">Đơn giá</th>
+                <th class="text-end">Thành tiền</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Tiền phòng (@Model.TenLoaiPhong)</td>
+                <td class="text-center">@Model.SoDem đêm</td>
+                <td class="text-end">@Model.GiaTheoDem.ToString("N0") đ</td>
+                <td class="text-end">@Model.TienPhong.ToString("N0") đ</td>
+            </tr>
+            @if (Model.DanhSachDichVu != null && Model.DanhSachDichVu.Any())
+            {
+                foreach (var dv in Model.DanhSachDichVu)
+                {
+                    <tr>
+                        <td>Dịch vụ: @dv.TenDichVu</td>
+                        <td class="text-center">@dv.SoLuong</td>
+                        <td class="text-end">@dv.DonGia.ToString("N0") đ</td>
+                        <td class="text-end">@dv.ThanhTien.ToString("N0") đ</td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+
+    <div class="row justify-content-end">
+        <div class="col-md-5">
+            <table class="table table-sm table-borderless">
+                <tr>
+                    <td>Tiền phòng:</td>
+                    <td class="text-end">@Model.TienPhong.ToString("N0") đ</td>
+                </tr>
+                <tr>
+                    <td>Tiền dịch vụ:</td>
+                    <td class="text-end">@Model.TongTienDichVu.ToString("N0") đ</td>
+                </tr>
+                <tr>
+                    <td>Thuế VAT (@Model.TiLeThuePercent%):</td>
+                    <td class="text-end">@Model.TienThue.ToString("N0") đ</td>
+                </tr>
+                <tr class="fw-bold border-top fs-5 text-primary">
+                    <td>Tổng thanh toán:</td>
+                    <td class="text-end">@Model.TongThanhToan.ToString("N0") đ</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+    <button type="button" class="btn btn-primary" onclick="window.print()">
+        <i class="bi bi-printer"></i> In hóa đơn
+    </button>
+</div>
