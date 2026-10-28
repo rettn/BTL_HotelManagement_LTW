@@ -1,5 +1,4 @@
-﻿
-using HotelManagement.Data;
+﻿using HotelManagement.Data;
 using HotelManagement.Models;
 using HotelManagement.Repositories;
 using HotelManagement.ViewModels;
@@ -289,6 +288,10 @@ namespace HotelManagement.Services
                 if (chiTiet.DatPhong.TrangThai == "DaHuy")
                     return (false, "Phiếu đặt phòng đã bị hủy.");
 
+                if (chiTiet.DatPhong.TrangThai == "DaThanhToan" ||
+                    chiTiet.DatPhong.TrangThai == "DaHoanThanh")
+                    return (false, "Phiếu đặt phòng đã kết thúc, không thể nhận phòng.");
+
                 if (chiTiet.Phong == null)
                     return (false, "Không tìm thấy phòng.");
 
@@ -305,6 +308,13 @@ namespace HotelManagement.Services
                 if (daNhan)
                     return (false, "Phòng này đã được nhận.");
 
+                var daTra = await _context.LuuTrus.AnyAsync(l =>
+                    l.MaChiTietDatPhong == chiTiet.MaChiTietDatPhong &&
+                    l.ThoiGianTraPhong != null);
+
+                if (daTra)
+                    return (false, "Phòng này đã trả, không thể nhận lại.");
+
                 _context.LuuTrus.Add(new LuuTru
                 {
                     MaChiTietDatPhong = chiTiet.MaChiTietDatPhong,
@@ -313,6 +323,10 @@ namespace HotelManagement.Services
 
                 chiTiet.Phong.TrangThai = "DangSuDung";
                 chiTiet.DatPhong.TrangThai = "DangLuuTru";
+
+                // Ghi nhan thoi diem nhan phong thuc te (lan nhan dau tien)
+                if (chiTiet.DatPhong.NgayNhanThucTe == default)
+                    chiTiet.DatPhong.NgayNhanThucTe = DateTime.Now;
 
                 // Chi tiet da nhan phong duoc theo doi qua LuuTru.
                 // Chi tiet cac phong chua nhan van giu nguyen.
@@ -346,6 +360,11 @@ namespace HotelManagement.Services
                 if (chiTiet == null || chiTiet.DatPhong == null || chiTiet.Phong == null)
                     return (false, "Không tìm thấy chi tiết đặt phòng.");
 
+                if (chiTiet.DatPhong.TrangThai == "DaHuy" ||
+                    chiTiet.DatPhong.TrangThai == "DaThanhToan" ||
+                    chiTiet.DatPhong.TrangThai == "DaHoanThanh")
+                    return (false, "Phiếu đặt phòng đã kết thúc, không thể trả phòng.");
+
                 var luuTru = await _context.LuuTrus
                     .Where(l =>
                         l.MaChiTietDatPhong == chiTiet.MaChiTietDatPhong &&
@@ -369,6 +388,7 @@ namespace HotelManagement.Services
                 if (!conPhongChuaTra)
                 {
                     chiTiet.DatPhong.TrangThai = "DaHoanThanh";
+                    chiTiet.DatPhong.NgayTraThucTe = DateTime.Now;
                     await _context.SaveChangesAsync();
                 }
 

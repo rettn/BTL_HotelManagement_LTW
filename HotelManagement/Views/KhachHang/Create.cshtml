@@ -1,13 +1,12 @@
-﻿
-@model HotelManagement.Models.KhachHang
+﻿@model HotelManagement.Models.KhachHang
 
 @{
-    ViewData["Title"] = "Thêm khách hàng";
+    ViewData["Title"] = "Khách hàng";
 }
 
 <div class="container-fluid">
     <div class="mb-4">
-        <h2 class="fw-bold">Thêm khách hàng</h2>
+        <h3 class="fw-bold">Thêm khách hàng</h3>
         <p class="text-secondary">Nhập thông tin hồ sơ khách hàng mới.</p>
     </div>
 
@@ -86,6 +85,17 @@
         </div>
     </div>
 </div>
+
+@section Styles {
+    <style>
+        /* Bo dau cham dau dong trong khung bao loi cua form */
+        .validation-summary-errors ul {
+            list-style: none;
+            padding-left: 0;
+            margin: 0;
+        }
+    </style>
+}
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

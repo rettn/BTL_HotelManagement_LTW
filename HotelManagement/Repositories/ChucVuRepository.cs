@@ -64,7 +64,7 @@ namespace HotelManagement.Repositories
             // Khong xoa neu dang co nhan vien su dung chuc vu nay.
             if (await IsInUseAsync(chucVu.TenChucVu))
                 throw new InvalidOperationException(
-                    "Chuc vu dang duoc nhan vien su dung, khong the xoa.");
+                    "Chức vụ đang được nhân viên sử dụng, không được xóa.");
 
             _context.ChucVus.Remove(chucVu);
             await _context.SaveChangesAsync();

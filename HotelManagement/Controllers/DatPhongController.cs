@@ -139,11 +139,8 @@ namespace HotelManagement.Controllers
                 });
             }
 
-            return Json(new
-            {
-                success = true,
-                message = result.Message
-            });
+            // Tra ve trang thai moi de giao dien tu doi nut Nhan phong -> Tra phong
+            return Json(await BuildTrangThaiResponseAsync(id, maPhong, result.Message));
         }
 
         // POST: /DatPhong/CheckOut
@@ -155,7 +152,42 @@ namespace HotelManagement.Controllers
             if (!result.Success)
                 return BadRequest(new { success = false, message = result.Message });
 
-            return Json(new { success = true, message = result.Message });
+            return Json(await BuildTrangThaiResponseAsync(id, maPhong, result.Message));
+        }
+
+        // Doc lai trang thai phong / phieu dat sau khi nhan hoac tra phong.
+        // nutTiepTheo: "TraPhong" (dang luu tru), "DonDep" (dang don dep), "NhanPhong" (con cho nhan)
+        private async Task<object> BuildTrangThaiResponseAsync(int maDatPhong, int maPhong, string message)
+        {
+            var phong = await _context.Phongs.AsNoTracking()
+                .FirstOrDefaultAsync(p => p.MaPhong == maPhong);
+            var datPhong = await _context.DatPhongs.AsNoTracking()
+                .FirstOrDefaultAsync(d => d.MaDatPhong == maDatPhong);
+
+            var trangThaiPhong = phong?.TrangThai?.Trim();
+            var dangO = await _context.LuuTrus.AsNoTracking().AnyAsync(l =>
+                l.ChiTietDatPhong != null &&
+                l.ChiTietDatPhong.MaDatPhong == maDatPhong &&
+                l.ChiTietDatPhong.MaPhong == maPhong &&
+                l.ThoiGianNhanPhong != null &&
+                l.ThoiGianTraPhong == null);
+
+            string nutTiepTheo = dangO
+                ? "TraPhong"
+                : (trangThaiPhong == "DangDon" || trangThaiPhong == "Đang dọn dẹp")
+                    ? "DonDep"
+                    : "NhanPhong";
+
+            return new
+            {
+                success = true,
+                message,
+                maDatPhong,
+                maPhong,
+                trangThaiPhong,
+                trangThaiDatPhong = datPhong?.TrangThai,
+                nutTiepTheo
+            };
         }
 
         // POST: /DatPhong/DonDepXong
@@ -273,15 +305,41 @@ namespace HotelManagement.Controllers
 
             if (datPhong != null)
             {
+                // Chan thanh toan / tra phong lap lai
+                if (datPhong.TrangThai != "DangLuuTru")
+                {
+                    TempData["Error"] = "Chỉ có thể trả phòng và thanh toán cho phiếu đang lưu trú.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                var thoiGianTra = DateTime.Now;
                 datPhong.TrangThai = "DaThanhToan";
-                datPhong.NgayTraThucTe = DateTime.Now;
+                datPhong.NgayTraThucTe = thoiGianTra;
+
+                var dsChiTiet = datPhong.ChiTietDatPhongs.Select(c => c.MaChiTietDatPhong).ToList();
+
+                // Dong cac luot luu tru dang mo de phong khong con hien la "co khach"
+                var luuTruDangMo = await _context.LuuTrus
+                    .Where(l => dsChiTiet.Contains(l.MaChiTietDatPhong) &&
+                                l.ThoiGianNhanPhong != null &&
+                                l.ThoiGianTraPhong == null)
+                    .ToListAsync();
+
+                foreach (var lt in luuTruDangMo)
+                    lt.ThoiGianTraPhong = thoiGianTra;
+
+                // Chi phong da duoc nhan moi chuyen sang dang don
+                var chiTietDaNhan = luuTruDangMo.Select(l => l.MaChiTietDatPhong).ToHashSet();
 
                 foreach (var ctdp in datPhong.ChiTietDatPhongs)
                 {
                     var phong = await _context.Phongs.FindAsync(ctdp.MaPhong);
                     if (phong != null)
                     {
-                        phong.TrangThai = "DangDon";
+                        // Phong da nhan -> dang don; phong chua tung nhan -> tra ve trong
+                        phong.TrangThai = chiTietDaNhan.Contains(ctdp.MaChiTietDatPhong)
+                            ? "DangDon"
+                            : "Trong";
                     }
                 }
 
@@ -388,7 +446,7 @@ namespace HotelManagement.Controllers
                 NoiDungChuyenKhoan = noiDungCK,
                 VietQrImageUrl = vietQrUrl
             };
-        }      
+        }
         private async Task NapDuLieuFormAsync(DatPhongViewModel model)
         {
             model.KhachHangs = await _context.KhachHangs

@@ -2,7 +2,7 @@
 @model HotelManagement.Models.KhachHang
 
 @{
-    ViewData["Title"] = "Chi tiết khách hàng";
+    ViewData["Title"] = "Khách hàng";
     var danhSachDatPhong = Model.DanhSachDatPhong?
         .OrderByDescending(dp => dp.NgayDat)
         .ToList() ?? new List<HotelManagement.Models.DatPhong>();
@@ -11,7 +11,7 @@
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
         <div>
-            <h2 class="fw-bold">Chi tiết khách hàng</h2>
+            <h3 class="fw-bold">Chi tiết khách hàng</h3>
             <p class="text-secondary mb-0">Hồ sơ và lịch sử đặt phòng</p>
         </div>
 

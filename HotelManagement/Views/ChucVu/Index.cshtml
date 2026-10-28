@@ -1,6 +1,6 @@
 ﻿@model IEnumerable<HotelManagement.Models.ChucVu>
 @{
-    ViewData["Title"] = "Quản lý chức vụ";
+    ViewData["Title"] = "Quản lý nhân sự";
     var danhSach = Model?.ToList() ?? new List<HotelManagement.Models.ChucVu>();
     var inv = System.Globalization.CultureInfo.InvariantCulture;
 }
@@ -151,7 +151,7 @@
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
         <div>
             <h3 class="fw-bold mb-1">
-                <i class="bi bi-person-workspace me-2"></i>Quản lý chức vụ
+                Quản lý chức vụ
             </h3>
             <p class="text-muted mb-0">
                 Quản lý danh sách chức vụ và mức lương cơ bản mặc định của nhân viên khách sạn.
@@ -171,19 +171,7 @@
         </div>
     </div>
 
-    @if (TempData["Success"] != null)
-    {
-        <div class="alert alert-success">
-            <i class="bi bi-check-circle me-2"></i>@TempData["Success"]
-        </div>
-    }
-
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger">
-            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["Error"]
-        </div>
-    }
+    
 
     <div class="card border-0 shadow-sm">
         <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">

@@ -65,7 +65,9 @@ namespace HotelManagement.Controllers
                 .Where(c =>
                     c.MaPhong == id &&
                     c.DatPhong != null &&
-                    c.DatPhong.TrangThai != "DaHuy")
+                    c.DatPhong.TrangThai != "DaHuy" &&
+                    c.DatPhong.TrangThai != "DaThanhToan" &&
+                    c.DatPhong.TrangThai != "DaHoanThanh")
                 .ToListAsync();
 
             var hienTai = DateTime.Now;
