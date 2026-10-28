@@ -14,6 +14,7 @@ namespace HotelManagement.Data
         }
 
         public DbSet<NhanVien> NhanViens { get; set; }
+        public DbSet<ChucVu> ChucVus { get; set; }
         public DbSet<KhachHang> KhachHangs { get; set; }
         public DbSet<LoaiPhong> LoaiPhongs { get; set; }
         public DbSet<Phong> Phongs { get; set; }
@@ -29,5 +30,18 @@ namespace HotelManagement.Data
         public DbSet<NhatKyHeThong> NhatKyHeThongs { get; set; }
         public DbSet<LichSuPhong> LichSuPhongs { get; set; }
         public DbSet<HoanTien> HoanTiens { get; set; }
+        protected override void OnModelCreating(
+            Microsoft.EntityFrameworkCore.ModelBuilder builder)
+        {
+            base.OnModelCreating(builder);
+
+            builder.Entity<HotelManagement.Models.NhanVien>()
+                .HasIndex(n => n.IdentityUserId)
+                .IsUnique();
+        }
+
+
     }
+
+
 }

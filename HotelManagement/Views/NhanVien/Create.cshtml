@@ -1,0 +1,118 @@
+﻿ @* Views/NhanVien/Create.cshtml *@
+@model HotelManagement.Models.NhanVien
+
+@{
+    ViewData["Title"] = "Thêm nhân viên";
+}
+
+<div class="container-fluid py-3">
+    <div class="mb-4">
+        <a asp-action="Index" class="text-decoration-none text-muted">
+            <i class="bi bi-arrow-left me-1"></i> Quay lại danh sách
+        </a>
+        <h3 class="fw-bold mt-3">
+            <i class="bi bi-person-plus me-2"></i>Thêm nhân viên
+        </h3>
+        <p class="text-muted">Nhập thông tin nhân viên mới của khách sạn.</p>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+            <form asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="HoTen" class="form-label">Họ và tên <span class="text-danger">*</span></label>
+                        <input asp-for="HoTen" class="form-control" placeholder="Nhập họ và tên" />
+                        <span asp-validation-for="HoTen" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="ChucVu" class="form-label">Chức vụ <span class="text-danger">*</span></label>
+                        <select asp-for="ChucVu" class="form-select">
+                            <option value="">-- Chọn chức vụ --</option>
+                            @foreach (ChucVu cv in ViewBag.ChucVus)
+                            {
+                                if (cv.TrangThai ||
+                                    cv.TenChucVu == Model.ChucVu)
+                                {
+                                    <option value="@cv.TenChucVu">@cv.TenChucVu</option>
+                                }
+                            }
+                        </select>
+                        <span asp-validation-for="ChucVu" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="GioiTinh" class="form-label">Giới tính</label>
+                        <select asp-for="GioiTinh" class="form-select">
+                            <option value="">-- Chọn giới tính --</option>
+                            <option value="Nam">Nam</option>
+                            <option value="Nữ">Nữ</option>
+                            <option value="Khác">Khác</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="NgaySinh" class="form-label">Ngày sinh</label>
+                        <input asp-for="NgaySinh" type="date" class="form-control" />
+                        <span asp-validation-for="NgaySinh" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="SoDienThoai" class="form-label">Số điện thoại</label>
+                        <input asp-for="SoDienThoai" class="form-control" placeholder="Nhập số điện thoại" />
+                        <span asp-validation-for="SoDienThoai" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Email" class="form-label">Email</label>
+                        <input asp-for="Email" type="email" class="form-control" placeholder="example@email.com" />
+                        <span asp-validation-for="Email" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="DiaChi" class="form-label">Địa chỉ</label>
+                        <input asp-for="DiaChi" class="form-control" placeholder="Nhập địa chỉ" />
+                        <span asp-validation-for="DiaChi" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="LuongCoBan" class="form-label">Lương cơ bản (VNĐ) <span class="text-danger">*</span></label>
+                        <input asp-for="LuongCoBan" type="number" min="0" step="1000"
+                               class="form-control" placeholder="Ví dụ: 8000000" />
+                        <span asp-validation-for="LuongCoBan" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="NgayVaoLam" class="form-label">Ngày vào làm</label>
+                        <input asp-for="NgayVaoLam" type="date" asp-format="{0:yyyy-MM-dd}"
+                               class="form-control" />
+                        <span asp-validation-for="NgayVaoLam" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="form-check form-switch">
+                            <input asp-for="TrangThai" class="form-check-input" />
+                            <label asp-for="TrangThai" class="form-check-label">Đang làm việc</label>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="my-4" />
+                <div class="d-flex justify-content-end gap-2">
+                    <a asp-action="Index" class="btn btn-outline-secondary">Hủy</a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg me-1"></i> Lưu nhân viên
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

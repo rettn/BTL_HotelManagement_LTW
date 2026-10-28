@@ -1,0 +1,400 @@
+﻿
+@model IEnumerable<HotelManagement.Models.ChucVu>
+
+@{
+    ViewData["Title"] = "Quản lý chức vụ";
+    var danhSach = Model?.ToList() ?? new List<HotelManagement.Models.ChucVu>();
+}
+
+<style>
+    .cv-modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 99999;
+        background: rgba(15, 23, 42, .55);
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+    }
+
+    .cv-modal-overlay.show {
+        display: flex;
+    }
+
+    .cv-modal-box {
+        width: 100%;
+        max-width: 520px;
+        background: white;
+        border-radius: 14px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, .2);
+        overflow: hidden;
+        animation: cvAppear .18s ease-out;
+    }
+
+    .cv-modal-header, .cv-modal-footer {
+        padding: 18px 22px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .cv-modal-footer {
+        justify-content: flex-end;
+        border-top: 1px solid #e5e7eb;
+        border-bottom: 0;
+    }
+
+    .cv-modal-body {
+        padding: 22px;
+    }
+
+    .cv-modal-close {
+        border: 0;
+        background: transparent;
+        font-size: 26px;
+        color: #64748b;
+        cursor: pointer;
+    }
+
+    .cv-delete-icon {
+        width: 60px;
+        height: 60px;
+        margin: 0 auto 16px;
+        border-radius: 50%;
+        background: #fee2e2;
+        color: #dc2626;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 26px;
+    }
+
+    @@keyframes cvAppear {
+        from { opacity: 0; transform: translateY(10px) scale(.98); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+</style>
+
+<div class="container-fluid py-3">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <h3 class="fw-bold mb-1">
+                <i class="bi bi-person-workspace me-2"></i>Quản lý chức vụ
+            </h3>
+            <p class="text-muted mb-0">
+                Quản lý danh sách chức vụ của nhân viên khách sạn.
+            </p>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a asp-controller="NhanVien" asp-action="Index"
+               class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Quay lại
+            </a>
+
+            <button type="button" class="btn btn-success"
+                    onclick="openCvModal('createModal')">
+                <i class="bi bi-plus-lg me-1"></i>Thêm chức vụ
+            </button>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">
+            <i class="bi bi-check-circle me-2"></i>@TempData["Success"]
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle me-2"></i>@TempData["Error"]
+        </div>
+    }
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="fw-semibold mb-0">
+                <i class="bi bi-list-ul me-2"></i>Danh sách chức vụ
+            </h5>
+            <span class="badge bg-primary">@danhSach.Count chức vụ</span>
+        </div>
+
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Mã</th>
+                            <th>Tên chức vụ</th>
+                            <th>Mô tả</th>
+                            <th>Trạng thái</th>
+                            <th class="text-center">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (danhSach.Any())
+                        {
+                            @foreach (var cv in danhSach)
+                            {
+                                <tr>
+                                    <td class="fw-semibold">CV@(cv.MaChucVu.ToString("D3"))</td>
+                                    <td class="fw-semibold">@cv.TenChucVu</td>
+                                    <td>@(string.IsNullOrWhiteSpace(cv.MoTa) ? "—" : cv.MoTa)</td>
+                                    <td>
+                                        @if (cv.TrangThai)
+                                        {
+                                            <span class="badge bg-success-subtle text-success">Đang sử dụng</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary-subtle text-secondary">Ngừng sử dụng</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="d-flex justify-content-center gap-2">
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-primary btn-edit-chucvu"
+                                                    data-id="@cv.MaChucVu"
+                                                    data-ten="@cv.TenChucVu"
+                                                    data-mota="@cv.MoTa"
+                                                    data-trangthai="@cv.TrangThai"
+                                                    title="Sửa">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </button>
+
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-danger btn-delete-chucvu"
+                                                    data-id="@cv.MaChucVu"
+                                                    data-ten="@cv.TenChucVu"
+                                                    title="Xóa">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center py-5 text-muted">
+                                    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                    Chưa có chức vụ nào.
+                                    <div class="mt-2">Nhấn “Thêm chức vụ” để bắt đầu.</div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* POPUP THEM *@
+<div id="createModal" class="cv-modal-overlay"
+     onclick="closeCvModalOnOverlay(event, 'createModal')">
+    <div class="cv-modal-box">
+        <form asp-controller="ChucVu" asp-action="Create" method="post">
+            @Html.AntiForgeryToken()
+
+            <div class="cv-modal-header">
+                <h5 class="fw-bold mb-0">
+                    <i class="bi bi-plus-circle text-success me-2"></i>Thêm chức vụ
+                </h5>
+                <button type="button" class="cv-modal-close"
+                        onclick="closeCvModal('createModal')">&times;</button>
+            </div>
+
+            <div class="cv-modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Tên chức vụ <span class="text-danger">*</span></label>
+                    <input name="TenChucVu" class="form-control"
+                           maxlength="50" required
+                           placeholder="Ví dụ: Lễ tân" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Mô tả</label>
+                    <textarea name="MoTa" class="form-control"
+                              rows="3" maxlength="255"
+                              placeholder="Mô tả công việc..."></textarea>
+                </div>
+
+                <input type="hidden" name="TrangThai" value="true" />
+            </div>
+
+            <div class="cv-modal-footer">
+                <button type="button" class="btn btn-outline-secondary"
+                        onclick="closeCvModal('createModal')">Hủy</button>
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-check-lg me-1"></i>Thêm chức vụ
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@* POPUP SUA *@
+<div id="editModal" class="cv-modal-overlay"
+     onclick="closeCvModalOnOverlay(event, 'editModal')">
+    <div class="cv-modal-box">
+        <form asp-controller="ChucVu" asp-action="Edit" method="post">
+            @Html.AntiForgeryToken()
+
+            <input type="hidden" id="editMaChucVu" name="MaChucVu" />
+
+            <div class="cv-modal-header">
+                <h5 class="fw-bold mb-0">
+                    <i class="bi bi-pencil-square text-primary me-2"></i>Sửa chức vụ
+                </h5>
+                <button type="button" class="cv-modal-close"
+                        onclick="closeCvModal('editModal')">&times;</button>
+            </div>
+
+            <div class="cv-modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Tên chức vụ <span class="text-danger">*</span></label>
+                    <input id="editTenChucVu" name="TenChucVu"
+                           class="form-control" maxlength="50" required />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Mô tả</label>
+                    <textarea id="editMoTa" name="MoTa"
+                              class="form-control" rows="3"
+                              maxlength="255"></textarea>
+                </div>
+
+                <div class="form-check form-switch">
+                    <input type="checkbox" id="editTrangThai"
+                           name="TrangThai" value="true"
+                           class="form-check-input" />
+                    <input type="hidden" name="TrangThai" value="false" />
+                    <label for="editTrangThai" class="form-check-label">
+                        Đang sử dụng
+                    </label>
+                </div>
+            </div>
+
+            <div class="cv-modal-footer">
+                <button type="button" class="btn btn-outline-secondary"
+                        onclick="closeCvModal('editModal')">Hủy</button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save me-1"></i>Lưu thay đổi
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@* POPUP XAC NHAN XOA *@
+<div id="deleteModal" class="cv-modal-overlay"
+     onclick="closeCvModalOnOverlay(event, 'deleteModal')">
+    <div class="cv-modal-box" style="max-width: 430px;">
+        <form asp-controller="ChucVu" asp-action="Delete" method="post">
+            @Html.AntiForgeryToken()
+
+            <input type="hidden" id="deleteMaChucVu" name="id" />
+
+            <div class="cv-modal-header">
+                <h5 class="fw-bold mb-0">Xác nhận xóa</h5>
+                <button type="button" class="cv-modal-close"
+                        onclick="closeCvModal('deleteModal')">&times;</button>
+            </div>
+
+            <div class="cv-modal-body text-center">
+                <div class="cv-delete-icon">
+                    <i class="bi bi-trash"></i>
+                </div>
+
+                <h5 class="fw-bold">Xóa chức vụ này?</h5>
+                <p class="text-muted mb-0">
+                    Cậu có chắc muốn xóa chức vụ
+                    <strong id="deleteTenChucVu"></strong>?
+                    <br />Thao tác này có thể không hoàn tác được.
+                </p>
+            </div>
+
+            <div class="cv-modal-footer">
+                <button type="button" class="btn btn-outline-secondary"
+                        onclick="closeCvModal('deleteModal')">Hủy</button>
+                <button type="submit" class="btn btn-danger">
+                    <i class="bi bi-trash me-1"></i>Xác nhận xóa
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openCvModal(id) {
+        const modal = document.getElementById(id);
+        if (modal) {
+            modal.classList.add('show');
+        }
+    }
+
+    function closeCvModal(id) {
+        const modal = document.getElementById(id);
+        if (modal) {
+            modal.classList.remove('show');
+        }
+    }
+
+    function closeCvModalOnOverlay(event, id) {
+        if (event.target.id === id) {
+            closeCvModal(id);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // Mo popup sua chuc vu
+        document.querySelectorAll('.btn-edit-chucvu').forEach(function (button) {
+            button.addEventListener('click', function () {
+                document.getElementById('editMaChucVu').value =
+                    this.dataset.id;
+
+                document.getElementById('editTenChucVu').value =
+                    this.dataset.ten || '';
+
+                document.getElementById('editMoTa').value =
+                    this.dataset.mota || '';
+
+                document.getElementById('editTrangThai').checked =
+                    this.dataset.trangthai === 'True' ||
+                    this.dataset.trangthai === 'true';
+
+                openCvModal('editModal');
+            });
+        });
+
+        // Mo popup xac nhan xoa
+        document.querySelectorAll('.btn-delete-chucvu').forEach(function (button) {
+            button.addEventListener('click', function () {
+                document.getElementById('deleteMaChucVu').value =
+                    this.dataset.id;
+
+                document.getElementById('deleteTenChucVu').textContent =
+                    this.dataset.ten || '';
+
+                openCvModal('deleteModal');
+            });
+        });
+
+        // Dong popup bang phim Escape
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                document.querySelectorAll('.cv-modal-overlay.show')
+                    .forEach(function (modal) {
+                        modal.classList.remove('show');
+                    });
+            }
+        });
+    });
+</script>

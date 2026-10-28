@@ -130,6 +130,31 @@ namespace HotelManagement.Data.Migrations
                     b.ToTable("ChiTietHoaDon");
                 });
 
+            modelBuilder.Entity("HotelManagement.Models.ChucVu", b =>
+                {
+                    b.Property<int>("MaChucVu")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("MaChucVu"));
+
+                    b.Property<string>("MoTa")
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("TenChucVu")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<bool>("TrangThai")
+                        .HasColumnType("tinyint(1)");
+
+                    b.HasKey("MaChucVu");
+
+                    b.ToTable("ChucVu");
+                });
+
             modelBuilder.Entity("HotelManagement.Models.DatPhong", b =>
                 {
                     b.Property<int>("MaDatPhong")
@@ -450,6 +475,10 @@ namespace HotelManagement.Data.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)");
 
+                    b.Property<string>("IdentityUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("varchar(450)");
+
                     b.Property<decimal>("LuongCoBan")
                         .HasColumnType("decimal(18,2)");
 
@@ -467,6 +496,9 @@ namespace HotelManagement.Data.Migrations
                         .HasColumnType("tinyint(1)");
 
                     b.HasKey("MaNV");
+
+                    b.HasIndex("IdentityUserId")
+                        .IsUnique();
 
                     b.ToTable("NhanVien");
                 });

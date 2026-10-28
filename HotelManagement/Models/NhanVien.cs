@@ -33,6 +33,10 @@ namespace HotelManagement.Models
         [StringLength(50)]
         public string ChucVu { get; set; } = string.Empty;
 
+        // Lien ket voi tai khoan ASP.NET Core Identity
+        [StringLength(450)]
+        public string? IdentityUserId { get; set; }
+
         [Column(TypeName = "decimal(18,2)")]
         public decimal LuongCoBan { get; set; }
 

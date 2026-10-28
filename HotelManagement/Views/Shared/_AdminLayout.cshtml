@@ -5,6 +5,8 @@
     var isReservationSection = currentController.Equals("DatPhong", StringComparison.OrdinalIgnoreCase);
     var isFinanceSection = currentController.Equals("HoaDon", StringComparison.OrdinalIgnoreCase)
         || currentController.Equals("ThanhToan", StringComparison.OrdinalIgnoreCase);
+    var isNhanSuSection = currentController.Equals(
+    "NhanVien", StringComparison.OrdinalIgnoreCase);
     var displayName = User.Identity?.IsAuthenticated == true
         ? (User.Identity?.Name ?? "Quản trị viên")
         : "Quản trị viên";
@@ -104,6 +106,16 @@
                    class="sidebar-link @(currentController.Equals("DichVu", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
                     <i class="bi bi-cup-hot"></i><span>Dịch vụ</span>
                 </a>
+
+                @if (User.IsInRole("Admin"))
+                {
+                    <div class="sidebar-section-label">Nhân sự</div>
+                    <a asp-controller="NhanVien" asp-action="Index"
+                       class="sidebar-link @(isNhanSuSection ? "active" : "")">
+                        <i class="bi bi-person-badge"></i>
+                        <span>Quản lý nhân sự</span>
+                    </a>
+                }
 
                 <div class="sidebar-section-label">TÀI CHÍNH</div>
                 <a href="#financeMenu" class="sidebar-link"

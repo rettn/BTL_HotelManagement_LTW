@@ -59,6 +59,14 @@ builder.Services.AddScoped<PhongService>();
 builder.Services.AddScoped<KhachHangRepository>();
 builder.Services.AddScoped<KhachHangService>();
 
+// Quan ly nhan vien
+builder.Services.AddScoped<NhanVienRepository>();
+builder.Services.AddScoped<NhanVienService>();
+
+//Quan ly chuc vu
+builder.Services.AddScoped<ChucVuRepository>();
+builder.Services.AddScoped<ChucVuService>();
+
 var app = builder.Build();
 await IdentitySeeder.SeedAsync(
     app.Services,
