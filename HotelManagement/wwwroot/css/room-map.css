@@ -23,6 +23,7 @@
         margin: 0 0 5px;
         font-size: 21px;
         font-weight: 700;
+        font-family: inherit;
     }
 
     .room-toolbar p {
