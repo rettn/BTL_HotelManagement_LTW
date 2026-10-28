@@ -1,5 +1,4 @@
-﻿
-using HotelManagement.Models;
+﻿using HotelManagement.Models;
 using HotelManagement.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -79,7 +78,7 @@ namespace HotelManagement.Controllers
             {
                 await _nhanVienService.AddAsync(nhanVien);
 
-                TempData["Success"] = "Them nhan vien thanh cong.";
+                TempData["Success"] = "Thêm nhân viên thành công.";
                 return RedirectToAction(nameof(Index));
             }
             catch (ArgumentException ex)
@@ -127,7 +126,7 @@ namespace HotelManagement.Controllers
                 if (!updated)
                     return NotFound();
 
-                TempData["Success"] = "Cap nhat nhan vien thanh cong.";
+                TempData["Success"] = "Cập nhật nhân viên thành công.";
                 return RedirectToAction(nameof(Index));
             }
             catch (ArgumentException ex)
@@ -152,7 +151,7 @@ namespace HotelManagement.Controllers
             if (!changed)
                 return NotFound();
 
-            TempData["Success"] = "Cap nhat trang thai nhan vien thanh cong.";
+            TempData["Success"] = "Cập nhật trạng thái nhân viên thành công.";
 
             return RedirectToAction(nameof(Index));
         }

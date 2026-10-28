@@ -1,5 +1,4 @@
-﻿
-using HotelManagement.Models;
+﻿using HotelManagement.Models;
 using HotelManagement.Repositories;
 
 namespace HotelManagement.Services
@@ -28,8 +27,11 @@ namespace HotelManagement.Services
             chucVu.TenChucVu = chucVu.TenChucVu.Trim();
             chucVu.MoTa = chucVu.MoTa?.Trim();
 
+            if (chucVu.LuongCoBanMacDinh < 0)
+                throw new ArgumentException("Lương cơ bản không được âm.");
+
             if (await _repository.ExistsByNameAsync(chucVu.TenChucVu))
-                throw new ArgumentException("Ten chuc vu da ton tai.");
+                throw new ArgumentException("Tên chức vụ đã tồn tại.");
 
             await _repository.AddAsync(chucVu);
         }
@@ -44,10 +46,13 @@ namespace HotelManagement.Services
 
             chucVu.TenChucVu = chucVu.TenChucVu.Trim();
 
+            if (chucVu.LuongCoBanMacDinh < 0)
+                throw new ArgumentException("Lương cơ bản không được âm.");
+
             if (await _repository.ExistsByNameAsync(
                 chucVu.TenChucVu, chucVu.MaChucVu))
             {
-                throw new ArgumentException("Ten chuc vu da ton tai.");
+                throw new ArgumentException("Tên chức vụ đã tồn tại.");
             }
 
             // Neu doi ten chuc vu, cap nhat cac nhan vien dang su dung.
@@ -55,9 +60,11 @@ namespace HotelManagement.Services
 
             existing.TenChucVu = chucVu.TenChucVu;
             existing.MoTa = chucVu.MoTa?.Trim();
+            existing.LuongCoBanMacDinh = chucVu.LuongCoBanMacDinh;
             existing.TrangThai = chucVu.TrangThai;
 
-            // Cap nhat ten chuc vu trong bang NhanVien.
+            // Chi doi ten chuc vu cua nhan vien. KHONG dong bo luong:
+            // luong thuc te cua tung nhan vien (NhanVien.LuongCoBan) duoc giu nguyen.
             var nhanViens = await _repository.GetNhanViensByChucVuAsync(
                 oldName);
 

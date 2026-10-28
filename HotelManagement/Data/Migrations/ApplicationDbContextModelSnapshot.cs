@@ -138,6 +138,9 @@ namespace HotelManagement.Data.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("MaChucVu"));
 
+                    b.Property<decimal>("LuongCoBanMacDinh")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<string>("MoTa")
                         .HasMaxLength(255)
                         .HasColumnType("varchar(255)");

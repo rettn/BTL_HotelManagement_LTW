@@ -1,9 +1,45 @@
-﻿ @* Views/NhanVien/Edit.cshtml *@
-@model HotelManagement.Models.NhanVien
-
+﻿@model HotelManagement.Models.NhanVien
 @{
     ViewData["Title"] = "Chỉnh sửa nhân viên";
+    var inv = System.Globalization.CultureInfo.InvariantCulture;
 }
+
+<style>
+    .nv-salary-box {
+        padding: 16px 18px;
+        border: 1px solid #dcefe3;
+        border-radius: 12px;
+        background: #fbfefc;
+    }
+
+        .nv-salary-box .form-label {
+            color: #166534;
+            font-weight: 600;
+        }
+
+        .nv-salary-box .input-group-text {
+            background: #e7f7ed;
+            color: #15803d;
+            font-weight: 700;
+            border-color: #cfe9d9;
+        }
+
+        .nv-salary-box .form-control {
+            border-color: #cfe9d9;
+            font-weight: 600;
+        }
+
+            .nv-salary-box .form-control:focus {
+                border-color: #198754;
+                box-shadow: 0 0 0 .2rem rgba(25, 135, 84, .15);
+            }
+
+    #luongHint {
+        margin-top: 8px;
+        font-size: 13px;
+        color: #64748b;
+    }
+</style>
 
 <div class="container-fluid py-3">
     <div class="mb-4">
@@ -32,15 +68,19 @@
 
                     <div class="col-md-6">
                         <label asp-for="ChucVu" class="form-label">Chức vụ <span class="text-danger">*</span></label>
-                        <select asp-for="ChucVu" class="form-select">
-                            <option value="">-- Chọn chức vụ --</option>
-                            <option value="Quản lý">Quản lý</option>
-                            <option value="Lễ tân">Lễ tân</option>
-                            <option value="Buồng phòng">Buồng phòng</option>
-                            <option value="Kế toán">Kế toán</option>
-                            <option value="Bảo vệ">Bảo vệ</option>
-                            <option value="Kỹ thuật">Kỹ thuật</option>
-                            <option value="Nhân viên">Nhân viên</option>
+                        <select asp-for="ChucVu" class="form-select" id="chucVuSelect">
+                            <option value="" data-luong="0">-- Chọn chức vụ --</option>
+                            @foreach (ChucVu cv in ViewBag.ChucVus)
+                            {
+                                if (cv.TrangThai ||
+                                cv.TenChucVu == Model.ChucVu)
+                                {
+                                    <option value="@cv.TenChucVu"
+                                            data-luong="@cv.LuongCoBanMacDinh.ToString("0.##", inv)">
+                                        @cv.TenChucVu
+                                    </option>
+                                }
+                            }
                         </select>
                         <span asp-validation-for="ChucVu" class="text-danger small"></span>
                     </div>
@@ -80,10 +120,18 @@
                     </div>
 
                     <div class="col-md-6">
-                        <label asp-for="LuongCoBan" class="form-label">Lương cơ bản (VNĐ)</label>
-                        <input asp-for="LuongCoBan" type="number" min="0" step="1000"
-                               class="form-control" />
-                        <span asp-validation-for="LuongCoBan" class="text-danger small"></span>
+                        <div class="nv-salary-box">
+                            <label asp-for="LuongCoBan" class="form-label">
+                                <i class="bi bi-cash-coin me-1"></i>Lương cơ bản thực tế (VNĐ)
+                            </label>
+                            <div class="input-group">
+                                <input asp-for="LuongCoBan" id="luongInput" type="number" min="0" step="any"
+                                       class="form-control" />
+                                <span class="input-group-text">đ</span>
+                            </div>
+                            <div id="luongHint" class="d-none"></div>
+                            <span asp-validation-for="LuongCoBan" class="text-danger small"></span>
+                        </div>
                     </div>
 
                     <div class="col-md-6">
@@ -102,6 +150,7 @@
                 </div>
 
                 <hr class="my-4" />
+
                 <div class="d-flex justify-content-end gap-2">
                     <a asp-action="Index" class="btn btn-outline-secondary">Hủy</a>
                     <button type="submit" class="btn btn-primary">
@@ -115,4 +164,37 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        (function () {
+            const select = document.getElementById('chucVuSelect');
+            const luong = document.getElementById('luongInput');
+            const hint = document.getElementById('luongHint');
+            const fmt = n => Number(n).toLocaleString('vi-VN') + ' đ';
+
+            // Sua nhan vien: GIU luong thuc te hien tai, chi goi y muc mac dinh.
+            // Luong chi doi khi quan tri vien tu sua o nhap hoac bam "Dung muc nay".
+            function capNhatGoiY() {
+                const macDinh = parseFloat(select.selectedOptions[0]?.dataset.luong || '0');
+                const hienTai = parseFloat(luong.value || '0');
+
+                if (macDinh > 0 && macDinh !== hienTai) {
+                    hint.innerHTML = '<i class="bi bi-lightbulb text-warning me-1"></i>' +
+                        'Lương mặc định của chức vụ: <strong>' + fmt(macDinh) + '</strong> ' +
+                        '<button type="button" class="btn btn-link btn-sm p-0 ms-1" id="btnDungMacDinh">Dùng mức này</button>';
+                    hint.classList.remove('d-none');
+                    document.getElementById('btnDungMacDinh').onclick = function () {
+                        luong.value = macDinh;
+                        capNhatGoiY();
+                    };
+                } else {
+                    hint.classList.add('d-none');
+                }
+            }
+
+            select.addEventListener('change', capNhatGoiY);
+            luong.addEventListener('input', capNhatGoiY);
+            capNhatGoiY();
+        })();
+    </script>
 }

@@ -1,5 +1,4 @@
-﻿
-using HotelManagement.Data;
+﻿using HotelManagement.Data;
 using HotelManagement.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -22,12 +21,25 @@ namespace HotelManagement.Repositories
             {
                 search = search.Trim();
 
+                // Collation nhị phân của MySQL: phân biệt chữ hoa, chữ thường và dấu
+                const string collation = "utf8mb4_bin";
+
+                // Cho phép gõ "NV0001", "nv1", "0001" hoặc "1" để tìm theo mã nhân viên
+                var maText = search.StartsWith("NV", StringComparison.OrdinalIgnoreCase)
+                    ? search.Substring(2)
+                    : search;
+                var maNV = int.TryParse(maText, out var id) ? id : -1;
+
+                var laEmail = search.Contains('@');
+                var laSo = search.All(char.IsDigit);
+
                 query = query.Where(n =>
-                    n.HoTen.Contains(search) ||
-                    n.ChucVu.Contains(search) ||
-                    (n.Email != null && n.Email.Contains(search)) ||
-                    (n.SoDienThoai != null &&
-                     n.SoDienThoai.Contains(search)));
+                    n.MaNV == maNV ||
+                    EF.Functions.Collate(n.HoTen, collation).Contains(search) ||
+                    EF.Functions.Collate(n.ChucVu, collation).Contains(search) ||
+                    (laEmail && n.Email != null &&
+                     EF.Functions.Collate(n.Email, collation).Contains(search)) ||
+                    (laSo && n.SoDienThoai != null && n.SoDienThoai.Contains(search)));
             }
 
             return await query

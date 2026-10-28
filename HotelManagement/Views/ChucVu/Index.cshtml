@@ -1,9 +1,8 @@
-﻿
-@model IEnumerable<HotelManagement.Models.ChucVu>
-
+﻿@model IEnumerable<HotelManagement.Models.ChucVu>
 @{
     ViewData["Title"] = "Quản lý chức vụ";
     var danhSach = Model?.ToList() ?? new List<HotelManagement.Models.ChucVu>();
+    var inv = System.Globalization.CultureInfo.InvariantCulture;
 }
 
 <style>
@@ -18,9 +17,9 @@
         padding: 16px;
     }
 
-    .cv-modal-overlay.show {
-        display: flex;
-    }
+        .cv-modal-overlay.show {
+            display: flex;
+        }
 
     .cv-modal-box {
         width: 100%;
@@ -72,9 +71,79 @@
         font-size: 26px;
     }
 
+    /* Lương mặc định */
+    .cv-salary {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 12px;
+        border-radius: 8px;
+        background: #e7f7ed;
+        color: #15803d;
+        font-weight: 700;
+        font-size: 14px;
+        white-space: nowrap;
+    }
+
+    .cv-salary-empty {
+        background: #f1f5f9;
+        color: #94a3b8;
+        font-weight: 600;
+    }
+
+    .cv-salary-box {
+        padding: 14px 16px;
+        border: 1px solid #dcefe3;
+        border-radius: 12px;
+        background: #fbfefc;
+    }
+
+        .cv-salary-box .form-label {
+            color: #166534;
+            font-weight: 600;
+        }
+
+        .cv-salary-box .input-group-text {
+            background: #e7f7ed;
+            color: #15803d;
+            font-weight: 700;
+            border-color: #cfe9d9;
+        }
+
+        .cv-salary-box .form-control {
+            border-color: #cfe9d9;
+            font-weight: 600;
+        }
+
+            .cv-salary-box .form-control:focus {
+                border-color: #198754;
+                box-shadow: 0 0 0 .2rem rgba(25, 135, 84, .15);
+            }
+
+    .cv-salary-preview {
+        margin-top: 8px;
+        font-size: 13px;
+        color: #15803d;
+        font-weight: 600;
+        min-height: 18px;
+    }
+
+    .cv-salary-note {
+        margin-top: 4px;
+        font-size: 12.5px;
+        color: #64748b;
+    }
+
     @@keyframes cvAppear {
-        from { opacity: 0; transform: translateY(10px) scale(.98); }
-        to { opacity: 1; transform: translateY(0) scale(1); }
+        from {
+            opacity: 0;
+            transform: translateY(10px) scale(.98);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
     }
 </style>
 
@@ -85,7 +154,7 @@
                 <i class="bi bi-person-workspace me-2"></i>Quản lý chức vụ
             </h3>
             <p class="text-muted mb-0">
-                Quản lý danh sách chức vụ của nhân viên khách sạn.
+                Quản lý danh sách chức vụ và mức lương cơ bản mặc định của nhân viên khách sạn.
             </p>
         </div>
 
@@ -132,6 +201,7 @@
                             <th>Mã</th>
                             <th>Tên chức vụ</th>
                             <th>Mô tả</th>
+                            <th>Lương cơ bản mặc định</th>
                             <th>Trạng thái</th>
                             <th class="text-center">Thao tác</th>
                         </tr>
@@ -145,6 +215,19 @@
                                     <td class="fw-semibold">CV@(cv.MaChucVu.ToString("D3"))</td>
                                     <td class="fw-semibold">@cv.TenChucVu</td>
                                     <td>@(string.IsNullOrWhiteSpace(cv.MoTa) ? "—" : cv.MoTa)</td>
+                                    <td>
+                                        @if (cv.LuongCoBanMacDinh > 0)
+                                        {
+                                            <span class="cv-salary">
+                                                <i class="bi bi-cash-coin"></i>
+                                                @cv.LuongCoBanMacDinh.ToString("N0") đ
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="cv-salary cv-salary-empty">Chưa thiết lập</span>
+                                        }
+                                    </td>
                                     <td>
                                         @if (cv.TrangThai)
                                         {
@@ -162,6 +245,7 @@
                                                     data-id="@cv.MaChucVu"
                                                     data-ten="@cv.TenChucVu"
                                                     data-mota="@cv.MoTa"
+                                                    data-luong="@cv.LuongCoBanMacDinh.ToString("0.##", inv)"
                                                     data-trangthai="@cv.TrangThai"
                                                     title="Sửa">
                                                 <i class="bi bi-pencil-square"></i>
@@ -182,7 +266,7 @@
                         else
                         {
                             <tr>
-                                <td colspan="5" class="text-center py-5 text-muted">
+                                <td colspan="6" class="text-center py-5 text-muted">
                                     <i class="bi bi-inbox fs-1 d-block mb-2"></i>
                                     Chưa có chức vụ nào.
                                     <div class="mt-2">Nhấn “Thêm chức vụ” để bắt đầu.</div>
@@ -208,7 +292,9 @@
                     <i class="bi bi-plus-circle text-success me-2"></i>Thêm chức vụ
                 </h5>
                 <button type="button" class="cv-modal-close"
-                        onclick="closeCvModal('createModal')">&times;</button>
+                        onclick="closeCvModal('createModal')">
+                    &times;
+                </button>
             </div>
 
             <div class="cv-modal-body">
@@ -226,12 +312,31 @@
                               placeholder="Mô tả công việc..."></textarea>
                 </div>
 
+                <div class="cv-salary-box">
+                    <label class="form-label">
+                        <i class="bi bi-cash-coin me-1"></i>Lương cơ bản mặc định
+                    </label>
+                    <div class="input-group">
+                        <input type="number" name="LuongCoBanMacDinh"
+                               id="createLuong" class="form-control cv-luong-input"
+                               min="0" step="1000" value="0"
+                               placeholder="Ví dụ: 8000000" />
+                        <span class="input-group-text">VNĐ</span>
+                    </div>
+                    <div class="cv-salary-preview" data-preview-for="createLuong"></div>
+                    <div class="cv-salary-note">
+                        Tự điền khi thêm nhân viên mới thuộc chức vụ này.
+                    </div>
+                </div>
+
                 <input type="hidden" name="TrangThai" value="true" />
             </div>
 
             <div class="cv-modal-footer">
                 <button type="button" class="btn btn-outline-secondary"
-                        onclick="closeCvModal('createModal')">Hủy</button>
+                        onclick="closeCvModal('createModal')">
+                    Hủy
+                </button>
                 <button type="submit" class="btn btn-success">
                     <i class="bi bi-check-lg me-1"></i>Thêm chức vụ
                 </button>
@@ -246,7 +351,6 @@
     <div class="cv-modal-box">
         <form asp-controller="ChucVu" asp-action="Edit" method="post">
             @Html.AntiForgeryToken()
-
             <input type="hidden" id="editMaChucVu" name="MaChucVu" />
 
             <div class="cv-modal-header">
@@ -254,7 +358,9 @@
                     <i class="bi bi-pencil-square text-primary me-2"></i>Sửa chức vụ
                 </h5>
                 <button type="button" class="cv-modal-close"
-                        onclick="closeCvModal('editModal')">&times;</button>
+                        onclick="closeCvModal('editModal')">
+                    &times;
+                </button>
             </div>
 
             <div class="cv-modal-body">
@@ -271,6 +377,22 @@
                               maxlength="255"></textarea>
                 </div>
 
+                <div class="cv-salary-box mb-3">
+                    <label class="form-label">
+                        <i class="bi bi-cash-coin me-1"></i>Lương cơ bản mặc định
+                    </label>
+                    <div class="input-group">
+                        <input type="number" name="LuongCoBanMacDinh"
+                               id="editLuong" class="form-control cv-luong-input"
+                               min="0" step="1000" value="0" />
+                        <span class="input-group-text">VNĐ</span>
+                    </div>
+                    <div class="cv-salary-preview" data-preview-for="editLuong"></div>
+                    <div class="cv-salary-note">
+                        Chỉ áp dụng cho nhân viên thêm mới. Lương thực tế của nhân viên hiện tại không bị thay đổi.
+                    </div>
+                </div>
+
                 <div class="form-check form-switch">
                     <input type="checkbox" id="editTrangThai"
                            name="TrangThai" value="true"
@@ -284,7 +406,9 @@
 
             <div class="cv-modal-footer">
                 <button type="button" class="btn btn-outline-secondary"
-                        onclick="closeCvModal('editModal')">Hủy</button>
+                        onclick="closeCvModal('editModal')">
+                    Hủy
+                </button>
                 <button type="submit" class="btn btn-primary">
                     <i class="bi bi-save me-1"></i>Lưu thay đổi
                 </button>
@@ -299,20 +423,20 @@
     <div class="cv-modal-box" style="max-width: 430px;">
         <form asp-controller="ChucVu" asp-action="Delete" method="post">
             @Html.AntiForgeryToken()
-
             <input type="hidden" id="deleteMaChucVu" name="id" />
 
             <div class="cv-modal-header">
                 <h5 class="fw-bold mb-0">Xác nhận xóa</h5>
                 <button type="button" class="cv-modal-close"
-                        onclick="closeCvModal('deleteModal')">&times;</button>
+                        onclick="closeCvModal('deleteModal')">
+                    &times;
+                </button>
             </div>
 
             <div class="cv-modal-body text-center">
                 <div class="cv-delete-icon">
                     <i class="bi bi-trash"></i>
                 </div>
-
                 <h5 class="fw-bold">Xóa chức vụ này?</h5>
                 <p class="text-muted mb-0">
                     Cậu có chắc muốn xóa chức vụ
@@ -323,7 +447,9 @@
 
             <div class="cv-modal-footer">
                 <button type="button" class="btn btn-outline-secondary"
-                        onclick="closeCvModal('deleteModal')">Hủy</button>
+                        onclick="closeCvModal('deleteModal')">
+                    Hủy
+                </button>
                 <button type="submit" class="btn btn-danger">
                     <i class="bi bi-trash me-1"></i>Xác nhận xóa
                 </button>
@@ -353,7 +479,25 @@
         }
     }
 
+    // Hien thi so tien dang chu "8.000.000 đ" ngay duoi o nhap
+    function capNhatXemTruocLuong(input) {
+        const preview = document.querySelector(
+            '[data-preview-for="' + input.id + '"]');
+        if (!preview) return;
+
+        const value = parseFloat(input.value || '0');
+        preview.textContent = value > 0
+            ? '= ' + value.toLocaleString('vi-VN') + ' đ / tháng'
+            : '';
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.cv-luong-input').forEach(function (input) {
+            input.addEventListener('input', function () {
+                capNhatXemTruocLuong(input);
+            });
+        });
+
         // Mo popup sua chuc vu
         document.querySelectorAll('.btn-edit-chucvu').forEach(function (button) {
             button.addEventListener('click', function () {
@@ -365,6 +509,10 @@
 
                 document.getElementById('editMoTa').value =
                     this.dataset.mota || '';
+
+                const luong = document.getElementById('editLuong');
+                luong.value = this.dataset.luong || '0';
+                capNhatXemTruocLuong(luong);
 
                 document.getElementById('editTrangThai').checked =
                     this.dataset.trangthai === 'True' ||

@@ -998,3 +998,7 @@ input[type="password"]::-ms-clear {
     color: #8a93a5;
     font-size: 13px;
 }
+.admin-content .container-fluid {
+    padding-left: 0;
+    padding-right: 0;
+}

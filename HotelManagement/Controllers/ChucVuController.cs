@@ -1,5 +1,4 @@
-﻿
-using HotelManagement.Models;
+﻿using HotelManagement.Models;
 using HotelManagement.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -24,18 +23,18 @@ namespace HotelManagement.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(
-            [Bind("TenChucVu,MoTa,TrangThai")] ChucVu chucVu)
+            [Bind("TenChucVu,MoTa,LuongCoBanMacDinh,TrangThai")] ChucVu chucVu)
         {
             if (!ModelState.IsValid)
             {
-                TempData["Error"] = "Thong tin chuc vu khong hop le.";
+                TempData["Error"] = "Thông tin chức vụ không hợp lệ.";
                 return RedirectToAction(nameof(Index));
             }
 
             try
             {
                 await _service.AddAsync(chucVu);
-                TempData["Success"] = "Them chuc vu thanh cong.";
+                TempData["Success"] = "Thêm chức vụ thành công.";
             }
             catch (ArgumentException ex)
             {
@@ -48,22 +47,21 @@ namespace HotelManagement.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(
-            [Bind("MaChucVu,TenChucVu,MoTa,TrangThai")] ChucVu chucVu)
+            [Bind("MaChucVu,TenChucVu,MoTa,LuongCoBanMacDinh,TrangThai")] ChucVu chucVu)
         {
             if (!ModelState.IsValid)
             {
-                TempData["Error"] = "Thong tin chuc vu khong hop le.";
+                TempData["Error"] = "Thông tin chức vụ không hợp lệ.";
                 return RedirectToAction(nameof(Index));
             }
 
             try
             {
                 var updated = await _service.UpdateAsync(chucVu);
-
                 if (!updated)
                     return NotFound();
 
-                TempData["Success"] = "Cap nhat chuc vu thanh cong.";
+                TempData["Success"] = "Cập nhật chức vụ thành công.";
             }
             catch (ArgumentException ex)
             {
@@ -80,11 +78,10 @@ namespace HotelManagement.Controllers
             try
             {
                 var deleted = await _service.DeleteAsync(id);
-
                 if (!deleted)
                     return NotFound();
 
-                TempData["Success"] = "Xoa chuc vu thanh cong.";
+                TempData["Success"] = "Xóa chức vụ thành công.";
             }
             catch (InvalidOperationException ex)
             {
