@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using HotelManagement.Data;
 using HotelManagement.Models;
 using HotelManagement.Services;
@@ -109,6 +109,183 @@ namespace HotelManagement.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        // GET: /DatPhong/GetThongTinHuyPhong?id=5
+        [HttpGet]
+        public async Task<IActionResult> GetThongTinHuyPhong(int id)
+        {
+            var datPhong = await _context.DatPhongs
+                .Include(dp => dp.KhachHang)
+                .Include(dp => dp.ChiTietDatPhongs)
+                    .ThenInclude(ct => ct.Phong)
+                .FirstOrDefaultAsync(dp => dp.MaDatPhong == id);
+
+            if (datPhong == null)
+                return NotFound(new { success = false, message = "Không tìm thấy phiếu đặt phòng." });
+
+            if (datPhong.TrangThai == "DaHuy")
+                return BadRequest(new { success = false, message = "Phiếu đặt phòng này đã được hủy trước đó." });
+
+            if (datPhong.TrangThai == "DaThanhToan" || datPhong.TrangThai == "DaHoanThanh")
+                return BadRequest(new { success = false, message = "Không thể hủy phòng đã thanh toán trả phòng." });
+
+            var ngayNhan = datPhong.NgayNhanDuKien;
+            var ngayHienTai = DateTime.Now;
+            var soNgayTruocNhan = (ngayNhan.Date - ngayHienTai.Date).TotalDays;
+
+            double tiLeHoan = 0;
+            string quyDinh = "";
+
+            if (datPhong.TienCoc <= 0)
+            {
+                tiLeHoan = 0;
+                quyDinh = "Khách hàng chưa đóng tiền cọc, không phát sinh khoản hoàn trả.";
+            }
+            else if (soNgayTruocNhan >= 7)
+            {
+                tiLeHoan = 100;
+                quyDinh = $"Hủy trước {soNgayTruocNhan:0} ngày (>= 7 ngày): Đủ điều kiện hoàn 100% tiền cọc.";
+            }
+            else if (soNgayTruocNhan >= 3)
+            {
+                tiLeHoan = 50;
+                quyDinh = $"Hủy trước {soNgayTruocNhan:0} ngày (3 - 6 ngày): Phí hủy phòng 50%, hoàn lại 50% tiền cọc.";
+            }
+            else
+            {
+                tiLeHoan = 0;
+                quyDinh = $"Hủy trước {(soNgayTruocNhan < 0 ? 0 : soNgayTruocNhan):0} ngày (< 3 ngày): Theo chính sách không được hoàn lại tiền cọc.";
+            }
+
+            decimal soTienHoanGoiY = (datPhong.TienCoc * (decimal)tiLeHoan) / 100m;
+
+            return Json(new
+            {
+                success = true,
+                maDatPhong = datPhong.MaDatPhong,
+                tenKhachHang = datPhong.KhachHang?.HoTen ?? "Khách lẻ",
+                soDienThoai = datPhong.KhachHang?.SoDienThoai ?? "",
+                ngayNhanDuKien = datPhong.NgayNhanDuKien.ToString("dd/MM/yyyy"),
+                soNgayTruocNhan = (int)soNgayTruocNhan,
+                tienCoc = datPhong.TienCoc,
+                tiLeHoan = tiLeHoan,
+                soTienHoanGoiY = soTienHoanGoiY,
+                quyDinh = quyDinh,
+                nhanVienThucHien = User.Identity?.Name ?? "Nhân viên trực"
+            });
+        }
+
+        // POST: /DatPhong/XacNhanHuyPhong
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> XacNhanHuyPhong([FromBody] HuyPhongRequestModel request)
+        {
+            if (string.IsNullOrWhiteSpace(request.LyDoHuy))
+                return BadRequest(new { success = false, message = "Vui lòng nhập lý do hủy phòng." });
+
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                var datPhong = await _context.DatPhongs
+                    .Include(dp => dp.ChiTietDatPhongs)
+                    .FirstOrDefaultAsync(dp => dp.MaDatPhong == request.MaDatPhong);
+
+                if (datPhong == null)
+                    return NotFound(new { success = false, message = "Không tìm thấy phiếu đặt phòng." });
+
+                if (datPhong.TrangThai == "DaHuy")
+                    return BadRequest(new { success = false, message = "Phiếu đặt phòng đã được hủy trước đó." });
+
+                datPhong.TrangThai = "DaHuy";
+                datPhong.GhiChu = $"[HỦY PHÒNG {DateTime.Now:dd/MM/yyyy HH:mm}] Lý do: {request.LyDoHuy}. Hoàn: {request.SoTienHoan:N0} đ";
+
+                if (datPhong.TienCoc > 0)
+                {
+                    var hoaDon = await _context.HoaDons
+                        .Include(h => h.ThanhToans)
+                        .FirstOrDefaultAsync(h => h.MaDatPhong == datPhong.MaDatPhong);
+
+                    if (hoaDon == null)
+                    {
+                        hoaDon = new HoaDon
+                        {
+                            MaDatPhong = datPhong.MaDatPhong,
+                            NgayLap = DateTime.Now,
+                            TienPhong = 0,
+                            TienDichVu = 0,
+                            GiamGia = 0,
+                            TongTien = datPhong.TienCoc,
+                            TrangThai = "DaHuy"
+                        };
+                        _context.HoaDons.Add(hoaDon);
+                        await _context.SaveChangesAsync();
+                    }
+
+                    var thanhToan = hoaDon.ThanhToans.FirstOrDefault();
+                    if (thanhToan == null)
+                    {
+                        thanhToan = new ThanhToan
+                        {
+                            MaHD = hoaDon.MaHD,
+                            SoTien = datPhong.TienCoc,
+                            PhuongThuc = "TienCoc",
+                            TrangThai = "DaCoc",
+                            NgayThanhToan = DateTime.Now,
+                            MaGiaoDich = "COC" + datPhong.MaDatPhong
+                        };
+                        _context.ThanhToans.Add(thanhToan);
+                        await _context.SaveChangesAsync();
+                    }
+
+                    var hoanTien = new HoanTien
+                    {
+                        MaThanhToan = thanhToan.MaThanhToan,
+                        SoTienHoan = request.SoTienHoan,
+                        LyDo = $"[Hình thức: {request.HinhThucHoan}] [Tỷ lệ hoàn: {request.PhanTramHoan}%] [Nhân viên: {User.Identity?.Name ?? "Nhân viên"}] Lý do: {request.LyDoHuy}",
+                        TrangThai = request.SoTienHoan > 0 ? "DaHoanTien" : "KhongHoanTien",
+                        NgayYeuCau = DateTime.Now,
+                        NgayHoanTien = DateTime.Now
+                    };
+                    _context.HoanTiens.Add(hoanTien);
+                }
+
+                var maPhongList = datPhong.ChiTietDatPhongs.Select(c => c.MaPhong).Distinct().ToList();
+                foreach (var maPhong in maPhongList)
+                {
+                    var phong = await _context.Phongs.FirstOrDefaultAsync(p => p.MaPhong == maPhong);
+                    if (phong != null)
+                    {
+                        var dangCoLuuTru = await _context.LuuTrus
+                            .AnyAsync(l => l.ChiTietDatPhong != null &&
+                                           l.ChiTietDatPhong.MaPhong == maPhong &&
+                                           l.ThoiGianTraPhong == null);
+
+                        var conDatPhongKhac = await _context.ChiTietDatPhongs
+                            .AnyAsync(c => c.MaPhong == maPhong &&
+                                           c.MaDatPhong != datPhong.MaDatPhong &&
+                                           c.DatPhong != null &&
+                                           c.DatPhong.TrangThai != "DaHuy" &&
+                                           c.DatPhong.TrangThai != "DaThanhToan" &&
+                                           c.DatPhong.TrangThai != "DaHoanThanh");
+
+                        if (!dangCoLuuTru && !conDatPhongKhac)
+                        {
+                            phong.TrangThai = "Trong";
+                        }
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return Json(new { success = true, message = "Hủy phòng và ghi nhận thông tin hoàn cọc thành công!" });
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return StatusCode(500, new { success = false, message = "Lỗi khi xử lý: " + ex.Message });
+            }
+        }
+
         // POST: /DatPhong/Cancel/1
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -165,7 +342,6 @@ namespace HotelManagement.Controllers
                 });
             }
 
-            // Tra ve trang thai moi de giao dien tu doi nut Nhan phong -> Tra phong
             return Json(await BuildTrangThaiResponseAsync(id, maPhong, result.Message));
         }
 
@@ -181,8 +357,6 @@ namespace HotelManagement.Controllers
             return Json(await BuildTrangThaiResponseAsync(id, maPhong, result.Message));
         }
 
-        // Doc lai trang thai phong / phieu dat sau khi nhan hoac tra phong.
-        // nutTiepTheo: "TraPhong" (dang luu tru), "DonDep" (dang don dep), "NhanPhong" (con cho nhan)
         private async Task<object> BuildTrangThaiResponseAsync(int maDatPhong, int maPhong, string message)
         {
             var phong = await _context.Phongs.AsNoTracking()
@@ -331,7 +505,7 @@ namespace HotelManagement.Controllers
 
             if (datPhong != null)
             {
-                // Chan thanh toan / tra phong lap lai
+                // Chặn thanh toán / trả phòng lặp lại
                 if (datPhong.TrangThai != "DangLuuTru")
                 {
                     TempData["Error"] = "Chỉ có thể trả phòng và thanh toán cho phiếu đang lưu trú.";
@@ -344,7 +518,7 @@ namespace HotelManagement.Controllers
 
                 var dsChiTiet = datPhong.ChiTietDatPhongs.Select(c => c.MaChiTietDatPhong).ToList();
 
-                // Dong cac luot luu tru dang mo de phong khong con hien la "co khach"
+                // Đóng các lượt lưu trú đang mở để phòng không còn hiện là "có khách"
                 var luuTruDangMo = await _context.LuuTrus
                     .Where(l => dsChiTiet.Contains(l.MaChiTietDatPhong) &&
                                 l.ThoiGianNhanPhong != null &&
@@ -354,7 +528,7 @@ namespace HotelManagement.Controllers
                 foreach (var lt in luuTruDangMo)
                     lt.ThoiGianTraPhong = thoiGianTra;
 
-                // Chi phong da duoc nhan moi chuyen sang dang don
+                // Chỉ phòng đã được nhận mới chuyển sang đang dọn
                 var chiTietDaNhan = luuTruDangMo.Select(l => l.MaChiTietDatPhong).ToHashSet();
 
                 foreach (var ctdp in datPhong.ChiTietDatPhongs)
@@ -362,7 +536,6 @@ namespace HotelManagement.Controllers
                     var phong = await _context.Phongs.FindAsync(ctdp.MaPhong);
                     if (phong != null)
                     {
-                        // Phong da nhan -> dang don; phong chua tung nhan -> tra ve trong
                         phong.TrangThai = chiTietDaNhan.Contains(ctdp.MaChiTietDatPhong)
                             ? "DangDon"
                             : "Trong";
@@ -370,18 +543,62 @@ namespace HotelManagement.Controllers
                 }
 
                 await _context.SaveChangesAsync();
+
+                // Ghi nhận Hóa đơn và Thanh toán vào CSDL khi thanh toán thành công
+                var existingHoaDon = await _context.HoaDons.FirstOrDefaultAsync(h => h.MaDatPhong == datPhong.MaDatPhong);
+                if (existingHoaDon == null)
+                {
+                    var hoaDon = new HoaDon
+                    {
+                        MaDatPhong = datPhong.MaDatPhong,
+                        NgayLap = thoiGianTra,
+                        TienPhong = model.TienPhong,
+                        TienDichVu = model.TongTienDichVu,
+                        GiamGia = 0,
+                        TongTien = model.TongThanhToan,
+                        TrangThai = "DaThanhToan"
+                    };
+                    _context.HoaDons.Add(hoaDon);
+                    await _context.SaveChangesAsync();
+
+                    var thanhToan = new ThanhToan
+                    {
+                        MaHD = hoaDon.MaHD,
+                        SoTien = model.TongThanhToan,
+                        PhuongThuc = model.PhuongThucThanhToan ?? "TienMat",
+                        TrangThai = "ThanhCong",
+                        NgayThanhToan = thoiGianTra,
+                        MaGiaoDich = "GD" + hoaDon.MaHD + DateTime.Now.ToString("yyyyMMddHHmmss")
+                    };
+                    _context.ThanhToans.Add(thanhToan);
+                    await _context.SaveChangesAsync();
+                }
             }
 
-            return RedirectToAction(nameof(ThanhToanThanhCong), new { maDatPhong = model.MaDatPhong });
+            // Lấy MaHD chuẩn xác từ database để truyền sang trang thành công
+            var hoaDonVuaTao = await _context.HoaDons
+                .FirstOrDefaultAsync(h => h.MaDatPhong == model.MaDatPhong);
+
+            int maHDGoi = hoaDonVuaTao?.MaHD ?? model.MaDatPhong;
+
+            return RedirectToAction(nameof(ThanhToanThanhCong), new { id = maHDGoi });
         }
 
-
-        // GET: /DatPhong/ThanhToanThanhCong?maDatPhong=5
-        [HttpGet]
-        public async Task<IActionResult> ThanhToanThanhCong(int maDatPhong)
+       // Thanh toan hoa don thanh cong
+        [HttpGet("DatPhong/ThanhToanThanhCong/{id?}")]
+        public async Task<IActionResult> ThanhToanThanhCong(int id, int? maDatPhong)
         {
-            var viewModel = await GetHoaDonCheckoutViewModelAsync(maDatPhong);
+            int targetId = id > 0 ? id : (maDatPhong ?? 0);
+            if (targetId == 0) return NotFound(); 
 
+            // Tìm hóa đơn theo MaHD hoặc MaDatPhong
+            var hoaDon = await _context.HoaDons
+                .Include(h => h.DatPhong)
+                .FirstOrDefaultAsync(h => h.MaHD == targetId || h.MaDatPhong == targetId);
+
+            int realMaDatPhong = hoaDon?.MaDatPhong ?? targetId;
+
+            var viewModel = await GetHoaDonCheckoutViewModelAsync(realMaDatPhong);
             if (viewModel == null)
             {
                 return NotFound();
@@ -390,6 +607,7 @@ namespace HotelManagement.Controllers
             ViewBag.MaHoaDon = $"HD{maDatPhong}{DateTime.Now:yyyyMMdd}";
             return View("ThanhToanThanhCong", viewModel);
         }
+        
 
         // HÀM BỔ TRỢ LẤY DỮ LIỆU BẢNG KÊ CHECKOUT & HÓA ĐƠN
         private async Task<HoaDonCheckoutViewModel?> GetHoaDonCheckoutViewModelAsync(int maDatPhong)
@@ -416,7 +634,7 @@ namespace HotelManagement.Controllers
             decimal giaTheoDem = chiTietPhong?.DonGia ?? loaiPhong?.GiaTheoDem ?? 0;
             decimal tienPhong = giaTheoDem * soDem;
 
-            // === TẢI CHI TIẾT DỊCH VỤ ĐÃ SỬ DỤNG TỪ CSDL THÔNG QUA LƯỢT LƯU TRÚ ===
+            // Tải chi tiết dịch vụ đã sử dụng
             var dsDichVu = await _context.ChiTietDichVus
                 .AsNoTracking()
                 .Include(cdv => cdv.DichVu)
@@ -433,11 +651,10 @@ namespace HotelManagement.Controllers
                 .ToListAsync();
 
             decimal tongTienDichVu = dsDichVu.Sum(x => x.ThanhTien);
-            decimal tiLeThuePercent = 10; // VAT 10%
+            decimal tiLeThuePercent = 10;
             decimal tienThue = (tienPhong + tongTienDichVu) * (tiLeThuePercent / 100m);
             decimal tongThanhToan = tienPhong + tongTienDichVu + tienThue;
 
-            // Lấy thông tin cài đặt ngân hàng thanh toán VietQR
             var paymentSetting = _paymentSettingService.GetSettings();
             string nganHangMa = paymentSetting?.NganHangMa ?? "";
             string soTaiKhoan = paymentSetting?.SoTaiKhoan ?? "";
@@ -474,6 +691,7 @@ namespace HotelManagement.Controllers
                 VietQrImageUrl = vietQrUrl
             };
         }
+
         private async Task NapDuLieuFormAsync(DatPhongViewModel model)
         {
             model.KhachHangs = await _context.KhachHangs
@@ -505,18 +723,21 @@ namespace HotelManagement.Controllers
                 })
                 .ToListAsync();
         }
+
         [HttpGet]
         public async Task<IActionResult> XuatHoaDon(int id)
         {
-            var viewModel = await GetHoaDonCheckoutViewModelAsync(id);
+            // Ở đây id có thể là MaHD hoặc MaDatPhong, ta tìm theo MaHD trước, nếu không thấy thì tìm theo MaDatPhong
+            var hoaDon = await _context.HoaDons.FirstOrDefaultAsync(h => h.MaHD == id || h.MaDatPhong == id);
+            int maDatPhong = hoaDon?.MaDatPhong ?? id;
+
+            var viewModel = await GetHoaDonCheckoutViewModelAsync(maDatPhong);
             if (viewModel == null)
             {
                 return NotFound("Không tìm thấy thông tin hóa đơn.");
             }
 
-            ViewBag.MaHoaDon = $"HD{id}{DateTime.Now:yyyyMMdd}";
-
-            // Bỏ qua điều kiện AJAX, luôn trả về View XuatHoaDon để hiển thị trực tiếp
+            ViewBag.MaHoaDon = hoaDon?.MaHD ?? id;
             return View("XuatHoaDon", viewModel);
         }
     }

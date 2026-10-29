@@ -1,4 +1,4 @@
-﻿@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Identity
 @inject UserManager<IdentityUser> UserManager
 @{
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
@@ -118,8 +118,8 @@
                 }
 
                 <div class="sidebar-section-label">TÀI CHÍNH</div>
-                <a href="#financeMenu" class="sidebar-link"
-                   data-menu-toggle="financeMenu"
+                <a class="sidebar-link @(isFinanceSection ? "active" : "")"
+                   asp-controller="HoaDon" asp-action="Index"
                    aria-expanded="@(isFinanceSection ? "true" : "false")">
                     <i class="bi bi-wallet2"></i><span>Hóa đơn & thanh toán</span>
                 </a>
@@ -131,7 +131,7 @@
             </div> *@
 
                 <div class="sidebar-section-label">BÁO CÁO & HỆ THỐNG</div>
-                <a href="#" class="sidebar-link disabled-link" aria-disabled="true">
+                <a asp-controller="Dashboard" asp-action="TaiChinh" class="sidebar-link">
                     <i class="bi bi-bar-chart-line"></i><span>Báo cáo thống kê</span>
                 </a>
 

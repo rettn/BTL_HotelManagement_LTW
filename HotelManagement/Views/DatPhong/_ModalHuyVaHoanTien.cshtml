@@ -1,0 +1,77 @@
+<!-- MODAL HỦY PHÒNG & HOÀN TIỀN CỌC -->
+<div class="modal fade" id="modalHuyVaHoanTien" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title fw-bold" id="modalLabel">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>Xác nhận Hủy phòng & Hoàn cọc
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <!-- Thông báo chính sách hoàn cọc -->
+                <div class="alert alert-warning py-2 px-3 small mb-3 border-0 bg-warning-subtle text-dark" id="txtQuyDinhChinhSach">
+                    <i class="bi bi-info-circle me-1 text-warning"></i>Đang tải quy định chính sách hủy...
+                </div>
+
+                <!-- Tóm tắt phiếu đặt -->
+                <div class="bg-light p-3 rounded mb-3">
+                    <div class="row g-2 small">
+                        <div class="col-6">Mã đặt phòng: <strong id="lblMaDatPhong" class="text-primary">#DP...</strong></div>
+                        <div class="col-6 text-end">Khách hàng: <strong id="lblTenKhachHang">...</strong></div>
+                        <div class="col-6">Ngày nhận dự kiến: <span id="lblNgayNhan">...</span></div>
+                        <div class="col-6 text-end">Tiền cọc ban đầu: <strong id="lblTienCoc" class="text-danger">0 đ</strong></div>
+                    </div>
+                </div>
+
+                <!-- Form thông tin hoàn tiền -->
+                <form id="formHuyPhong">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" id="modalMaDatPhong" />
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">Tỷ lệ hoàn tiền (%)</label>
+                            <div class="input-group input-group-sm">
+                                <input type="number" id="txtPhanTramHoan" class="form-control fw-bold text-success" min="0" max="100" />
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">Số tiền hoàn trả</label>
+                            <div class="input-group input-group-sm">
+                                <input type="number" id="txtSoTienHoan" class="form-control fw-bold text-danger" min="0" />
+                                <span class="input-group-text">đ</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Hình thức hoàn tiền</label>
+                        <select id="ddlHinhThucHoan" class="form-select form-select-sm">
+                            <option value="TienMat">Tiền mặt tại quầy</option>
+                            <option value="ChuyenKhoan">Chuyển khoản ngân hàng</option>
+                            <option value="TheNganHang">Thẻ thanh toán / Ví điện tử</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Lý do hủy phòng <span class="text-danger">*</span></label>
+                        <textarea id="txtLyDoHuy" class="form-control" rows="2" placeholder="Nhập lý do hủy từ khách hàng hoặc yêu cầu quản lý..." required></textarea>
+                    </div>
+
+                    <div class="small text-muted mb-2">
+                        Nhân viên thực hiện: <strong id="lblNhanVienThucHien">Nhân viên</strong>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer bg-light py-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-sm btn-danger fw-semibold px-3" id="btnSubmitHuyPhong">
+                    <i class="bi bi-check-circle me-1"></i>Xác nhận Hủy & Hoàn cọc
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+

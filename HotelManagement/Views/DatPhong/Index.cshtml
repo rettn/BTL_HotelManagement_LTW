@@ -1,4 +1,4 @@
-﻿@model IEnumerable<HotelManagement.Models.DatPhong>
+@model IEnumerable<HotelManagement.Models.DatPhong>
 
 @{
     ViewData["Title"] = "Danh sách đặt phòng";
@@ -392,7 +392,7 @@
                                             <i class="bi bi-box-arrow-right"></i> Check-out
                                         </a>
                                     }
-                                    @if (datPhong.TrangThai == "ChoXacNhan")
+                                    @if (datPhong.TrangThai == "ChoXacNhan" || datPhong.TrangThai == "DaCoc")
                                     {
                                         <form asp-controller="DatPhong"
                                               asp-action="Cancel"
@@ -402,7 +402,7 @@
                                             @Html.AntiForgeryToken()
                                             <button type="submit"
                                                     class="booking-action booking-action-danger"
-                                                    title="Hủy đặt phòng">
+                                                    title="Hủy đặt phòng & Hoàn cọc" onclick="event.preventDefault(); moModalHuyPhong(@datPhong.MaDatPhong);">
                                                 <i class="bi bi-x-circle"></i>
                                             </button>
                                         </form>
@@ -448,8 +448,113 @@
     </div>
 </div>
 
+<partial name="_ModalHuyVaHoanTien" />
+
 @section Scripts {
     <script>
+        let currentTienCoc = 0;
+        let modalHuyPhongInstance = null;
+
+        function getModalHuyPhong() {
+            if (!modalHuyPhongInstance) {
+                const modalEl = document.getElementById('modalHuyVaHoanTien');
+                if (modalEl) modalHuyPhongInstance = new bootstrap.Modal(modalEl);
+            }
+            return modalHuyPhongInstance;
+        }
+
+        function moModalHuyPhong(maDatPhong) {
+            fetch(`/DatPhong/GetThongTinHuyPhong?id=${maDatPhong}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.success) {
+                        alert(data.message);
+                        return;
+                    }
+
+                    document.getElementById('modalMaDatPhong').value = data.maDatPhong;
+                    document.getElementById('lblMaDatPhong').innerText = '#DP' + data.maDatPhong;
+                    document.getElementById('lblTenKhachHang').innerText = data.tenKhachHang;
+                    document.getElementById('lblNgayNhan').innerText = data.ngayNhanDuKien;
+                    document.getElementById('lblTienCoc').innerText = Number(data.tienCoc).toLocaleString('vi-VN') + ' đ';
+                    document.getElementById('lblNhanVienThucHien').innerText = data.nhanVienThucHien;
+                    document.getElementById('txtQuyDinhChinhSach').innerHTML = `<i class="bi bi-info-circle me-1"></i>${data.quyDinh}`;
+
+                    currentTienCoc = data.tienCoc;
+                    document.getElementById('txtPhanTramHoan').value = data.tiLeHoan;
+                    document.getElementById('txtSoTienHoan').value = data.soTienHoanGoiY;
+                    document.getElementById('txtLyDoHuy').value = '';
+
+                    const modal = getModalHuyPhong();
+                    if (modal) modal.show();
+                })
+                .catch(err => alert("Không thể tải thông tin đặt phòng: " + err));
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const txtPercent = document.getElementById('txtPhanTramHoan');
+            if (txtPercent) {
+                txtPercent.addEventListener('input', function () {
+                    let percent = parseFloat(this.value) || 0;
+                    if (percent > 100) percent = 100;
+                    if (percent < 0) percent = 0;
+                    document.getElementById('txtSoTienHoan').value = (currentTienCoc * percent) / 100;
+                });
+            }
+
+            const btnSubmit = document.getElementById('btnSubmitHuyPhong');
+            if (btnSubmit) {
+                btnSubmit.addEventListener('click', function () {
+                    const maDatPhong = parseInt(document.getElementById('modalMaDatPhong').value);
+                    const lyDoHuy = document.getElementById('txtLyDoHuy').value.trim();
+                    const phanTramHoan = parseFloat(document.getElementById('txtPhanTramHoan').value) || 0;
+                    const soTienHoan = parseFloat(document.getElementById('txtSoTienHoan').value) || 0;
+                    const hinhThucHoan = document.getElementById('ddlHinhThucHoan').value;
+                    const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+
+                    if (!lyDoHuy) {
+                        alert('Vui lòng nhập lý do hủy phòng.');
+                        return;
+                    }
+
+                    this.disabled = true;
+                    this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Đang xử lý...';
+
+                    fetch('/DatPhong/XacNhanHuyPhong', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': token
+                        },
+                        body: JSON.stringify({
+                            maDatPhong: maDatPhong,
+                            lyDoHuy: lyDoHuy,
+                            phanTramHoan: phanTramHoan,
+                            soTienHoan: soTienHoan,
+                            hinhThucHoan: hinhThucHoan
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(res => {
+                        if (res.success) {
+                            alert(res.message);
+                            const modal = getModalHuyPhong();
+                            if (modal) modal.hide();
+                            location.reload();
+                        } else {
+                            alert('Lỗi: ' + res.message);
+                            btnSubmit.disabled = false;
+                            btnSubmit.innerHTML = '<i class="bi bi-check-circle me-1"></i>Xác nhận Hủy & Hoàn cọc';
+                        }
+                    })
+                    .catch(err => {
+                        alert('Đã xảy ra lỗi kết nối: ' + err);
+                        btnSubmit.disabled = false;
+                        btnSubmit.innerHTML = '<i class="bi bi-check-circle me-1"></i>Xác nhận Hủy & Hoàn cọc';
+                    });
+                });
+            }
+        });
         async function huyDatPhong(event, form) {
             event.preventDefault();
 
