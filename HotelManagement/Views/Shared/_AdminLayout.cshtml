@@ -2,20 +2,27 @@
 @inject UserManager<IdentityUser> UserManager
 @{
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+
+    var isDashboardIndex = currentController.Equals("Dashboard", StringComparison.OrdinalIgnoreCase)
+    && (currentAction.Equals("Index", StringComparison.OrdinalIgnoreCase) || string.IsNullOrEmpty(currentAction));
+    var isReportSection = currentController.Equals("Dashboard", StringComparison.OrdinalIgnoreCase)
+    && currentAction.Equals("TaiChinh", StringComparison.OrdinalIgnoreCase);
+
     var isReservationSection = currentController.Equals("DatPhong", StringComparison.OrdinalIgnoreCase);
     var isFinanceSection = currentController.Equals("HoaDon", StringComparison.OrdinalIgnoreCase)
-        || currentController.Equals("ThanhToan", StringComparison.OrdinalIgnoreCase);
+    || currentController.Equals("ThanhToan", StringComparison.OrdinalIgnoreCase);
     var isNhanSuSection = currentController.Equals(
     "NhanVien", StringComparison.OrdinalIgnoreCase);
     var displayName = User.Identity?.IsAuthenticated == true
-        ? (User.Identity?.Name ?? "Quản trị viên")
-        : "Quản trị viên";
+    ? (User.Identity?.Name ?? "Quản trị viên")
+    : "Quản trị viên";
     var currentUser = User.Identity?.IsAuthenticated == true
-        ? await UserManager.GetUserAsync(User)
-        : null;
+    ? await UserManager.GetUserAsync(User)
+    : null;
     var roles = currentUser is null
-        ? Array.Empty<string>()
-        : (await UserManager.GetRolesAsync(currentUser)).ToArray();
+    ? Array.Empty<string>()
+    : (await UserManager.GetRolesAsync(currentUser)).ToArray();
     var roleName = roles.FirstOrDefault() switch
     {
         "Admin" => "Quản trị viên",
@@ -24,63 +31,63 @@
         _ => "Tài khoản"
     };
     var avatarInitial = displayName.Trim().Length > 0
-        ? displayName.Trim()[0].ToString().ToUpperInvariant()
-        : "A";
+    ? displayName.Trim()[0].ToString().ToUpperInvariant()
+    : "A";
 }
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Hotel Manager</title>
+    <!DOCTYPE html>
+    <html lang="vi">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>@ViewData["Title"] - Hotel Manager</title>
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@coreui/coreui@5.4.3/dist/css/coreui.min.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" />
-    <link rel="stylesheet" href="~/css/admin-theme.css" asp-append-version="true" />
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@coreui/coreui@5.4.3/dist/css/coreui.min.css" />
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" />
+        <link rel="stylesheet" href="~/css/admin-theme.css" asp-append-version="true" />
 
-    @await RenderSectionAsync("Styles", required: false)
-</head>
-<body>
-    <div class="admin-shell" id="adminShell">
-        <aside class="admin-sidebar" id="adminSidebar">
+        @await RenderSectionAsync("Styles", required: false)
+    </head>
+    <body>
+        <div class="admin-shell" id="adminShell">
+            <aside class="admin-sidebar" id="adminSidebar">
 
-            <div class="sidebar-brand">
-                <a asp-controller="Dashboard"
-                   asp-action="Index"
-                   class="brand-link">
-                    <span class="brand-mark">
-                        <!-- Anh logo: file nam o wwwroot/images/logo.png -->
-                        <img src="~/images/logo2.webp"
-                             alt="Logo khách sạn"
-                             class="brand-logo" />
-                    </span>
-                </a>
+                <div class="sidebar-brand">
+                    <a asp-controller="Dashboard"
+                       asp-action="Index"
+                       class="brand-link">
+                        <span class="brand-mark">
+                            <!-- Anh logo: file nam o wwwroot/images/logo.png -->
+                            <img src="~/images/logo2.webp"
+                                 alt="Logo khách sạn"
+                                 class="brand-logo" />
+                        </span>
+                    </a>
 
-                <button type="button"
-                        class="sidebar-collapse"
-                        id="sidebarCollapse"
-                        aria-label="Thu gọn menu">
-                    <i class="bi bi-chevron-left"></i>
-                </button>
-            </div>
+                    <button type="button"
+                            class="sidebar-collapse"
+                            id="sidebarCollapse"
+                            aria-label="Thu gọn menu">
+                        <i class="bi bi-chevron-left"></i>
+                    </button>
+                </div>
 
-            <nav class="sidebar-nav" aria-label="Menu quản trị">
-                <div class="sidebar-section-label">TỔNG QUAN</div>
-                <a asp-controller="Dashboard" asp-action="Index"
-                   class="sidebar-link @(currentController.Equals("Dashboard", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
-                    <i class="bi bi-speedometer2"></i><span>Tổng quan</span>
-                </a>
+                <nav class="sidebar-nav" aria-label="Menu quản trị">
+                    <div class="sidebar-section-label">TỔNG QUAN</div>
+                    <a asp-controller="Dashboard" asp-action="Index"
+                       class="sidebar-link @(isDashboardIndex ? "active" : "")">
+                        <i class="bi bi-speedometer2"></i><span>Tổng quan</span>
+                    </a>
 
-                <div class="sidebar-section-label">QUẢN LÝ KHÁCH SẠN</div>
+                    <div class="sidebar-section-label">QUẢN LÝ KHÁCH SẠN</div>
 
-                <a asp-controller="Phong"
-                   asp-action="Index"
-                   class="sidebar-link @(currentController.Equals("Phong", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
-                    <i class="bi bi-door-closed"></i>
-                    <span>Sơ đồ phòng</span>
-                </a>
+                    <a asp-controller="Phong"
+                       asp-action="Index"
+                       class="sidebar-link @(currentController.Equals("Phong", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
+                        <i class="bi bi-door-closed"></i>
+                        <span>Sơ đồ phòng</span>
+                    </a>
 
-                @* <div class="sidebar-submenu @(currentController == "Phong" || currentController == "LoaiPhong" ? "show" : "")" id="roomMenu">
+                    @* <div class="sidebar-submenu @(currentController == "Phong" || currentController == "LoaiPhong" ? "show" : "")" id="roomMenu">
                 <a href="#" class="sidebar-sublink disabled-link" aria-disabled="true">
                     Sơ đồ phòng
                 </a>
@@ -91,263 +98,265 @@
                 </a>
             </div> *@
 
-                <a asp-controller="DatPhong" asp-action="Index"
-                   class="sidebar-link @(currentController.Equals("DatPhong", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
-                    <i class="bi bi-calendar2-check"></i><span>Danh sách đặt phòng</span>
-                </a>
-
-                <a asp-controller="KhachHang" asp-action="Index"
-                   class="sidebar-link @(currentController.Equals("KhachHang", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
-                    <i class="bi bi-people"></i>
-                    <span>Khách hàng</span>
-                </a>
-
-                <a asp-controller="DichVu" asp-action="Index"
-                   class="sidebar-link @(currentController.Equals("DichVu", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
-                    <i class="bi bi-cup-hot"></i><span>Dịch vụ</span>
-                </a>
-
-                @if (User.IsInRole("Admin"))
-                {
-                    <div class="sidebar-section-label">NHÂN SỰ</div>
-                    <a asp-controller="NhanVien" asp-action="Index"
-                       class="sidebar-link @(isNhanSuSection ? "active" : "")">
-                        <i class="bi bi-person-badge"></i>
-                        <span>Quản lý nhân sự</span>
+                    <a asp-controller="DatPhong" asp-action="Index"
+                       class="sidebar-link @(currentController.Equals("DatPhong", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
+                        <i class="bi bi-calendar2-check"></i><span>Danh sách đặt phòng</span>
                     </a>
-                }
 
-                <div class="sidebar-section-label">TÀI CHÍNH</div>
-                <a class="sidebar-link @(isFinanceSection ? "active" : "")"
-                   asp-controller="HoaDon" asp-action="Index"
-                   aria-expanded="@(isFinanceSection ? "true" : "false")">
-                    <i class="bi bi-wallet2"></i><span>Hóa đơn & thanh toán</span>
-                </a>
-                @* <div class="sidebar-submenu @(isFinanceSection ? "show" : "")" id="financeMenu">
+                    <a asp-controller="KhachHang" asp-action="Index"
+                       class="sidebar-link @(currentController.Equals("KhachHang", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
+                        <i class="bi bi-people"></i>
+                        <span>Khách hàng</span>
+                    </a>
+
+                    <a asp-controller="DichVu" asp-action="Index"
+                       class="sidebar-link @(currentController.Equals("DichVu", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
+                        <i class="bi bi-cup-hot"></i><span>Dịch vụ</span>
+                    </a>
+
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <div class="sidebar-section-label">NHÂN SỰ</div>
+                        <a asp-controller="NhanVien" asp-action="Index"
+                           class="sidebar-link @(isNhanSuSection ? "active" : "")">
+                            <i class="bi bi-person-badge"></i>
+                            <span>Quản lý nhân sự</span>
+                        </a>
+                    }
+
+                    <div class="sidebar-section-label">TÀI CHÍNH</div>
+                    <a class="sidebar-link @(isFinanceSection ? "active" : "")"
+                       asp-controller="HoaDon" asp-action="Index"
+                       aria-expanded="@(isFinanceSection ? "true" : "false")">
+                        <i class="bi bi-wallet2"></i><span>Hóa đơn & thanh toán</span>
+                    </a>
+                    @* <div class="sidebar-submenu @(isFinanceSection ? "show" : "")" id="financeMenu">
                 <a href="#" class="sidebar-sublink disabled-link" aria-disabled="true">
                     Danh sách hóa đơn
                 </a>
                 <a href="#" class="sidebar-sublink disabled-link" aria-disabled="true">Thanh toán</a>
             </div> *@
 
-                <div class="sidebar-section-label">BÁO CÁO & HỆ THỐNG</div>
-                <a asp-controller="Dashboard" asp-action="TaiChinh" class="sidebar-link">
-                    <i class="bi bi-bar-chart-line"></i><span>Báo cáo thống kê</span>
-                </a>
+                    <div class="sidebar-section-label">BÁO CÁO & HỆ THỐNG</div>
+                    <a asp-controller="Dashboard" asp-action="TaiChinh" class="sidebar-link @(isReportSection ? "active" : "")">
+                        <i class="bi bi-bar-chart-line"></i><span>Báo cáo thống kê</span>
+                    </a>
 
-                @if (User.IsInRole("Admin"))
-                {
-                    <a asp-controller="CaiDat" asp-action="Index"
-                       class="sidebar-link @((currentController.Equals("CaiDat", StringComparison.OrdinalIgnoreCase)
-                                                     || currentController.Equals("QuanTri", StringComparison.OrdinalIgnoreCase)) ? "active" : "")">
-                    <i class="bi bi-gear"></i><span>Cài đặt</span>
-                </a>
-                                }
-            </nav>
-
-            <div class="sidebar-footer">
-                <span class="sidebar-footer-icon"><i class="bi bi-shield-check"></i></span>
-                <div><strong>Hotel Manager</strong><small>Hệ thống quản trị</small></div>
-            </div>
-        </aside>
-
-        <div class="sidebar-overlay" id="sidebarOverlay"></div>
-
-        <div class="admin-main">
-            <header class="admin-topbar">
-                <div class="topbar-left">
-                    <button type="button" class="mobile-menu-button" id="mobileMenuButton" aria-label="Mở menu">
-                        <i class="bi bi-list"></i>
-                    </button>
-                    <label class="topbar-search">
-                        <i class="bi bi-search"></i>
-                        <input type="search" placeholder="Tìm kiếm..." aria-label="Tìm kiếm" />
-                        <kbd>Ctrl K</kbd>
-                    </label>
-                </div>
-
-                <div class="topbar-actions">
-                    <button type="button" class="topbar-icon" title="Thông báo">
-                        <i class="bi bi-bell"></i><span class="notification-dot"></span>
-                    </button>
-                    <button type="button" class="topbar-icon" title="Trợ giúp">
-                        <i class="bi bi-question-circle"></i>
-                    </button>
-                    <span class="topbar-divider"></span>
-                    @if (User.Identity?.IsAuthenticated == true)
+                    @if (User.IsInRole("Admin"))
                     {
-                        <div class="profile-menu" id="profileMenu">
-                            <button type="button" class="profile-chip profile-menu-trigger" id="profileMenuButton"
-                                    aria-expanded="false" aria-haspopup="true" aria-controls="profileMenuPopover">
-                                <span class="profile-avatar" aria-hidden="true">@avatarInitial</span>
-                                <span class="profile-text"><strong>@displayName</strong><small>@roleName</small></span>
-                                <i class="bi bi-chevron-down profile-menu-chevron" aria-hidden="true"></i>
-                            </button>
-                            <div class="profile-popover" id="profileMenuPopover" role="menu" aria-labelledby="profileMenuButton">
-                                <a class="profile-account-link" asp-area="" asp-controller="Account" asp-action="Profile" role="menuitem">
-                                    <span class="profile-avatar profile-avatar-large" aria-hidden="true">@avatarInitial</span>
-                                    <span class="profile-account-details"><strong>@displayName</strong><small>@roleName</small><span>Quản lý tài khoản</span></span>
-                                </a>
-                                <div class="profile-popover-divider" role="separator"></div>
-                                <form asp-controller="Account" asp-action="Logout" method="post" class="profile-logout-form">
-                                    @Html.AntiForgeryToken()
-                                    <button type="submit" class="profile-logout-button" role="menuitem"><i class="bi bi-box-arrow-right" aria-hidden="true"></i> Đăng xuất</button>
-                                </form>
+                        <a asp-controller="CaiDat" asp-action="Index"
+                           class="sidebar-link @((currentController.Equals("CaiDat", StringComparison.OrdinalIgnoreCase)
+                                                                        || currentController.Equals("QuanTri", StringComparison.OrdinalIgnoreCase)) ? "active" : "")">
+                        <i class="bi bi-gear"></i><span>Cài đặt</span>
+                    </a>
+                                        }
+                </nav>
+
+                <div class="sidebar-footer">
+                    <span class="sidebar-footer-icon"><i class="bi bi-shield-check"></i></span>
+                    <div><strong>Hotel Manager</strong><small>Hệ thống quản trị</small></div>
+                </div>
+            </aside>
+
+            <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+            <div class="admin-main">
+                <header class="admin-topbar">
+                    <div class="topbar-left">
+                        <button type="button" class="mobile-menu-button" id="mobileMenuButton" aria-label="Mở menu">
+                            <i class="bi bi-list"></i>
+                        </button>
+                        <label class="topbar-search">
+                            <i class="bi bi-search"></i>
+                            <input type="search" placeholder="Tìm kiếm..." aria-label="Tìm kiếm" />
+                            <kbd>Ctrl K</kbd>
+                        </label>
+                    </div>
+
+                    <div class="topbar-actions">
+                        <button type="button" class="topbar-icon" title="Thông báo">
+                            <i class="bi bi-bell"></i><span class="notification-dot"></span>
+                        </button>
+                        <button type="button" class="topbar-icon" title="Trợ giúp">
+                            <i class="bi bi-question-circle"></i>
+                        </button>
+                        <span class="topbar-divider"></span>
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <div class="profile-menu" id="profileMenu">
+                                <button type="button" class="profile-chip profile-menu-trigger" id="profileMenuButton"
+                                        aria-expanded="false" aria-haspopup="true" aria-controls="profileMenuPopover">
+                                    <span class="profile-avatar" aria-hidden="true">@avatarInitial</span>
+                                    <span class="profile-text"><strong>@displayName</strong><small>@roleName</small></span>
+                                    <i class="bi bi-chevron-down profile-menu-chevron" aria-hidden="true"></i>
+                                </button>
+                                <div class="profile-popover" id="profileMenuPopover" role="menu" aria-labelledby="profileMenuButton">
+                                    <a class="profile-account-link" asp-area="" asp-controller="Account" asp-action="Profile" role="menuitem">
+                                        <span class="profile-avatar profile-avatar-large" aria-hidden="true">@avatarInitial</span>
+                                        <span class="profile-account-details"><strong>@displayName</strong><small>@roleName</small><span>Quản lý tài khoản</span></span>
+                                    </a>
+                                    <div class="profile-popover-divider" role="separator"></div>
+                                    <form asp-controller="Account" asp-action="Logout" method="post" class="profile-logout-form">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="profile-logout-button" role="menuitem"><i class="bi bi-box-arrow-right" aria-hidden="true"></i> Đăng xuất</button>
+                                    </form>
+                                </div>
                             </div>
+                        }
+                    </div>
+                </header>
+
+                <main class="admin-content">
+
+                    @if (TempData["Success"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+                            @TempData["Success"]
+                            <button type="button" class="btn-close" data-coreui-dismiss="alert" aria-label="Đóng"></button>
                         </div>
                     }
-                </div>
-            </header>
+                    @if (TempData["Error"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+                            @TempData["Error"]
+                            <button type="button" class="btn-close" data-coreui-dismiss="alert" aria-label="Đóng"></button>
+                        </div>
+                    }
 
-            <main class="admin-content">
-
-                @if (TempData["Success"] != null)
-                {
-                    <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
-                        @TempData["Success"]
-                        <button type="button" class="btn-close" data-coreui-dismiss="alert" aria-label="Đóng"></button>
-                    </div>
-                }
-                @if (TempData["Error"] != null)
-                {
-                    <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
-                        @TempData["Error"]
-                        <button type="button" class="btn-close" data-coreui-dismiss="alert" aria-label="Đóng"></button>
-                    </div>
-                }
-
-                <div class="content-heading">
-                    <div>
-                        <h1>@ViewData["Title"]</h1>
-                        <div class="breadcrumb-line">
-                            <a asp-controller="Dashboard" asp-action="Index">Trang chủ</a>
-                            <i class="bi bi-chevron-right"></i>
-                            <span>@ViewData["Title"]</span>
+                    <div class="content-heading">
+                        <div>
+                            <h1>@ViewData["Title"]</h1>
+                            <div class="breadcrumb-line">
+                                <a asp-controller="Dashboard" asp-action="Index">Trang chủ</a>
+                                <i class="bi bi-chevron-right"></i>
+                                <span>@ViewData["Title"]</span>
+                            </div>
+                        </div>
+                        <div class="content-date">
+                            <i class="bi bi-calendar3"></i>@DateTime.Now.ToString("dd/MM/yyyy")
                         </div>
                     </div>
-                    <div class="content-date">
-                        <i class="bi bi-calendar3"></i>@DateTime.Now.ToString("dd/MM/yyyy")
-                    </div>
-                </div>
-                @RenderBody()
-            </main>
+                    @RenderBody()
+                </main>
 
-            <footer class="admin-footer">
-                <span>© @DateTime.Now.Year Hotel Manager</span>
-                <span>Hệ thống quản lý khách sạn</span>
-            </footer>
+                <footer class="admin-footer">
+                    <span>© @DateTime.Now.Year Hotel Manager</span>
+                    <span>Hệ thống quản lý khách sạn</span>
+                </footer>
+            </div>
         </div>
-    </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@@coreui/coreui@5.4.3/dist/js/coreui.bundle.min.js"></script>
-    <script>
-        (() => {
-            const shell = document.getElementById('adminShell');
-            const overlay = document.getElementById('sidebarOverlay');
-            const mobileButton = document.getElementById('mobileMenuButton');
-            const collapseButton = document.getElementById('sidebarCollapse');
-            const profileMenu = document.getElementById('profileMenu');
-            const profileMenuButton = document.getElementById('profileMenuButton');
+        <script src="https://cdn.jsdelivr.net/npm/@@coreui/coreui@5.4.3/dist/js/coreui.bundle.min.js"></script>
+        <script>
+            (() => {
+                const shell = document.getElementById('adminShell');
+                const overlay = document.getElementById('sidebarOverlay');
+                const mobileButton = document.getElementById('mobileMenuButton');
+                const collapseButton = document.getElementById('sidebarCollapse');
+                const profileMenu = document.getElementById('profileMenu');
+                const profileMenuButton = document.getElementById('profileMenuButton');
 
-            const closeProfileMenu = () => {
-                profileMenu?.classList.remove('is-open');
-                profileMenuButton?.setAttribute('aria-expanded', 'false');
-            };
+                const closeProfileMenu = () => {
+                    profileMenu?.classList.remove('is-open');
+                    profileMenuButton?.setAttribute('aria-expanded', 'false');
+                };
 
-            // Bam nut tai khoan de mo/dong menu
-            profileMenuButton?.addEventListener('click', event => {
-                event.stopPropagation();
+                // Bam nut tai khoan de mo/dong menu
+                profileMenuButton?.addEventListener('click', event => {
+                    event.stopPropagation();
 
-                const isOpen = profileMenu?.classList.toggle('is-open') ?? false;
+                    const isOpen = profileMenu?.classList.toggle('is-open') ?? false;
 
-                profileMenuButton.setAttribute(
-                    'aria-expanded',
-                    isOpen ? 'true' : 'false'
-                );
-            });
-
-            // Bam ra ngoai thi dong menu
-            document.addEventListener('click', event => {
-                if (profileMenu && !profileMenu.contains(event.target)) {
-                    closeProfileMenu();
-                }
-            });
-
-            // Bam Escape thi dong menu
-            document.addEventListener('keydown', event => {
-                if (event.key === 'Escape') {
-                    closeProfileMenu();
-                }
-            });
-
-            document.querySelectorAll('[data-menu-toggle]').forEach(link => {
-                link.addEventListener('click', event => {
-                    event.preventDefault();
-
-                    const target = document.getElementById(link.dataset.menuToggle);
-                    if (!target) return;
-
-                    target.classList.toggle('show');
-                    link.setAttribute(
+                    profileMenuButton.setAttribute(
                         'aria-expanded',
-                        target.classList.contains('show') ? 'true' : 'false'
+                        isOpen ? 'true' : 'false'
                     );
                 });
-            });
 
-            collapseButton?.addEventListener('click', () => {
-                shell.classList.toggle('sidebar-collapsed');
-            });
-
-            mobileButton?.addEventListener('click', () => {
-                shell.classList.toggle('mobile-sidebar-open');
-            });
-
-            overlay?.addEventListener('click', () => {
-                shell.classList.remove('mobile-sidebar-open');
-            });
-
-            document.addEventListener('keydown', event => {
-                if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
-                    event.preventDefault();
-                    document.querySelector('.topbar-search input')?.focus();
-                }
-
-                if (event.key === 'Escape') {
-                    shell.classList.remove('mobile-sidebar-open');
-                }
-            });
-        })();
-    </script>
-    <script>
-        (() => {
-            document.querySelectorAll('input[type="password"]').forEach(input => {
-             
-                if (input.closest('.input-group')) return;
-
-                const wrap = document.createElement('div');
-                wrap.className = 'password-field';
-                input.parentNode.insertBefore(wrap, input);
-                wrap.appendChild(input);
-
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = 'password-toggle';
-                btn.setAttribute('aria-label', 'Hiện mật khẩu');
-                btn.innerHTML = '<i class="bi bi-eye"></i>';
-
-                btn.addEventListener('click', () => {
-                    const show = input.type === 'password';
-                    input.type = show ? 'text' : 'password';
-                    btn.setAttribute('aria-label', show ? 'Ẩn mật khẩu' : 'Hiện mật khẩu');
-                    btn.querySelector('i').className = show ? 'bi bi-eye-slash' : 'bi bi-eye';
+                // Bam ra ngoai thi dong menu
+                document.addEventListener('click', event => {
+                    if (profileMenu && !profileMenu.contains(event.target)) {
+                        closeProfileMenu();
+                    }
                 });
 
-                wrap.appendChild(btn);
-            });
-        })();
-    </script>
+                // Bam Escape thi dong menu
+                document.addEventListener('keydown', event => {
+                    if (event.key === 'Escape') {
+                        closeProfileMenu();
+                    }
+                });
 
-    @await RenderSectionAsync("Scripts", required: false)
-</body>
+                document.querySelectorAll('[data-menu-toggle]').forEach(link => {
+                    link.addEventListener('click', event => {
+                        event.preventDefault();
+
+                        const target = document.getElementById(link.dataset.menuToggle);
+                        if (!target) return;
+
+                        target.classList.toggle('show');
+                        link.setAttribute(
+                            'aria-expanded',
+                            target.classList.contains('show') ? 'true' : 'false'
+                        );
+                    });
+                });
+
+                collapseButton?.addEventListener('click', () => {
+                    shell.classList.toggle('sidebar-collapsed');
+                });
+
+                mobileButton?.addEventListener('click', () => {
+                    shell.classList.toggle('mobile-sidebar-open');
+                });
+
+                overlay?.addEventListener('click', () => {
+                    shell.classList.remove('mobile-sidebar-open');
+                });
+
+                document.addEventListener('keydown', event => {
+                    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+                        event.preventDefault();
+                        document.querySelector('.topbar-search input')?.focus();
+                    }
+
+                    if (event.key === 'Escape') {
+                        shell.classList.remove('mobile-sidebar-open');
+                    }
+                });
+            })();
+        </script>
+        <script>
+            (() => {
+                document.querySelectorAll('input[type="password"]').forEach(input => {
+
+                    if (input.closest('.input-group')) return;
+
+                    const wrap = document.createElement('div');
+                    wrap.className = 'password-field';
+                    input.parentNode.insertBefore(wrap, input);
+                    wrap.appendChild(input);
+
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'password-toggle';
+                    btn.setAttribute('aria-label', 'Hiện mật khẩu');
+                    btn.innerHTML = '<i class="bi bi-eye"></i>';
+
+                    btn.addEventListener('click', () => {
+                        const show = input.type === 'password';
+                        input.type = show ? 'text' : 'password';
+                        btn.setAttribute('aria-label', show ? 'Ẩn mật khẩu' : 'Hiện mật khẩu');
+                        btn.querySelector('i').className = show ? 'bi bi-eye-slash' : 'bi bi-eye';
+                    });
+
+                    wrap.appendChild(btn);
+                });
+            })();
+        </script>
+
+        @await RenderSectionAsync("Scripts", required: false)
+    </body>
 </html>
+
+```

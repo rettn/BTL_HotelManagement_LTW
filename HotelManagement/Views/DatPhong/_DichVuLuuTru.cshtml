@@ -1,12 +1,13 @@
 ﻿@model HotelManagement.Models.LuuTru
-
 @{
     var daDung = Model.ChiTietDichVus
         .OrderByDescending(d => d.ThoiGianSuDung)
         .ToList();
     var tongTien = daDung.Sum(d => d.SoLuong * d.DonGia);
+
     var danhSachDichVu = ViewBag.DanhSachDichVu as List<HotelManagement.Models.DichVu>
         ?? new List<HotelManagement.Models.DichVu>();
+
     var soPhong = Model.ChiTietDatPhong?.Phong?.SoPhong;
 }
 
@@ -35,24 +36,68 @@
                         <th>Đơn giá</th>
                         <th>Thành tiền</th>
                         <th>Thời gian</th>
+                        <th class="dv-col-action">Thao tác</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var d in daDung)
                     {
-                        <tr>
+                        <tr id="dv-row-@d.MaChiTietDichVu">
                             <td>@(d.DichVu?.TenDichVu ?? "Dịch vụ đã xóa")</td>
                             <td>@d.SoLuong</td>
                             <td>@d.DonGia.ToString("N0") đ</td>
                             <td>@((d.SoLuong * d.DonGia).ToString("N0")) đ</td>
                             <td>@d.ThoiGianSuDung.ToString("HH:mm dd/MM")</td>
+                            <td class="dv-col-action">
+                                <button type="button" class="dv-icon-btn dv-icon-edit"
+                                        title="Sửa"
+                                        onclick="batDauSuaDichVu(@d.MaChiTietDichVu)">
+                                    <i class="bi bi-pencil-square"></i>
+                                </button>
+                                <button type="button" class="dv-icon-btn dv-icon-delete"
+                                        title="Xóa"
+                                        onclick="xoaDichVu(@d.MaChiTietDichVu, '@(d.DichVu?.TenDichVu?.Replace("'", "\\'") ?? "dịch vụ")')">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+
+                        <tr id="dv-edit-@d.MaChiTietDichVu" class="dv-edit-row" style="display:none;">
+                            <td colspan="6">
+                                <div class="dv-edit">
+                                    <select id="dvSuaChon-@d.MaChiTietDichVu">
+                                        @if (!danhSachDichVu.Any(x => x.Id == d.MaDichVu))
+                                        {
+                                            <option value="@d.MaDichVu" selected>
+                                                @(d.DichVu?.TenDichVu ?? "Dịch vụ đã xóa") - @d.DonGia.ToString("N0") đ
+                                            </option>
+                                        }
+                                        @foreach (var dv in danhSachDichVu)
+                                        {
+                                            <option value="@dv.Id" selected="@(dv.Id == d.MaDichVu)">
+                                                @dv.TenDichVu - @dv.Gia.ToString("N0") đ
+                                            </option>
+                                        }
+                                    </select>
+                                    <input id="dvSuaSoLuong-@d.MaChiTietDichVu" type="number"
+                                           min="1" max="100" value="@d.SoLuong" />
+                                    <button type="button" class="dv-btn"
+                                            onclick="luuSuaDichVu(@d.MaChiTietDichVu)">
+                                        <i class="bi bi-check-lg"></i> Lưu
+                                    </button>
+                                    <button type="button" class="dv-btn-light"
+                                            onclick="huySuaDichVu(@d.MaChiTietDichVu)">
+                                        Hủy
+                                    </button>
+                                </div>
+                            </td>
                         </tr>
                     }
                 </tbody>
                 <tfoot>
                     <tr>
                         <td colspan="3">Tổng cộng</td>
-                        <td colspan="2">@tongTien.ToString("N0") đ</td>
+                        <td colspan="3">@tongTien.ToString("N0") đ</td>
                     </tr>
                 </tfoot>
             </table>
@@ -159,6 +204,72 @@
             font-weight: 700;
             color: #198754;
             border-bottom: 0;
+        }
+
+    .dv-col-action {
+        width: 92px;
+        text-align: center !important;
+        white-space: nowrap;
+    }
+
+    /* Nút sửa / xóa */
+    .dv-icon-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border: 1px solid #dce3ed;
+        border-radius: 8px;
+        background: #fff;
+        cursor: pointer;
+        transition: background .15s, color .15s, border-color .15s;
+    }
+
+    .dv-icon-edit {
+        color: #2563b7;
+    }
+
+        .dv-icon-edit:hover {
+            background: #e9f2ff;
+            border-color: #bcd4f7;
+        }
+
+    .dv-icon-delete {
+        color: #c03939;
+    }
+
+        .dv-icon-delete:hover {
+            background: #ffe8e8;
+            border-color: #f3c0c0;
+        }
+
+    /* Dòng sửa */
+    .dv-edit-row td {
+        background: #fbfefc;
+        border-bottom: 1px solid #dcefe3;
+    }
+
+    .dv-edit {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+        .dv-edit select {
+            flex: 1;
+            min-width: 200px;
+            padding: 9px;
+            border: 1px solid #cfe9d9;
+            border-radius: 8px;
+        }
+
+        .dv-edit input {
+            width: 80px;
+            padding: 9px;
+            border: 1px solid #cfe9d9;
+            border-radius: 8px;
         }
 
     .dv-add {

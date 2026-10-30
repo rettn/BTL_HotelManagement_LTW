@@ -477,6 +477,67 @@ namespace HotelManagement.Controllers
             await _context.SaveChangesAsync();
             return Json(new { success = true, message = "Đã thêm dịch vụ." });
         }
+        // POST: /DatPhong/SuaDichVu
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SuaDichVu(int maChiTietDichVu, int maDichVu, int soLuong)
+        {
+            if (soLuong < 1 || soLuong > 100)
+                return BadRequest(new { success = false, message = "Số lượng phải từ 1 đến 100." });
+
+            var chiTiet = await _context.ChiTietDichVus
+                .FirstOrDefaultAsync(c => c.MaChiTietDichVu == maChiTietDichVu);
+
+            if (chiTiet == null)
+                return NotFound(new { success = false, message = "Không tìm thấy dịch vụ cần sửa." });
+
+            var luuTru = await _context.LuuTrus
+                .FirstOrDefaultAsync(l => l.MaLuuTru == chiTiet.MaLuuTru);
+
+            if (luuTru == null || luuTru.ThoiGianTraPhong != null)
+                return BadRequest(new { success = false, message = "Khách đã trả phòng, không thể sửa dịch vụ." });
+
+            // Đổi sang dịch vụ khác thì lấy đơn giá mới, giữ nguyên dịch vụ thì giữ đơn giá đã lưu
+            if (maDichVu != chiTiet.MaDichVu)
+            {
+                var dichVu = await _context.DichVus
+                    .FirstOrDefaultAsync(d => d.Id == maDichVu && d.TrangThai);
+
+                if (dichVu == null)
+                    return BadRequest(new { success = false, message = "Dịch vụ không tồn tại hoặc đã ngừng cung cấp." });
+
+                chiTiet.MaDichVu = dichVu.Id;
+                chiTiet.DonGia = dichVu.Gia;
+            }
+
+            chiTiet.SoLuong = soLuong;
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Đã cập nhật dịch vụ." });
+        }
+
+        // POST: /DatPhong/XoaDichVu
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> XoaDichVu(int maChiTietDichVu)
+        {
+            var chiTiet = await _context.ChiTietDichVus
+                .FirstOrDefaultAsync(c => c.MaChiTietDichVu == maChiTietDichVu);
+
+            if (chiTiet == null)
+                return NotFound(new { success = false, message = "Không tìm thấy dịch vụ cần xóa." });
+
+            var luuTru = await _context.LuuTrus
+                .FirstOrDefaultAsync(l => l.MaLuuTru == chiTiet.MaLuuTru);
+
+            if (luuTru == null || luuTru.ThoiGianTraPhong != null)
+                return BadRequest(new { success = false, message = "Khách đã trả phòng, không thể xóa dịch vụ." });
+
+            _context.ChiTietDichVus.Remove(chiTiet);
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Đã xóa dịch vụ." });
+        }
 
         // GET: /DatPhong/Checkout/5
         [HttpGet]

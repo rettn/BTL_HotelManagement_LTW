@@ -1,77 +1,271 @@
+@model HotelManagement.ViewModels.DashboardViewModel
+@using System.Text.Json
+
 @{
     ViewData["Title"] = "Tổng quan";
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
 }
 
-<div class="dashboard-quick-grid">
-    <a asp-controller="LoaiPhong" asp-action="Index" class="dashboard-quick-card">
-        <span class="dashboard-quick-icon">
-            <i class="bi bi-door-closed"></i>
-        </span>
-        <span>
-            <h2>Sơ đồ phòng & loại phòng</h2>
-            <p>Xem và quản lý danh mục loại phòng hiện có.</p>
-        </span>
-    </a>
+<div class="container-fluid px-0">
+    <div class="mb-4">
+        <h3 class="fw-bold text-dark mb-1">Bảng điều khiển</h3>
+        <p class="text-muted small mb-0">Thống kê hoạt động thực tế và các lối tắt quản trị hệ thống</p>
+    </div>
 
-    <a asp-controller="DichVu" asp-action="Index" class="dashboard-quick-card">
-        <span class="dashboard-quick-icon">
-            <i class="bi bi-cup-hot"></i>
-        </span>
-        <span>
-            <h2>Quản lý dịch vụ</h2>
-            <p>Cập nhật dịch vụ và thông tin giá dịch vụ.</p>
-        </span>
-    </a>
+    <h5 class="fw-bold text-dark mb-3">Lối tắt quản trị</h5>
+    <div class="row g-3 mb-4">
+        <div class="col-md-4 col-sm-6">
+            <a asp-controller="LoaiPhong" asp-action="Index" class="card border-0 shadow-sm rounded-3 p-3 text-decoration-none bg-white h-100 border-start border-4 border-primary">
+                <div class="d-flex align-items-center gap-3">
+                    <i class="bi bi-door-closed fs-3 text-primary"></i>
+                    <div>
+                        <h6 class="fw-bold text-dark mb-1">Sơ đồ & Loại phòng</h6>
+                        <small class="text-muted">Quản lý danh mục loại phòng</small>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-4 col-sm-6">
+            <a asp-controller="DichVu" asp-action="Index" class="card border-0 shadow-sm rounded-3 p-3 text-decoration-none bg-white h-100 border-start border-4 border-info">
+                <div class="d-flex align-items-center gap-3">
+                    <i class="bi bi-cup-hot fs-3 text-info"></i>
+                    <div>
+                        <h6 class="fw-bold text-dark mb-1">Quản lý dịch vụ</h6>
+                        <small class="text-muted">Cập nhật danh mục và giá dịch vụ</small>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-4 col-sm-6">
+            <a asp-controller="DatPhong" asp-action="Index" class="card border-0 shadow-sm rounded-3 p-3 text-decoration-none bg-white h-100 border-start border-4 border-success">
+                <div class="d-flex align-items-center gap-3">
+                    <i class="bi bi-calendar2-check fs-3 text-success"></i>
+                    <div>
+                        <h6 class="fw-bold text-dark mb-1">Quản lý đặt phòng</h6>
+                        <small class="text-muted">Đặt phòng, nhận và trả phòng</small>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-4 col-sm-6">
+            <a asp-controller="HoaDon" asp-action="Index" class="card border-0 shadow-sm rounded-3 p-3 text-decoration-none bg-white h-100 border-start border-4 border-warning">
+                <div class="d-flex align-items-center gap-3">
+                    <i class="bi bi-receipt fs-3 text-warning"></i>
+                    <div>
+                        <h6 class="fw-bold text-dark mb-1">Hóa đơn & Thanh toán</h6>
+                        <small class="text-muted">Tra cứu lịch sử và in hóa đơn</small>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-4 col-sm-6">
+            <a asp-controller="Dashboard" asp-action="TaiChinh" class="card border-0 shadow-sm rounded-3 p-3 text-decoration-none bg-white h-100 border-start border-4 border-danger">
+                <div class="d-flex align-items-center gap-3">
+                    <i class="bi bi-bar-chart-line fs-3 text-danger"></i>
+                    <div>
+                        <h6 class="fw-bold text-dark mb-1">Báo cáo thống kê</h6>
+                        <small class="text-muted">Phân tích doanh thu và dòng tiền</small>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-4 col-sm-6">
+            <a asp-controller="CaiDat" asp-action="Index" class="card border-0 shadow-sm rounded-3 p-3 text-decoration-none bg-white h-100 border-start border-4 border-secondary">
+                <div class="d-flex align-items-center gap-3">
+                    <i class="bi bi-gear fs-3 text-secondary"></i>
+                    <div>
+                        <h6 class="fw-bold text-dark mb-1">Cài đặt hệ thống</h6>
+                        <small class="text-muted">Cấu hình thông tin khách sạn</small>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
 
-    <a asp-controller="DatPhong" asp-action="Index" class="dashboard-quick-card">
-        <span class="dashboard-quick-icon">
-            <i class="bi bi-calendar2-check"></i>
-        </span>
-        <span>
-            <h2>Quản lý đặt phòng</h2>
-            <p>Xem danh sách phiếu đặt phòng, tạo phiếu, nhận và trả phòng.</p>
-        </span>
-    </a>
+    <!-- 2. Thống kê 4 chỉ số chính -->
+    <div class="card border-0 shadow-sm p-4 mb-4 rounded-3 bg-white">
+        <div class="row g-4 text-center text-sm-start">
+            <div class="col-md-3 col-6 border-end-md">
+                <div class="d-flex align-items-center justify-content-between pe-3">
+                    <div>
+                        <span class="text-muted small">Tổng số phòng</span>
+                        <h3 class="fw-bold text-dark mb-0 mt-1">@Model.TongSoPhong</h3>
+                    </div>
+                    <i class="bi bi-door-open fs-2 text-secondary opacity-50"></i>
+                </div>
+            </div>
+            <div class="col-md-3 col-6 border-end-md">
+                <div class="d-flex align-items-center justify-content-between pe-3">
+                    <div>
+                        <span class="text-muted small">Phòng đang sử dụng</span>
+                        <h3 class="fw-bold text-dark mb-0 mt-1">@Model.PhongDangSuDung</h3>
+                    </div>
+                    <i class="bi bi-people fs-2 text-secondary opacity-50"></i>
+                </div>
+            </div>
+            <div class="col-md-3 col-6 border-end-md">
+                <div class="d-flex align-items-center justify-content-between pe-3">
+                    <div>
+                        <span class="text-muted small">Phiếu chờ xác nhận</span>
+                        <h3 class="fw-bold text-dark mb-0 mt-1">@Model.PhieuChoXacNhan</h3>
+                    </div>
+                    <i class="bi bi-receipt fs-2 text-secondary opacity-50"></i>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-muted small">Doanh thu hôm nay</span>
+                        <h3 class="fw-bold text-dark mb-0 mt-1">
+                            @(Model.DoanhThuHomNay >= 1000000
+                                                        ? (Model.DoanhThuHomNay / 1000000m).ToString("0.#") + "M"
+                                                        : Model.DoanhThuHomNay.ToString("N0") + "đ")
+                        </h3>
+                    </div>
+                    <i class="bi bi-wallet2 fs-2 text-secondary opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <a asp-controller="HoaDon" asp-action="Index" class="dashboard-quick-card">
-        <span class="dashboard-quick-icon">
-            <i class="bi bi-receipt"></i>
-        </span>
-        <span>
-            <h2>Hóa đơn & thanh toán</h2>
-            <p>Tra cứu danh sách hóa đơn, lịch sử thanh toán và in hóa đơn.</p>
-        </span>
-    </a>
+    <!-- 3. Biểu đồ Doanh thu & Tình trạng phòng -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm rounded-3 h-100 p-3 bg-white">
+                <h6 class="fw-bold text-dark mb-3"><i class="bi bi-graph-up text-primary me-2"></i>Doanh thu tuần này</h6>
+                <div style="height: 240px; position: relative;">
+                    <canvas id="lineChartDoanhThu"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm rounded-3 h-100 p-3 bg-white">
+                <h6 class="fw-bold text-dark mb-3"><i class="bi bi-pie-chart text-primary me-2"></i>Tình trạng phòng</h6>
+                <div style="height: 200px; position: relative;">
+                    <canvas id="donutChartTrangThai"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <a asp-controller="Dashboard" asp-action="TaiChinh" class="dashboard-quick-card">
-        <span class="dashboard-quick-icon">
-            <i class="bi bi-bar-chart-line"></i>
-        </span>
-        <span>
-            <h2>Báo cáo thống kê</h2>
-            <p>Theo dõi doanh thu ngày/tuần/tháng, cơ cấu doanh thu và biểu đồ Chart.js.</p>
-        </span>
-    </a>
+    <!-- 4. Đặt phòng mới nhất (Đã sửa lỗi hiển thị mã phiếu) -->
+    <div class="card border-0 shadow-sm rounded-3 p-3 bg-white mb-4">
+        <h6 class="fw-bold text-dark mb-3"><i class="bi bi-clock-history text-primary me-2"></i>Đặt phòng mới nhất</h6>
+        <div class="table-responsive">
+            <table class="table align-middle text-nowrap mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Mã phiếu</th>
+                        <th>Khách hàng</th>
+                        <th>Trạng thái</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.DatPhongGanDay != null && Model.DatPhongGanDay.Any())
+                    {
+                        foreach (var item in Model.DatPhongGanDay)
+                        {
+                            string badgeClass = item.TrangThai switch
+                            {
+                                "ChoXacNhan" => "bg-warning text-dark",
+                                "DaXacNhan" => "bg-info text-dark",
+                                "DangLuuTru" => "bg-primary",
+                                "DaHoanThanh" => "bg-success",
+                                "DaHuy" => "bg-danger",
+                                "DaThanhToan" => "bg-secondary",
+                                _ => "bg-secondary"
+                            };
 
-    <a asp-controller="CaiDat" asp-action="Index" class="dashboard-quick-card">
-        <span class="dashboard-quick-icon">
-            <i class="bi bi-gear"></i>
-        </span>
-        <span>
-            <h2>Cài đặt hệ thống</h2>
-            <p>Cấu hình thông tin khách sạn, tham số và phân quyền hệ thống.</p>
-        </span>
-    </a>
-</div>
+                            string textTrangThai = item.TrangThai switch
+                            {
+                                "ChoXacNhan" => "Chờ xác nhận",
+                                "DaXacNhan" => "Đã xác nhận",
+                                "DangLuuTru" => "Đang lưu trú",
+                                "DaHoanThanh" => "Đã hoàn thành",
+                                "DaHuy" => "Đã hủy",
+                                "DaThanhToan" => "Đã thanh toán",
+                                _ => item.TrangThai ?? "Chưa rõ"
+                            };
 
-<h2 class="dashboard-section-title">Trạng thái hệ thống</h2>
-
-<div class="dashboard-notice">
-    <i class="bi bi-info-circle"></i>
-    <div>
-        <strong>Giao diện quản trị đã sẵn sàng.</strong>
-        <br />
-        Các phân hệ Đặt phòng, Quản lý hóa đơn và Báo cáo & Thống kê tài chính đã được kích hoạt và liên kết đầy đủ.
+                            <tr>
+                                <td class="fw-semibold">#DP@(item.MaDatPhong.ToString("D4"))</td>
+                                <td>@(item.KhachHang?.HoTen ?? "Khách vãng lai")</td>
+                                <td><span class="badge @badgeClass fw-normal px-2 py-1">@textTrangThai</span></td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="3" class="text-center text-muted py-3">Chưa có dữ liệu đặt phòng.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const labelsTuan = @Html.Raw(JsonSerializer.Serialize(Model.LabelsTuan));
+            const dataTuan = @Html.Raw(JsonSerializer.Serialize(Model.DoanhThuTuan));
+
+            const ctxLine = document.getElementById('lineChartDoanhThu').getContext('2d');
+            new Chart(ctxLine, {
+                type: 'line',
+                data: {
+                    labels: labelsTuan,
+                    datasets: [{
+                        label: 'Doanh thu',
+                        data: dataTuan,
+                        borderColor: '#0d6efd',
+                        backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        pointRadius: 4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#f0f0f0' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+            const ctxDonut = document.getElementById('donutChartTrangThai').getContext('2d');
+            new Chart(ctxDonut, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Trống', 'Đang dọn', 'Đang sử dụng', 'Đã đặt'],
+                    datasets: [{
+                        data: [
+                            @Model.SoPhongTrong,
+                            @Model.SoPhongDangDon,
+                            @Model.SoPhongDangSuDung,
+                            @Model.SoPhongDaDat
+                        ],
+                        backgroundColor: ['#0d6efd', '#ffc107', '#fd7e14', '#198754'],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, padding: 12 } }
+                    },
+                    cutout: '65%'
+                }
+            });
+        });
+    </script>
+}
