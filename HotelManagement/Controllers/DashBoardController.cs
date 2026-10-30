@@ -20,7 +20,6 @@ namespace HotelManagement.Controllers
         {
             return View();
         }
-
         // GET: /Dashboard/TaiChinh
         public async Task<IActionResult> TaiChinh()
         {
@@ -31,31 +30,54 @@ namespace HotelManagement.Controllers
             var startOfWeek = today.AddDays(-1 * diff);
             var startOfMonth = new DateTime(today.Year, today.Month, 1);
 
-            // Lấy danh sách hóa đơn đã thanh toán kèm thông tin đặt phòng để tính toán dự phòng
+            // Lấy danh sách hóa đơn đã thanh toán
             var queryPaid = _context.HoaDons
                 .AsNoTracking()
-                .Include(h => h.DatPhong)
-                    .ThenInclude(dp => dp!.ChiTietDatPhongs)
                 .Where(h => h.TrangThai == "DaThanhToan");
 
             var listHoaDon = await queryPaid.ToListAsync();
+            var maDatPhongIds = listHoaDon.Select(h => h.MaDatPhong).Distinct().ToList();
 
-            var doanhThuHomNay = listHoaDon.Where(h => h.NgayLap >= today).Sum(h => h.TongTien);
-            var doanhThuTuanNay = listHoaDon.Where(h => h.NgayLap >= startOfWeek).Sum(h => h.TongTien);
-            var doanhThuThangNay = listHoaDon.Where(h => h.NgayLap >= startOfMonth).Sum(h => h.TongTien);
-            var tongDoanhThu = listHoaDon.Sum(h => h.TongTien);
+            // Truy vấn lấy tổng tiền dịch vụ thực tế của từng mã đặt phòng từ bảng ChiTietDichVus
+            var dichVuDict = await _context.ChiTietDichVus
+                .AsNoTracking()
+                .Where(cdv => cdv.LuuTru != null &&
+                              cdv.LuuTru.ChiTietDatPhong != null &&
+                              maDatPhongIds.Contains(cdv.LuuTru.ChiTietDatPhong.MaDatPhong))
+                .Select(cdv => new {
+                    MaDatPhong = cdv.LuuTru!.ChiTietDatPhong!.MaDatPhong,
+                    ThanhTien = cdv.SoLuong * cdv.DonGia
+                })
+                .ToListAsync();
 
-            // Xử lý chuẩn hóa Tiền phòng & Tiền dịch vụ (nếu bảng HoaDons lưu 0đ thì lấy Tổng tiền làm tiền phòng tạm thời)
-            decimal tongTienPhong = listHoaDon.Sum(h => h.TienPhong > 0 ? h.TienPhong : h.TongTien);
-            decimal tongTienDichVu = listHoaDon.Sum(h => h.TienDichVu);
+            var serviceTotalByDp = dichVuDict
+                .GroupBy(x => x.MaDatPhong)
+                .ToDictionary(g => g.Key, g => g.Sum(x => x.ThanhTien));
+
+            // Xử lý chuẩn hóa và bóc tách tiền phòng & tiền dịch vụ cho từng hóa đơn
+            var processedInvoices = listHoaDon.Select(h => {
+                decimal serviceAmount = h.TienDichVu > 0 ? h.TienDichVu : (serviceTotalByDp.ContainsKey(h.MaDatPhong) ? serviceTotalByDp[h.MaDatPhong] : 0m);
+                decimal total = h.TongTien;
+                decimal roomAmount = h.TienPhong > 0 ? h.TienPhong : Math.Max(0, total - serviceAmount);
+
+                return new
+                {
+                    h.NgayLap,
+                    TongTien = total,
+                    TienPhong = roomAmount,
+                    TienDichVu = serviceAmount
+                };
+            }).ToList();
+
+            var doanhThuHomNay = processedInvoices.Where(h => h.NgayLap >= today).Sum(h => h.TongTien);
+            var doanhThuTuanNay = processedInvoices.Where(h => h.NgayLap >= startOfWeek).Sum(h => h.TongTien);
+            var doanhThuThangNay = processedInvoices.Where(h => h.NgayLap >= startOfMonth).Sum(h => h.TongTien);
+            var tongDoanhThu = processedInvoices.Sum(h => h.TongTien);
+
+            decimal tongTienPhong = processedInvoices.Sum(h => h.TienPhong);
+            decimal tongTienDichVu = processedInvoices.Sum(h => h.TienDichVu);
 
             var tongCoCau = tongTienPhong + tongTienDichVu;
-            if (tongCoCau == 0 && tongDoanhThu > 0)
-            {
-                tongTienPhong = tongDoanhThu;
-            }
-
-            tongCoCau = tongTienPhong + tongTienDichVu;
             double tiLePhong = tongCoCau > 0 ? (double)Math.Round(tongTienPhong / tongCoCau * 100, 1) : 100;
             double tiLeDichVu = tongCoCau > 0 ? (double)Math.Round(tongTienDichVu / tongCoCau * 100, 1) : 0;
 
@@ -71,14 +93,12 @@ namespace HotelManagement.Controllers
                 var currentDay = sevenDaysAgo.AddDays(i);
                 labels.Add(currentDay.ToString("dd/MM"));
 
-                var invoicesInDay = listHoaDon
+                var invoicesInDay = processedInvoices
                     .Where(h => h.NgayLap.Date == currentDay)
                     .ToList();
 
                 decimal dayTotal = invoicesInDay.Sum(h => h.TongTien);
-                decimal dayPhong = invoicesInDay.Sum(h => h.TienPhong > 0 ? h.TienPhong : h.TongTien);
-                if (dayPhong == 0 && dayTotal > 0) dayPhong = dayTotal;
-
+                decimal dayPhong = invoicesInDay.Sum(h => h.TienPhong);
                 decimal dayDichVu = invoicesInDay.Sum(h => h.TienDichVu);
 
                 valuesDoanhThu.Add(dayTotal);
@@ -100,10 +120,11 @@ namespace HotelManagement.Controllers
                 DoanhThu7Ngay = valuesDoanhThu,
                 DoanhThuPhong7Ngay = valuesPhong,
                 DoanhThuDichVu7Ngay = valuesDichVu,
-                TongHoaDonDaThu = listHoaDon.Count
+                TongHoaDonDaThu = processedInvoices.Count
             };
 
             return View("TaiChinh", model);
         }
+
     }
 }
