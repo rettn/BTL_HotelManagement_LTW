@@ -14,6 +14,7 @@
     || currentController.Equals("ThanhToan", StringComparison.OrdinalIgnoreCase);
     var isNhanSuSection = currentController.Equals(
     "NhanVien", StringComparison.OrdinalIgnoreCase);
+    var isPayrollSection = new[] { "BangLuong", "Thuong", "PhuCap", "KhauTru" }.Contains(currentController, StringComparer.OrdinalIgnoreCase);
     var displayName = User.Identity?.IsAuthenticated == true
     ? (User.Identity?.Name ?? "Quản trị viên")
     : "Quản trị viên";
@@ -122,6 +123,24 @@
                             <i class="bi bi-person-badge"></i>
                             <span>Quản lý nhân sự</span>
                         </a>
+                        <div class="sidebar-section-label">LƯƠNG & ĐIỀU CHỈNH</div>
+                        <div class="sidebar-parent-row">
+                            <a asp-controller="BangLuong" asp-action="Index"
+                               class="sidebar-link sidebar-parent @(currentController.Equals("BangLuong", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
+                                <i class="bi bi-wallet"></i><span>Quản lý bảng lương</span>
+                            </a>
+                            <button type="button" class="sidebar-parent-toggle" data-menu-toggle="payrollMenu"
+                                    aria-label="@(isPayrollSection ? "Thu gọn mục lương" : "Mở rộng mục lương")"
+                                    aria-expanded="@(isPayrollSection ? "true" : "false")">
+                                <i class="bi bi-chevron-left menu-chevron menu-chevron-closed" aria-hidden="true"></i>
+                                <i class="bi bi-chevron-down menu-chevron menu-chevron-open" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                        <div class="sidebar-submenu @(isPayrollSection ? "show" : "")" id="payrollMenu">
+                            <a asp-controller="Thuong" asp-action="Index" class="sidebar-sublink @(currentController.Equals("Thuong", StringComparison.OrdinalIgnoreCase) ? "active" : "")">Khoản thưởng</a>
+                            <a asp-controller="PhuCap" asp-action="Index" class="sidebar-sublink @(currentController.Equals("PhuCap", StringComparison.OrdinalIgnoreCase) ? "active" : "")">Phụ cấp</a>
+                            <a asp-controller="KhauTru" asp-action="Index" class="sidebar-sublink @(currentController.Equals("KhauTru", StringComparison.OrdinalIgnoreCase) ? "active" : "")">Khấu trừ</a>
+                        </div>
                     }
 
                     <div class="sidebar-section-label">TÀI CHÍNH</div>
@@ -157,6 +176,8 @@
                     <div><strong>Hotel Manager</strong><small>Hệ thống quản trị</small></div>
                 </div>
             </aside>
+            <div class="sidebar-resize-handle" id="sidebarResizeHandle" role="separator"
+                 aria-orientation="vertical" aria-label="Kéo để thay đổi độ rộng sidebar" title="Kéo để đổi độ rộng"></div>
 
             <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
@@ -255,6 +276,41 @@
                 const collapseButton = document.getElementById('sidebarCollapse');
                 const profileMenu = document.getElementById('profileMenu');
                 const profileMenuButton = document.getElementById('profileMenuButton');
+                const resizeHandle = document.getElementById('sidebarResizeHandle');
+                const minSidebarWidth = 200;
+                const maxSidebarWidth = 420;
+
+                try {
+                    const savedWidth = Number(localStorage.getItem('hotel-admin-sidebar-width'));
+                    if (Number.isFinite(savedWidth) && savedWidth >= minSidebarWidth && savedWidth <= maxSidebarWidth) {
+                        shell.style.setProperty('--admin-sidebar-width', `${savedWidth}px`);
+                    }
+                } catch { }
+
+                resizeHandle?.addEventListener('pointerdown', event => {
+                    if (window.matchMedia('(max-width: 767.98px)').matches || shell.classList.contains('sidebar-collapsed')) return;
+                    event.preventDefault();
+                    resizeHandle.setPointerCapture(event.pointerId);
+                    document.body.classList.add('sidebar-resizing');
+                });
+
+                resizeHandle?.addEventListener('pointermove', event => {
+                    if (!resizeHandle.hasPointerCapture(event.pointerId)) return;
+                    const width = Math.min(maxSidebarWidth, Math.max(minSidebarWidth, event.clientX));
+                    shell.style.setProperty('--admin-sidebar-width', `${width}px`);
+                });
+
+                const stopSidebarResize = event => {
+                    if (!resizeHandle?.hasPointerCapture(event.pointerId)) return;
+                    resizeHandle.releasePointerCapture(event.pointerId);
+                    document.body.classList.remove('sidebar-resizing');
+                    try {
+                        const width = parseFloat(getComputedStyle(shell).getPropertyValue('--admin-sidebar-width'));
+                        localStorage.setItem('hotel-admin-sidebar-width', String(width));
+                    } catch { }
+                };
+                resizeHandle?.addEventListener('pointerup', stopSidebarResize);
+                resizeHandle?.addEventListener('pointercancel', stopSidebarResize);
 
                 const closeProfileMenu = () => {
                     profileMenu?.classList.remove('is-open');

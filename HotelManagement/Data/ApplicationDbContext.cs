@@ -30,6 +30,10 @@ namespace HotelManagement.Data
         public DbSet<NhatKyHeThong> NhatKyHeThongs { get; set; }
         public DbSet<LichSuPhong> LichSuPhongs { get; set; }
         public DbSet<HoanTien> HoanTiens { get; set; }
+        public DbSet<BangLuong> BangLuongs { get; set; }
+        public DbSet<Thuong> Thuongs { get; set; }
+        public DbSet<PhuCap> PhuCaps { get; set; }
+        public DbSet<KhauTru> KhauTrus { get; set; }
         protected override void OnModelCreating(
             Microsoft.EntityFrameworkCore.ModelBuilder builder)
         {
@@ -38,6 +42,34 @@ namespace HotelManagement.Data
             builder.Entity<HotelManagement.Models.NhanVien>()
                 .HasIndex(n => n.IdentityUserId)
                 .IsUnique();
+
+            builder.Entity<BangLuong>()
+        .HasOne(b => b.NhanVien)
+        .WithMany()
+        .HasForeignKey(b => b.MaNV)
+        .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<BangLuong>()
+                .HasIndex(b => new { b.MaNV, b.Thang, b.Nam })
+                .IsUnique();
+
+            builder.Entity<Thuong>()
+                .HasOne(t => t.NhanVien)
+                .WithMany()
+                .HasForeignKey(t => t.MaNV)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<PhuCap>()
+                .HasOne(p => p.NhanVien)
+                .WithMany()
+                .HasForeignKey(p => p.MaNV)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<KhauTru>()
+                .HasOne(k => k.NhanVien)
+                .WithMany()
+                .HasForeignKey(k => k.MaNV)
+                .OnDelete(DeleteBehavior.Restrict);
         }
 
 

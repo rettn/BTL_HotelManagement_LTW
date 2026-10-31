@@ -53,6 +53,8 @@ namespace HotelManagement.Repositories
                 .FirstOrDefaultAsync(n => n.MaNV == id);
         }
 
+        public Task<List<NhanVien>> GetActiveEmployeesAsync() => _context.NhanViens.AsNoTracking().Where(n => n.TrangThai).OrderBy(n => n.MaNV).ToListAsync();
+
         public async Task AddAsync(NhanVien nhanVien)
         {
             _context.NhanViens.Add(nhanVien);

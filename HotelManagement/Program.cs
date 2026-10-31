@@ -67,6 +67,18 @@ builder.Services.AddScoped<NhanVienService>();
 builder.Services.AddScoped<ChucVuRepository>();
 builder.Services.AddScoped<ChucVuService>();
 
+// Repository quan ly luong
+builder.Services.AddScoped<BangLuongRepository>();
+builder.Services.AddScoped<ThuongRepository>();
+builder.Services.AddScoped<PhuCapRepository>();
+builder.Services.AddScoped<KhauTruRepository>();
+
+// Service quan ly luong
+builder.Services.AddScoped<BangLuongService>();
+builder.Services.AddScoped<ThuongService>();
+builder.Services.AddScoped<PhuCapService>();
+builder.Services.AddScoped<KhauTruService>();
+
 var app = builder.Build();
 await IdentitySeeder.SeedAsync(
     app.Services,
