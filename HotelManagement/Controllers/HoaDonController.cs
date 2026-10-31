@@ -95,7 +95,7 @@ namespace HotelManagement.Controllers
                     TienDichVu = h.TienDichVu,
                     GiamGia = h.GiamGia,
                     TongTien = h.TongTien,
-                    TrangThai = h.TrangThai,
+                    TrangThai = h.DatPhong != null && h.DatPhong.TrangThai == "DaHuy" ? "DaHuy" : h.TrangThai,
                     PhuongThucThanhToan = h.ThanhToans.OrderByDescending(t => t.NgayThanhToan).Select(t => t.PhuongThuc).FirstOrDefault() ?? "Chưa rõ"
                 })
                 .ToListAsync();
@@ -116,7 +116,6 @@ namespace HotelManagement.Controllers
 
             return View(viewModel);
         }
-
 
         // GET: /HoaDon/Details/5
         [HttpGet]
@@ -139,13 +138,28 @@ namespace HotelManagement.Controllers
                 return NotFound();
             }
 
+            // Đồng bộ trạng thái thực tế từ DatPhong sang ViewBag để hiển thị đúng ở View
+            string trangThaiHienThi = hoaDon.TrangThai;
+            if (hoaDon.DatPhong != null)
+            {
+                if (hoaDon.DatPhong.TrangThai == "DaHuy")
+                {
+                    trangThaiHienThi = "DaHuy";
+                }
+                else if (hoaDon.DatPhong.TrangThai == "DaCoc")
+                {
+                    trangThaiHienThi = "DaCoc";
+                }
+            }
+
             ViewBag.MaHoaDon = $"HD{hoaDon.MaDatPhong}{hoaDon.NgayLap:yyyyMMdd}";
-            ViewBag.TrangThai = hoaDon.TrangThai;
+            ViewBag.TrangThai = trangThaiHienThi;
             ViewBag.NgayLap = hoaDon.NgayLap;
             ViewBag.PhuongThucThanhToan = hoaDon.ThanhToans.OrderByDescending(t => t.NgayThanhToan).Select(t => t.PhuongThuc).FirstOrDefault() ?? "TienMat";
 
             return View(viewModel);
         }
+
         // HÀM BỔ TRỢ TÍNH TOÁN DỮ LIỆU HÓA ĐƠN CHUẨN XÁC
         private async Task<HoaDonCheckoutViewModel?> GetHoaDonCheckoutViewModelAsync(int maDatPhong)
         {
@@ -169,7 +183,7 @@ namespace HotelManagement.Controllers
             if (soDem <= 0) soDem = 1;
 
             decimal giaTheoDem = chiTietPhong?.DonGia ?? loaiPhong?.GiaTheoDem ?? 0;
-            decimal tienPhong = giaTheoDem * soDem;
+            decimal tienPhong = giaTheoDem * soDem; // Đã fix lỗi ngắt dòng cú pháp
 
             var dsDichVu = await _context.ChiTietDichVus
                 .AsNoTracking()
