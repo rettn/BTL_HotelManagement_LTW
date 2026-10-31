@@ -7,6 +7,27 @@
     var ngayLap = ViewBag.NgayLap != null ? (DateTime)ViewBag.NgayLap : DateTime.Now;
     var trangThai = ViewBag.TrangThai as string ?? "DaThanhToan";
     var phuongThuc = ViewBag.PhuongThucThanhToan as string ?? "TienMat";
+
+    // Cấu hình hiển thị tem trạng thái động
+    string stampText = "Đã thanh toán";
+    string stampSubText = "Giao dịch thành công";
+    string stampStyle = "border: 2px dashed #16804a; color: #16804a; background: #e4f8ed;";
+    string totalLabelText = "TỔNG TIỀN ĐÃ THANH TOÁN:";
+
+    if (trangThai == "DaHuy")
+    {
+        stampText = "ĐÃ HỦY";
+        stampSubText = "Đơn đã bị hủy";
+        stampStyle = "border: 2px dashed #c03939; color: #c03939; background: #ffe8e8;";
+        totalLabelText = "TỔNG TIỀN HỦY / HOÀN CỌC:";
+    }
+    else if (trangThai == "DaCoc")
+    {
+        stampText = "ĐÃ ĐẶT CỌC";
+        stampSubText = "Thanh toán tiền cọc";
+        stampStyle = "border: 2px dashed #986500; color: #986500; background: #fff3d6;";
+        totalLabelText = "TỔNG TIỀN CỌC:";
+    }
 }
 
 <style>
@@ -51,14 +72,11 @@
         position: absolute;
         top: 25px;
         right: 25px;
-        border: 2px dashed #16804a;
-        color: #16804a;
         padding: 5px 12px;
         font-weight: 700;
         font-size: 13px;
         border-radius: 8px;
         transform: rotate(6deg);
-        background: #e4f8ed;
         text-transform: uppercase;
         text-align: center;
     }
@@ -153,7 +171,6 @@
     }
 
     @@media print {
-        /* Ẩn các thành phần giao diện quản trị, sidebar, header, footer và các nút bấm */
         .d-print-none,
         nav,
         footer,
@@ -206,9 +223,10 @@
         </div>
 
         <div class="invoice-card">
-            <div class="status-stamp-right">
-                Đã thanh toán
-                <span class="status-stamp-sub">Giao dịch thành công</span>
+            <!-- Tem trạng thái động theo cơ sở dữ liệu -->
+            <div class="status-stamp-right" style="@stampStyle">
+                @stampText
+                <span class="status-stamp-sub">@stampSubText</span>
             </div>
 
             <div class="invoice-code-label">Mã hóa đơn dịch vụ</div>
@@ -299,7 +317,7 @@
                     <span>+@Model.TienThue.ToString("N0") đ</span>
                 </div>
                 <div class="calc-total-row">
-                    <span>TỔNG TIỀN ĐÃ THANH TOÁN:</span>
+                    <span>@totalLabelText</span>
                     <span class="text-danger">@Model.TongThanhToan.ToString("N0") đ</span>
                 </div>
             </div>
