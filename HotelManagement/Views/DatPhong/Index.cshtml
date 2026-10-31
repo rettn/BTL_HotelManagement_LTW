@@ -44,6 +44,7 @@
         background: #e9f2ff;
         color: #2563b7;
     }
+
     .booking-page {
         color: #263449;
     }
@@ -263,9 +264,6 @@
 </style>
 
 <div class="booking-page">
-
-    
-
     <div class="booking-toolbar">
         <div>
             <h2>Phiếu đặt phòng</h2>
@@ -394,18 +392,13 @@
                                     }
                                     @if (datPhong.TrangThai == "ChoXacNhan" || datPhong.TrangThai == "DaCoc")
                                     {
-                                        <form asp-controller="DatPhong"
-                                              asp-action="Cancel"
-                                              asp-route-id="@datPhong.MaDatPhong"
-                                              method="post"
-                                              onsubmit="return huyDatPhong(event, this);">
-                                            @Html.AntiForgeryToken()
-                                            <button type="submit"
-                                                    class="booking-action booking-action-danger"
-                                                    title="Hủy đặt phòng & Hoàn cọc" onclick="event.preventDefault(); moModalHuyPhong(@datPhong.MaDatPhong);">
-                                                <i class="bi bi-x-circle"></i>
-                                            </button>
-                                        </form>
+                                        <button type="button"
+                                                class="booking-action booking-action-danger"
+                                                style="cursor: pointer; position: relative; z-index: 5;"
+                                                title="Hủy đặt phòng & Hoàn cọc"
+                                                onclick="moModalHuyPhong(@datPhong.MaDatPhong)">
+                                            <i class="bi bi-x-circle" style="pointer-events: none;"></i>
+                                        </button>
                                     }
 
                                     @if (datPhong.TrangThai == "DaHuy")
@@ -451,6 +444,9 @@
 <partial name="_ModalHuyVaHoanTien" />
 
 @section Scripts {
+    <!-- Đảm bảo nạp đầy đủ Bootstrap JS Bundle để hàm modal hoạt động chính xác -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
     <script>
         let currentTienCoc = 0;
         let modalHuyPhongInstance = null;
@@ -458,7 +454,13 @@
         function getModalHuyPhong() {
             if (!modalHuyPhongInstance) {
                 const modalEl = document.getElementById('modalHuyVaHoanTien');
-                if (modalEl) modalHuyPhongInstance = new bootstrap.Modal(modalEl);
+                if (modalEl) {
+                    if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                        modalHuyPhongInstance = new bootstrap.Modal(modalEl);
+                    } else {
+                        console.error("Thư viện Bootstrap JavaScript chưa được tải!");
+                    }
+                }
             }
             return modalHuyPhongInstance;
         }
@@ -491,10 +493,10 @@
                 .catch(err => alert("Không thể tải thông tin đặt phòng: " + err));
         }
 
-        document.addEventListener("DOMContentLoaded", function () {
+        document.addEventListener("DOMContentLoaded", function() {
             const txtPercent = document.getElementById('txtPhanTramHoan');
             if (txtPercent) {
-                txtPercent.addEventListener('input', function () {
+                txtPercent.addEventListener('input', function() {
                     let percent = parseFloat(this.value) || 0;
                     if (percent > 100) percent = 100;
                     if (percent < 0) percent = 0;
@@ -504,7 +506,7 @@
 
             const btnSubmit = document.getElementById('btnSubmitHuyPhong');
             if (btnSubmit) {
-                btnSubmit.addEventListener('click', function () {
+                btnSubmit.addEventListener('click', function() {
                     const maDatPhong = parseInt(document.getElementById('modalMaDatPhong').value);
                     const lyDoHuy = document.getElementById('txtLyDoHuy').value.trim();
                     const phanTramHoan = parseFloat(document.getElementById('txtPhanTramHoan').value) || 0;
@@ -534,56 +536,27 @@
                             hinhThucHoan: hinhThucHoan
                         })
                     })
-                    .then(res => res.json())
-                    .then(res => {
-                        if (res.success) {
-                            alert(res.message);
-                            const modal = getModalHuyPhong();
-                            if (modal) modal.hide();
-                            location.reload();
-                        } else {
-                            alert('Lỗi: ' + res.message);
+                        .then(res => res.json())
+                        .then(res => {
+                            if (res.success) {
+                                alert(res.message);
+                                const modal = getModalHuyPhong();
+                                if (modal) modal.hide();
+                                location.reload();
+                            } else {
+                                alert('Lỗi: ' + res.message);
+                                btnSubmit.disabled = false;
+                                btnSubmit.innerHTML = '<i class="bi bi-check-circle me-1"></i>Xác nhận Hủy & Hoàn cọc';
+                            }
+                        })
+                        .catch(err => {
+                            alert('Đã xảy ra lỗi kết nối: ' + err);
                             btnSubmit.disabled = false;
                             btnSubmit.innerHTML = '<i class="bi bi-check-circle me-1"></i>Xác nhận Hủy & Hoàn cọc';
-                        }
-                    })
-                    .catch(err => {
-                        alert('Đã xảy ra lỗi kết nối: ' + err);
-                        btnSubmit.disabled = false;
-                        btnSubmit.innerHTML = '<i class="bi bi-check-circle me-1"></i>Xác nhận Hủy & Hoàn cọc';
-                    });
+                        });
                 });
             }
         });
-        async function huyDatPhong(event, form) {
-            event.preventDefault();
-
-            if (!confirm('Bạn có chắc muốn hủy lượt đặt phòng này?')) {
-                return false;
-            }
-
-            try {
-                const response = await fetch(form.action, {
-                    method: 'POST',
-                    body: new FormData(form)
-                });
-
-                let data = null;
-                try { data = await response.json(); } catch { }
-
-                if (!response.ok || !data || !data.success) {
-                    alert(data?.message ?? 'Hủy phiếu thất bại. Vui lòng thử lại.');
-                    return false;
-                }
-
-                alert(data.message);
-                location.reload();
-            } catch (err) {
-                alert('Không thể kết nối đến máy chủ.');
-            }
-
-            return false;
-        }
 
         (() => {
             const search = document.getElementById("bookingSearch");
