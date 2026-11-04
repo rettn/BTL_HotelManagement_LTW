@@ -237,13 +237,12 @@
 
         @if (datPhong != null)
         {
-            <a asp-controller="DatPhong"
-               asp-action="Checkout"
-               asp-route-id="@datPhong.MaDatPhong"
+            <button type="button"
+               onclick="moModalTraPhong(@datPhong.MaDatPhong, @Model.MaPhong)"
                class="rp-main-btn">
                 <i class="bi bi-box-arrow-right"></i>
                 Trả phòng
-            </a>
+            </button>
         }
     }
     else if (dangDon)

@@ -442,10 +442,12 @@ namespace HotelManagement.Services
 
                 var trangThaiPhong = phong.TrangThai?.Trim();
 
-                if (trangThaiPhong != "Trong" &&
-                    trangThaiPhong != "Trống")
+                // "DaDat" là trạng thái vận hành hiện tại, không có nghĩa phòng
+                // bị khóa cho mọi ngày. Lịch trùng bên dưới mới quyết định khả dụng.
+                if (trangThaiPhong == "DangSuDung" || trangThaiPhong == "Đang sử dụng" ||
+                    trangThaiPhong == "DangDon" || trangThaiPhong == "Đang dọn dẹp")
                 {
-                    return $"Phòng {phong.SoPhong} hiện không ở trạng thái trống.";
+                    return $"Phòng {phong.SoPhong} hiện đang có khách hoặc đang dọn dẹp.";
                 }
 
                 if (await _repository.PhongBiTrungLichAsync(

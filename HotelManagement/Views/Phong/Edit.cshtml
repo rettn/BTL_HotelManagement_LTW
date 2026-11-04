@@ -54,15 +54,11 @@
                         }
                     </div>
 
-                    <!-- Trạng thái -->
+                    <!-- Trạng thái vận hành được cập nhật qua nhận/trả phòng và dọn dẹp -->
                     <div class="col-md-4">
                         <label asp-for="TrangThai" class="form-label fw-bold text-dark mb-2">Trạng thái</label>
-                        <select asp-for="TrangThai" class="form-select py-2" style="border-radius: 8px;">
-                            <option value="Trống">Phòng trống</option>
-                            <option value="Đã đặt">Đã đặt</option>
-                            <option value="Đang sử dụng">Đang sử dụng</option>
-                            <option value="Đang dọn dẹp">Đang dọn dẹp</option>
-                        </select>
+                        <input type="text" class="form-control py-2" value="@Model.TrangThai" readonly />
+                        <input asp-for="TrangThai" type="hidden" />
                         <span asp-validation-for="TrangThai" class="text-danger small"></span>
                     </div>
                 </div>

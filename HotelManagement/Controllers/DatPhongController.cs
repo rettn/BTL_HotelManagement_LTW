@@ -32,10 +32,12 @@ namespace HotelManagement.Controllers
                 .Include(dp => dp.KhachHang)
                 .Include(dp => dp.ChiTietDatPhongs)
                     .ThenInclude(ct => ct.Phong)
-                .Where(dp =>
-                    dp.TrangThai == "ChoXacNhan" ||
-                    dp.TrangThai == "DaCoc" ||
-                    dp.TrangThai == "DangLuuTru")
+                    .ThenInclude(p => p!.LoaiPhong)
+                .Include(dp => dp.ChiTietDatPhongs)
+                    .ThenInclude(ct => ct.DanhSachLuuTru)
+                .Include(dp => dp.HoaDons)
+                    .ThenInclude(h => h.ThanhToans)
+                .Where(dp => dp.TrangThai != "DaHuy")
                 .OrderByDescending(dp => dp.MaDatPhong)
                 .ToListAsync();
 
@@ -355,6 +357,51 @@ namespace HotelManagement.Controllers
                 return BadRequest(new { success = false, message = result.Message });
 
             return Json(await BuildTrangThaiResponseAsync(id, maPhong, result.Message));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetThongTinTraPhong(int id, int maPhong)
+        {
+            var booking = await _context.DatPhongs.AsNoTracking()
+                .Include(d => d.KhachHang)
+                .Include(d => d.ChiTietDatPhongs)
+                    .ThenInclude(c => c.Phong)
+                        .ThenInclude(p => p!.LoaiPhong)
+                .Include(d => d.ChiTietDatPhongs)
+                    .ThenInclude(c => c.DanhSachLuuTru)
+                .FirstOrDefaultAsync(d => d.MaDatPhong == id);
+
+            if (booking == null)
+                return NotFound(new { success = false, message = "Không tìm thấy phiếu đặt phòng." });
+
+            var rooms = booking.ChiTietDatPhongs.Select(c =>
+            {
+                var stay = c.DanhSachLuuTru
+                    .Where(l => l.ThoiGianNhanPhong != null && l.ThoiGianTraPhong == null)
+                    .OrderByDescending(l => l.ThoiGianNhanPhong)
+                    .FirstOrDefault();
+                return new
+                {
+                    maPhong = c.MaPhong,
+                    soPhong = c.Phong?.SoPhong ?? "",
+                    tenLoaiPhong = c.Phong?.LoaiPhong?.TenLoaiPhong ?? "",
+                    ngayNhan = stay?.ThoiGianNhanPhong?.ToString("dd/MM/yyyy HH:mm") ?? c.NgayNhan.ToString("dd/MM/yyyy"),
+                    ngayTraDuKien = (c.NgayTra.TimeOfDay == TimeSpan.Zero ? c.NgayTra.Date.AddHours(12) : c.NgayTra).ToString("dd/MM/yyyy HH:mm"),
+                    dangLuuTru = stay != null,
+                    daTra = c.DanhSachLuuTru.Any(l => l.ThoiGianTraPhong != null)
+                };
+            }).OrderBy(r => r.soPhong).ToList();
+
+            if (!rooms.Any(r => r.maPhong == maPhong && r.dangLuuTru))
+                return BadRequest(new { success = false, message = "Phòng này hiện không có khách đang lưu trú." });
+
+            return Json(new
+            {
+                success = true,
+                maDatPhong = booking.MaDatPhong,
+                tenKhachHang = booking.KhachHang?.HoTen ?? "Khách lẻ",
+                rooms
+            });
         }
 
         private async Task<object> BuildTrangThaiResponseAsync(int maDatPhong, int maPhong, string message)
@@ -783,6 +830,40 @@ namespace HotelManagement.Controllers
                     TrangThai = p.TrangThai
                 })
                 .ToListAsync();
+        }
+
+        // Cập nhật danh sách phòng khả dụng theo khoảng ngày lưu trú.
+        [HttpGet]
+        public async Task<IActionResult> PhongKhaDung(DateTime ngayNhan, DateTime ngayTra)
+        {
+            if (ngayTra.Date <= ngayNhan.Date || ngayNhan.Date < DateTime.Today)
+                return BadRequest(new { message = "Khoảng ngày lưu trú không hợp lệ." });
+
+            var rooms = await _context.Phongs.AsNoTracking()
+                .Include(p => p.LoaiPhong)
+                .Where(p => p.TrangThai != "DangSuDung" && p.TrangThai != "Đang sử dụng" &&
+                            p.TrangThai != "DangDon" && p.TrangThai != "Đang dọn dẹp")
+                .OrderBy(p => p.SoPhong)
+                .Select(p => new
+                {
+                    p.MaPhong,
+                    p.SoPhong,
+                    TenLoaiPhong = p.LoaiPhong != null ? p.LoaiPhong.TenLoaiPhong : "Chưa phân loại",
+                    GiaTheoDem = p.LoaiPhong != null ? p.LoaiPhong.GiaTheoDem : 0,
+                    TrangThai = p.TrangThai
+                })
+                .ToListAsync();
+
+            var maPhongDaDat = await _context.ChiTietDatPhongs.AsNoTracking()
+                .Where(c => c.NgayNhan < ngayTra.Date && c.NgayTra > ngayNhan.Date &&
+                            c.DatPhong != null && c.DatPhong.TrangThai != "DaHuy" &&
+                            c.DatPhong.TrangThai != "DaThanhToan" && c.DatPhong.TrangThai != "DaHoanThanh")
+                .Select(c => c.MaPhong)
+                .Distinct()
+                .ToListAsync();
+            var blocked = maPhongDaDat.ToHashSet();
+
+            return Json(rooms.Where(p => !blocked.Contains(p.MaPhong)));
         }
 
         [HttpGet]

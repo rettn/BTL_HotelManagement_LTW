@@ -182,6 +182,27 @@
             </div>
         </section>
     </div>
+
+    <div id="checkoutConfirmModal" class="type-modal checkout-confirm-modal" aria-hidden="true">
+        <div class="type-modal-backdrop" data-close-checkout></div>
+        <section class="checkout-confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="checkoutConfirmTitle">
+            <header class="checkout-confirm-header">
+                <div><h2 id="checkoutConfirmTitle">Xác nhận trả phòng</h2><p id="checkoutConfirmGuest"></p></div>
+                <button type="button" class="type-modal-close" data-close-checkout aria-label="Đóng"><i class="bi bi-x-lg"></i></button>
+            </header>
+            <div class="checkout-confirm-table-wrap">
+                <table class="checkout-confirm-table">
+                    <thead><tr><th></th><th>Hạng phòng</th><th>Phòng</th><th>Nhận phòng</th><th>Trả phòng</th><th>Trạng thái</th></tr></thead>
+                    <tbody id="checkoutConfirmRooms"></tbody>
+                </table>
+            </div>
+            <footer class="checkout-confirm-footer">
+                <button type="button" class="btn btn-light border" data-close-checkout>Đóng</button>
+                <button type="button" id="confirmRoomCheckout" class="btn btn-success"><i class="bi bi-box-arrow-right me-1"></i>Trả phòng đã chọn</button>
+                <button type="button" id="confirmRoomCheckoutPay" class="btn btn-success"><i class="bi bi-receipt me-1"></i>Trả phòng và thanh toán</button>
+            </footer>
+        </section>
+    </div>
 </div>
 
 <style>
@@ -224,9 +245,108 @@
         flex: 1;
     }
 
+    .checkout-confirm-modal { z-index: 2200; }
+    .checkout-confirm-modal.show { display:flex; align-items:center; justify-content:center; padding:16px; }
+    .checkout-confirm-dialog { position:relative; z-index:1; width:min(100%,1100px); max-height:calc(100vh - 40px); overflow:auto; border-radius:18px; background:#fff; box-shadow:0 24px 70px rgba(0,0,0,.25); }
+    .checkout-confirm-header,.checkout-confirm-footer { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:18px 24px; }
+    .checkout-confirm-header { border-bottom:1px solid #e8edf2; }
+    .checkout-confirm-header h2 { margin:0; font-size:20px; font-weight:700; }
+    .checkout-confirm-header p { margin:5px 0 0; color:#718096; }
+    .checkout-confirm-table-wrap { padding:8px 24px; overflow:auto; }
+    .checkout-confirm-table { width:100%; min-width:760px; border-collapse:separate; border-spacing:0 4px; }
+    .checkout-confirm-table th { padding:12px; background:#e7f5ed; font-weight:650; }
+    .checkout-confirm-table td { padding:13px 12px; background:#f8fafc; }
+    .checkout-confirm-table tr.is-active td { background:#fff; }
+    .checkout-confirm-state { display:inline-block; padding:4px 9px; border-radius:99px; background:#e4f8ed; color:#16804a; font-size:12px; }
+    .checkout-confirm-state.inactive { background:#fff3d6; color:#986500; }
+    .checkout-confirm-footer { justify-content:flex-end; border-top:1px solid #e8edf2; }
+    .checkout-confirm-footer .btn-success { background:#209c60; border-color:#209c60; }
+    @@media(max-width:650px) { .checkout-confirm-footer { flex-wrap:wrap; } .checkout-confirm-footer button { flex:1 1 100%; } }
+
 </style>
 
 <script>
+    let checkoutBookingId = null;
+    let checkoutActiveRoomIds = [];
+
+    async function moModalTraPhong(maDatPhong, maPhongDangMo) {
+        const modal = document.getElementById('checkoutConfirmModal');
+        const tbody = document.getElementById('checkoutConfirmRooms');
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">Đang tải danh sách phòng...</td></tr>';
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('type-modal-open');
+        try {
+            const response = await fetch(`/DatPhong/GetThongTinTraPhong?id=${maDatPhong}&maPhong=${maPhongDangMo}`);
+            const data = await response.json();
+            if (!response.ok || !data.success) throw new Error(data.message || 'Không thể tải thông tin trả phòng.');
+            checkoutBookingId = data.maDatPhong;
+            document.getElementById('checkoutConfirmTitle').textContent = `Xác nhận trả phòng - DP${String(data.maDatPhong).padStart(6, '0')}`;
+            document.getElementById('checkoutConfirmGuest').innerHTML = `<i class="bi bi-person me-2"></i>${escapeHtmlRoom(data.tenKhachHang)}`;
+            checkoutActiveRoomIds = data.rooms.filter(r => r.dangLuuTru).map(r => r.maPhong);
+            tbody.replaceChildren();
+            data.rooms.forEach(room => {
+                const tr = document.createElement('tr');
+                tr.className = room.dangLuuTru ? 'is-active' : '';
+                const checkCell = document.createElement('td');
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox'; checkbox.className = 'checkout-room-checkbox';
+                checkbox.value = room.maPhong; checkbox.disabled = !room.dangLuuTru;
+                checkbox.checked = room.maPhong === Number(maPhongDangMo) && room.dangLuuTru;
+                checkCell.appendChild(checkbox); tr.appendChild(checkCell);
+                [room.tenLoaiPhong, room.soPhong, room.ngayNhan, room.ngayTraDuKien].forEach(value => {
+                    const td = document.createElement('td'); td.textContent = value || '—'; tr.appendChild(td);
+                });
+                const stateCell = document.createElement('td');
+                const state = document.createElement('span');
+                state.className = `checkout-confirm-state${room.dangLuuTru ? '' : ' inactive'}`;
+                state.textContent = room.dangLuuTru ? 'Đang lưu trú' : room.daTra ? 'Đã trả phòng' : 'Chưa nhận phòng';
+                stateCell.appendChild(state); tr.appendChild(stateCell);
+                tbody.appendChild(tr);
+            });
+        } catch (error) {
+            tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">${escapeHtmlRoom(error.message)}</td></tr>`;
+        }
+    }
+
+    function escapeHtmlRoom(value) {
+        const div = document.createElement('div'); div.textContent = value ?? ''; return div.innerHTML;
+    }
+
+    function closeCheckoutConfirm() {
+        document.getElementById('checkoutConfirmModal').classList.remove('show');
+        document.getElementById('checkoutConfirmModal').setAttribute('aria-hidden', 'true');
+        if (!document.querySelector('.type-modal.show')) document.body.classList.remove('type-modal-open');
+    }
+
+    document.addEventListener('click', event => {
+        if (event.target.closest('[data-close-checkout]')) closeCheckoutConfirm();
+    });
+
+    document.getElementById('confirmRoomCheckout').addEventListener('click', async function () {
+        const roomIds = [...document.querySelectorAll('.checkout-room-checkbox:checked')].map(input => Number(input.value));
+        if (!roomIds.length) { alert('Chọn ít nhất một phòng đang lưu trú để trả.'); return; }
+        const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+        this.disabled = true;
+        try {
+            for (const maPhong of roomIds) {
+                const body = new URLSearchParams({ id: checkoutBookingId, maPhong, __RequestVerificationToken: token });
+                const response = await fetch('/DatPhong/CheckOut', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body });
+                const data = await response.json();
+                if (!response.ok || !data.success) throw new Error(data.message || 'Không thể trả phòng.');
+            }
+            location.reload();
+        } catch (error) { alert(error.message); this.disabled = false; }
+    });
+
+    document.getElementById('confirmRoomCheckoutPay').addEventListener('click', () => {
+        const selected = [...document.querySelectorAll('.checkout-room-checkbox:checked')].map(input => Number(input.value));
+        if (!checkoutActiveRoomIds.length || selected.length !== checkoutActiveRoomIds.length || checkoutActiveRoomIds.some(id => !selected.includes(id))) {
+            alert('Để trả phòng và thanh toán cùng lúc, hãy chọn tất cả phòng đang lưu trú.'); return;
+        }
+        window.location.href = `/DatPhong/Checkout/${checkoutBookingId}`;
+    });
+
     // Nhận phòng / Hủy đặt phòng / Trả phòng trong popup phòng
     async function thucHienThaoTacPhong(url, maDatPhong, maPhong, thongBaoXacNhan) {
         if (!confirm(thongBaoXacNhan)) return;

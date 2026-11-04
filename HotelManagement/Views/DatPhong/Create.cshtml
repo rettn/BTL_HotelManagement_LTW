@@ -42,9 +42,9 @@
                 </div>
 
                 <div class="col-md-6">
-                    <label asp-for="MaPhongs" class="form-label">Chọn phòng trống</label>
+                    <label asp-for="MaPhongs" class="form-label">Chọn phòng khả dụng</label>
                     <select asp-for="MaPhongs" id="MaPhongsSelect" class="form-select select2-multiple" multiple="multiple" required style="width: 100%;">
-                        @foreach (var p in Model.Phongs.Where(p => p.TrangThai == "Trong" || p.TrangThai == "Trống"))
+                        @foreach (var p in Model.Phongs)
                         {
                             <option value="@p.MaPhong"
                                     data-gia="@p.GiaTheoDem.ToString("0", inv)"
@@ -56,9 +56,10 @@
                         }
                     </select>
                     <span asp-validation-for="MaPhongs" class="text-danger d-block mt-1"></span>
-                    @if (!Model.Phongs.Any(p => p.TrangThai == "Trong" || p.TrangThai == "Trống"))
+                    <div id="availableRoomCount" class="text-muted mt-1 small"></div>
+                    @if (!Model.Phongs.Any())
                     {
-                        <div class="text-danger mt-1 small">Hiện không có phòng trống.</div>
+                        <div class="text-muted mt-1 small">Chọn ngày lưu trú để kiểm tra phòng khả dụng.</div>
                     }
                 </div>
             </div>
@@ -529,10 +530,44 @@
                 }
             }
 
-            $('#NgayNhan, #NgayTra').on('change', calculate);
+            let availabilityRequest;
+            async function refreshAvailableRooms() {
+                const from = $('#NgayNhan').val();
+                const to = $('#NgayTra').val();
+                if (!from || !to || from >= to) return;
+                if (availabilityRequest) availabilityRequest.abort();
+                availabilityRequest = new AbortController();
+                try {
+                    const response = await fetch(`/DatPhong/PhongKhaDung?ngayNhan=${encodeURIComponent(from)}&ngayTra=${encodeURIComponent(to)}`, { signal: availabilityRequest.signal });
+                    if (!response.ok) return;
+                    const rooms = await response.json();
+                    const select = document.getElementById('MaPhongsSelect');
+                    const selected = new Set(Array.from(select.selectedOptions).map(o => o.value));
+                    select.replaceChildren();
+                    rooms.forEach(p => {
+                        const option = document.createElement('option');
+                        option.value = p.maPhong;
+                        option.textContent = `Phòng ${p.soPhong} - ${p.tenLoaiPhong} (${Number(p.giaTheoDem).toLocaleString('vi-VN')} đ/đêm)`;
+                        option.dataset.gia = p.giaTheoDem;
+                        option.dataset.so = p.soPhong;
+                        option.dataset.loai = p.tenLoaiPhong;
+                        option.dataset.giatext = Number(p.giaTheoDem).toLocaleString('vi-VN');
+                        option.selected = selected.has(String(p.maPhong));
+                        select.appendChild(option);
+                    });
+                    $('#MaPhongsSelect').trigger('change.select2');
+                    $('#availableRoomCount').text(`${rooms.length} phòng khả dụng trong khoảng ngày đã chọn`);
+                    calculate();
+                } catch (error) {
+                    if (error.name !== 'AbortError') console.error('Không thể tải phòng khả dụng', error);
+                }
+            }
+
+            $('#NgayNhan, #NgayTra').on('change', function () { calculate(); refreshAvailableRooms(); });
             $('#MaPhongsSelect').on('change', calculate);
 
             calculate();
+            refreshAvailableRooms();
         });
     </script>
 }
