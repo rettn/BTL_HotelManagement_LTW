@@ -44,22 +44,6 @@ namespace HotelManagement.Controllers
             return View(datPhongs);
         }
 
-        public async Task<IActionResult> History()
-        {
-            var datPhongs = await _context.DatPhongs
-                .Include(dp => dp.KhachHang)
-                .Include(dp => dp.ChiTietDatPhongs)
-                    .ThenInclude(ct => ct.Phong)
-                .Where(dp =>
-                    dp.TrangThai == "DaHuy" ||
-                    dp.TrangThai == "DaThanhToan" ||
-                    dp.TrangThai == "DaHoanThanh")
-                .OrderByDescending(dp => dp.MaDatPhong)
-                .ToListAsync();
-
-            return View("History", datPhongs);
-        }
-
         // GET: /DatPhong/Details/1
         public async Task<IActionResult> Details(int id)
         {
@@ -882,5 +866,6 @@ namespace HotelManagement.Controllers
             ViewBag.MaHoaDon = hoaDon?.MaHD ?? id;
             return View("XuatHoaDon", viewModel);
         }
+
     }
 }
