@@ -190,6 +190,38 @@ namespace HotelManagement.Data.Migrations
                     b.ToTable("ChiTietHoaDon");
                 });
 
+            modelBuilder.Entity("HotelManagement.Models.ChiTietNhapKho", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DichVuId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("DonGiaNhap")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("PhieuNhapKhoId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SoLuong")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("ThanhTien")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DichVuId");
+
+                    b.HasIndex("PhieuNhapKhoId");
+
+                    b.ToTable("ChiTietNhapKho");
+                });
+
             modelBuilder.Entity("HotelManagement.Models.ChucVu", b =>
                 {
                     b.Property<int>("MaChucVu")
@@ -271,19 +303,52 @@ namespace HotelManagement.Data.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("AnhUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<string>("DonViTinh")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)");
+
                     b.Property<decimal>("Gia")
                         .HasColumnType("decimal(65,30)");
+
+                    b.Property<decimal>("GiaVon")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("LoaiHang")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<string>("MaHang")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
 
                     b.Property<string>("MoTa")
                         .IsRequired()
                         .HasColumnType("longtext");
+
+                    b.Property<string>("NhomHang")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("varchar(80)");
 
                     b.Property<string>("TenDichVu")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)");
 
+                    b.Property<int>("TonKho")
+                        .HasColumnType("int");
+
                     b.Property<bool>("TrangThai")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("YeuThich")
                         .HasColumnType("tinyint(1)");
 
                     b.HasKey("Id");
@@ -645,6 +710,38 @@ namespace HotelManagement.Data.Migrations
                     b.HasKey("MaNhatKy");
 
                     b.ToTable("NhatKyHeThong");
+                });
+
+            modelBuilder.Entity("HotelManagement.Models.PhieuNhapKho", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("GhiChu")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<string>("MaPhieu")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<DateTime>("NgayNhap")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("NhaCungCap")
+                        .HasMaxLength(120)
+                        .HasColumnType("varchar(120)");
+
+                    b.Property<decimal>("TongTien")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PhieuNhapKho");
                 });
 
             modelBuilder.Entity("HotelManagement.Models.Phong", b =>
@@ -1093,6 +1190,25 @@ namespace HotelManagement.Data.Migrations
                     b.Navigation("HoaDon");
                 });
 
+            modelBuilder.Entity("HotelManagement.Models.ChiTietNhapKho", b =>
+                {
+                    b.HasOne("HotelManagement.Models.DichVu", "DichVu")
+                        .WithMany()
+                        .HasForeignKey("DichVuId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HotelManagement.Models.PhieuNhapKho", "PhieuNhapKho")
+                        .WithMany("ChiTietNhapKhos")
+                        .HasForeignKey("PhieuNhapKhoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("DichVu");
+
+                    b.Navigation("PhieuNhapKho");
+                });
+
             modelBuilder.Entity("HotelManagement.Models.DatPhong", b =>
                 {
                     b.HasOne("HotelManagement.Models.KhachHang", "KhachHang")
@@ -1292,6 +1408,11 @@ namespace HotelManagement.Data.Migrations
             modelBuilder.Entity("HotelManagement.Models.LuuTru", b =>
                 {
                     b.Navigation("ChiTietDichVus");
+                });
+
+            modelBuilder.Entity("HotelManagement.Models.PhieuNhapKho", b =>
+                {
+                    b.Navigation("ChiTietNhapKhos");
                 });
 
             modelBuilder.Entity("HotelManagement.Models.Phong", b =>

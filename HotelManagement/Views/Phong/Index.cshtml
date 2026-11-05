@@ -389,6 +389,7 @@
 
     function moDichVu(maPhong) {
         dichVuMaPhong = maPhong;
+        window.dvCart = {};
         const modal = document.getElementById('dichVuModal');
         const content = document.getElementById('dichVuContent');
 
@@ -400,7 +401,14 @@
 
         fetch('/DatPhong/DichVuLuuTru?maPhong=' + maPhong)
             .then(r => { if (!r.ok) throw new Error(); return r.text(); })
-            .then(html => { content.innerHTML = html; })
+            .then(html => {
+                content.innerHTML = html;
+                content.querySelectorAll('script').forEach(oldScript => {
+                    const script = document.createElement('script');
+                    script.textContent = oldScript.textContent;
+                    oldScript.replaceWith(script);
+                });
+            })
             .catch(() => {
                 content.innerHTML =
                     '<div class="type-empty"><p class="text-danger">Không thể tải danh sách dịch vụ.</p></div>';
@@ -417,33 +425,17 @@
     }
 
     async function themDichVu(maLuuTru) {
-        const maDichVu = document.getElementById('dvChon').value;
-        const soLuong = document.getElementById('dvSoLuong').value;
-
-        if (!maDichVu) { alert('Vui lòng chọn dịch vụ.'); return; }
-
+        const rows = [...(document.querySelectorAll('#dvCartRows .dv-cart-row'))];
+        if (!rows.length) { alert('Vui lòng chọn ít nhất một mặt hàng.'); return; }
         const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
-        const body = new URLSearchParams();
-        body.append('maLuuTru', maLuuTru);
-        body.append('maDichVu', maDichVu);
-        body.append('soLuong', soLuong);
-        body.append('__RequestVerificationToken', token);
-
         try {
-            const response = await fetch('/DatPhong/ThemDichVu', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-                body: body
-            });
-
-            let data = null;
-            try { data = await response.json(); } catch { }
-
-            if (!response.ok || !data || !data.success) {
-                alert(data?.message ?? 'Không thể thêm dịch vụ.');
-                return;
+            for (const row of rows) {
+                const body = new URLSearchParams({ maLuuTru, maDichVu: row.dataset.id, soLuong: row.querySelector('input').value, __RequestVerificationToken: token || '' });
+                const response = await fetch('/DatPhong/ThemDichVu', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' }, body });
+                let data = null; try { data = await response.json(); } catch { }
+                if (!response.ok || !data?.success) { alert(data?.message ?? 'Không thể thêm mặt hàng. Các mặt hàng đã lưu trước lỗi vẫn được ghi nhận.'); moDichVu(dichVuMaPhong); return; }
             }
-
+            window.dvCart = {};
             moDichVu(dichVuMaPhong);
         } catch (err) {
             alert('Không thể kết nối đến máy chủ.');

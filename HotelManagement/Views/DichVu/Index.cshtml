@@ -1,131 +1,74 @@
 @model IEnumerable<HotelManagement.Models.DichVu>
-
+@using HotelManagement.Models
 @{
-    ViewData["Title"] = "Dịch vụ";
+    ViewData["Title"] = "Dịch vụ & hàng hóa";
+    var items = Model.ToList();
+    var groups = ViewBag.NhomHangs as List<string> ?? new();
 }
 
-<div class="container-fluid px-0">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h2 class="fw-bold">Quản lý dịch vụ</h2>
-            
-        </div>
+<style>
+    .goods-page{color:#263449}.goods-head,.goods-toolbar,.goods-actions,.goods-filters{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.goods-head{margin-bottom:18px}.goods-head h2{margin:0 0 5px;font-size:25px;font-weight:700}.goods-head p{margin:0;color:#748198}.goods-actions{justify-content:flex-end}.goods-add{display:inline-flex;align-items:center;gap:8px;padding:10px 15px;border-radius:9px;background:#198754;color:white;text-decoration:none;font-weight:650}.goods-add:hover{background:#157347;color:white}.goods-add.secondary{background:#fff;color:#198754;border:1px solid #198754}.goods-tools{padding:14px;margin-bottom:14px;border:1px solid #e2e8f0;border-radius:12px;background:#fff}.goods-toolbar{justify-content:flex-start}.goods-search{position:relative;min-width:260px;flex:1;max-width:520px}.goods-search i{position:absolute;top:12px;left:12px;color:#8290a5}.goods-search input{width:100%;height:42px;padding:8px 12px 8px 36px;border:1px solid #dce3ed;border-radius:9px;outline:0}.goods-filter{height:40px;min-width:150px;padding:0 11px;border:1px solid #dce3ed;border-radius:9px;background:#fff;color:#40516a}.goods-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:15px}.goods-summary-card{position:relative;padding:15px 17px;border:1px solid #e2e8f0;border-radius:11px;background:#fff}.goods-summary-card span{display:block;color:#718096;font-size:12px}.goods-summary-card strong{display:block;margin-top:5px;font-size:23px}.goods-summary-card i{position:absolute;top:15px;right:17px;color:#198754;font-size:20px}.goods-table-panel{overflow:hidden;border:1px solid #e2e8f0;border-radius:13px;background:#fff}.goods-table-wrap{overflow:auto}.goods-table{width:100%;min-width:1000px;border-collapse:collapse}.goods-table th{padding:13px 12px;background:#f5f8fb;color:#65748b;text-align:left;font-size:12px;white-space:nowrap}.goods-table td{padding:11px 12px;border-top:1px solid #edf0f5;vertical-align:middle;font-size:13px}.goods-table tr:hover td{background:#fafcff}.goods-image{width:44px;height:44px;object-fit:cover;border-radius:9px;border:1px solid #e5e9ef;background:#f5f7fa}.goods-image-empty{display:grid;place-items:center;color:#8b98a9;font-size:19px}.goods-code{font-weight:700;color:#198754}.goods-name{font-weight:650;color:#263449}.goods-muted{display:block;margin-top:3px;color:#8290a5;font-size:11px}.goods-badge{display:inline-block;padding:4px 8px;border:1px solid #d5dee8;border-radius:7px;color:#496176;font-size:11px;white-space:nowrap}.goods-badge.product{border-color:#8bd5a6;color:#198754;background:#f1fbf4}.goods-status{font-size:12px;white-space:nowrap}.goods-status.active{color:#18864d}.goods-status.inactive{color:#7b8798}.goods-stock-low{color:#c47608;font-weight:650}.goods-stock-out{color:#c03939;font-weight:650}.goods-row-actions{display:flex;justify-content:flex-end;align-items:center;gap:5px}.goods-icon-btn{display:inline-grid;place-items:center;width:32px;height:32px;border:1px solid #dce3ed;border-radius:7px;background:white;color:#56657a;text-decoration:none;cursor:pointer}.goods-icon-btn:hover{background:#f3f7fb;color:#198754}.goods-favorite{border:0;background:none;color:#9aa5b1;cursor:pointer;font-size:17px}.goods-favorite.on{color:#e5a300}.goods-empty{text-align:center;padding:45px 12px;color:#7b8798}.goods-footer{display:flex;justify-content:space-between;padding:11px 14px;color:#748198;font-size:12px;border-top:1px solid #edf0f5}.goods-alert{margin-bottom:12px}.goods-hidden{display:none!important}
+    @@media(max-width:800px){.goods-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.goods-head{align-items:flex-start}.goods-actions{width:100%;justify-content:flex-start}.goods-search{max-width:none}.goods-filter{flex:1}}
+</style>
 
-        <a asp-action="Create" class="btn btn-primary">
-            + Thêm dịch vụ
-        </a>
-    </div>
-
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div class="alert alert-success alert-dismissible fade show">
-            @TempData["SuccessMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
-
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div class="alert alert-danger alert-dismissible fade show">
-            @TempData["ErrorMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
-
-    <div class="card shadow-sm mb-4">
-        <div class="card-body">
-            <form asp-action="Index" method="get">
-                <div class="row g-2">
-                    <div class="col-md-9">
-                        <input type="text" name="keyword" value="@ViewBag.Keyword"
-                               class="form-control" placeholder="Nhập tên dịch vụ cần tìm..." />
-                    </div>
-
-                    <div class="col-md-3 d-flex gap-2">
-                        <button type="submit" class="btn btn-primary flex-fill">Tìm kiếm</button>
-                        <a asp-action="Index" class="btn btn-outline-secondary">Đặt lại</a>
-                    </div>
-                </div>
-            </form>
+<div class="goods-page">
+    <div class="goods-head">
+        <div><h2>Dịch vụ &amp; hàng hóa</h2><p>Quản lý dịch vụ, sản phẩm, giá bán và tồn kho</p></div>
+        <div class="goods-actions">
+            <a asp-action="Create" asp-route-loaiHang="DichVu" class="goods-add secondary"><i class="bi bi-plus-lg"></i> Thêm dịch vụ</a>
+            <a asp-action="Create" asp-route-loaiHang="SanPham" class="goods-add"><i class="bi bi-plus-lg"></i> Thêm hàng hóa</a>
         </div>
     </div>
 
-    <div class="card shadow-sm">
-        <div class="card-header bg-white py-3">
-            <strong>Danh sách dịch vụ</strong>
+    @if (TempData["SuccessMessage"] is string success) { <div class="alert alert-success goods-alert">@success</div> }
+    @if (TempData["ErrorMessage"] is string error) { <div class="alert alert-warning goods-alert">@error</div> }
+
+    <div class="goods-summary">
+        <div class="goods-summary-card"><span>Mặt hàng đang xem</span><strong>@items.Count</strong><i class="bi bi-box-seam"></i></div>
+        <div class="goods-summary-card"><span>Dịch vụ</span><strong>@items.Count(x => x.LoaiHang != "SanPham")</strong><i class="bi bi-stars"></i></div>
+        <div class="goods-summary-card"><span>Sản phẩm</span><strong>@items.Count(x => x.LoaiHang == "SanPham")</strong><i class="bi bi-basket"></i></div>
+        <div class="goods-summary-card"><span>Ngừng kinh doanh</span><strong>@items.Count(x => !x.TrangThai)</strong><i class="bi bi-pause-circle"></i></div>
+    </div>
+
+    <div class="goods-tools">
+        <form asp-action="Index" method="get" class="goods-toolbar">
+            <label class="goods-search"><i class="bi bi-search"></i><input name="keyword" value="@ViewBag.Keyword" placeholder="Tìm theo mã, tên hàng" /></label>
+            <select name="loaiHang" class="goods-filter"><option value="">Tất cả loại hàng</option><option value="DichVu" selected="@(ViewBag.LoaiHang == "DichVu")">Dịch vụ</option><option value="SanPham" selected="@(ViewBag.LoaiHang == "SanPham")">Sản phẩm</option></select>
+            <select name="nhomHang" class="goods-filter"><option value="">Tất cả nhóm hàng</option>@foreach(var group in groups){<option value="@group" selected="@(ViewBag.NhomHang == group)">@group</option>}</select>
+            <select name="tonKho" class="goods-filter"><option value="">Mọi tồn kho</option><option value="low" selected="@(ViewBag.TonKho == "low")">Sắp hết (≤10)</option><option value="out" selected="@(ViewBag.TonKho == "out")">Hết hàng</option></select>
+            <select name="trangThai" class="goods-filter"><option value="">Mọi trạng thái</option><option value="active" selected="@(ViewBag.TrangThai == "active")">Đang kinh doanh</option><option value="inactive" selected="@(ViewBag.TrangThai == "inactive")">Ngừng kinh doanh</option></select>
+            <button class="btn btn-success" type="submit"><i class="bi bi-funnel me-1"></i>Lọc</button>
+            <a asp-action="Index" class="btn btn-light border">Đặt lại</a>
+        </form>
+    </div>
+
+    <div class="goods-table-panel">
+        <div class="goods-table-wrap">
+            <table class="goods-table">
+                <thead><tr><th>Ảnh</th><th>Mã hàng hóa</th><th>Tên hàng</th><th>Nhóm hàng</th><th>Loại hàng</th><th>Giá bán</th><th>Tồn kho</th><th>Trạng thái</th><th></th></tr></thead>
+                <tbody>
+                @foreach (var item in items)
+                {
+                    <tr>
+                        <td>@if (!string.IsNullOrWhiteSpace(item.AnhUrl)) { <img class="goods-image" src="@item.AnhUrl" alt="Ảnh @item.TenDichVu" /> } else { <span class="goods-image goods-image-empty"><i class="bi bi-image"></i></span> }</td>
+                        <td><span class="goods-code">@(string.IsNullOrWhiteSpace(item.MaHang) ? $"DV{item.Id:D6}" : item.MaHang)</span></td>
+                        <td><span class="goods-name">@item.TenDichVu</span><span class="goods-muted">@item.DonViTinh @if (item.LoaiHang == "DichVu" && item.GiaVon > 0) { <span> · Giá vốn @item.GiaVon.ToString("N0") đ</span> }</span></td>
+                        <td>@item.NhomHang</td>
+                        <td><span class="goods-badge @(item.LoaiHang == "SanPham" ? "product" : "")">@(item.LoaiHang == "SanPham" ? "Sản phẩm" : "Dịch vụ")</span></td>
+                        <td class="text-nowrap">@item.Gia.ToString("N0") đ</td>
+                        <td>@if (item.LoaiHang == "SanPham") { <span class="@(item.TonKho == 0 ? "goods-stock-out" : item.TonKho <= 10 ? "goods-stock-low" : "")">@item.TonKho</span> } else { <span class="text-muted">—</span> }</td>
+                        <td><span class="goods-status @(item.TrangThai ? "active" : "inactive")"><i class="bi @(item.TrangThai ? "bi-check-circle-fill" : "bi-pause-circle-fill") me-1"></i>@(item.TrangThai ? "Đang kinh doanh" : "Ngừng kinh doanh")</span></td>
+                        <td><div class="goods-row-actions">
+                            <form asp-action="ToggleFavorite" method="post"><input type="hidden" name="id" value="@item.Id" /><button class="goods-favorite @(item.YeuThich ? "on" : "")" title="@(item.YeuThich ? "Bỏ yêu thích" : "Đánh dấu yêu thích")"><i class="bi @(item.YeuThich ? "bi-star-fill" : "bi-star")"></i></button></form>
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="goods-icon-btn" title="Sửa"><i class="bi bi-pencil"></i></a>
+                            <form asp-action="ToggleStatus" method="post"><input type="hidden" name="id" value="@item.Id" /><button class="goods-icon-btn" title="@(item.TrangThai ? "Ngừng kinh doanh" : "Mở kinh doanh")"><i class="bi @(item.TrangThai ? "bi-pause" : "bi-play")"></i></button></form>
+                        </div></td>
+                    </tr>
+                }
+                @if (items.Count == 0) { <tr><td colspan="9" class="goods-empty"><i class="bi bi-search fs-3 d-block mb-2"></i>Không tìm thấy mặt hàng phù hợp.</td></tr> }
+                </tbody>
+            </table>
         </div>
-
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover table-striped mb-0 align-middle">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>Mã DV</th>
-                            <th>Tên dịch vụ</th>
-                            <th>Giá dịch vụ</th>
-                            <th>Mô tả</th>
-                            <th>Trạng thái</th>
-                            <th class="text-center" style="min-width: 190px;">Thao tác</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        @if (Model != null && Model.Any())
-                        {
-                            @foreach (var item in Model)
-                            {
-                                <tr>
-                                    <td>@item.Id</td>
-                                    <td class="fw-semibold">@item.TenDichVu</td>
-                                    <td class="text-nowrap">@item.Gia.ToString("N0") đ</td>
-                                    <td>
-                                        @(string.IsNullOrWhiteSpace(item.MoTa) ? "Chưa có mô tả" : item.MoTa)
-                                    </td>
-                                    <td>
-                                        @if (item.TrangThai)
-                                        {
-                                            <span class="badge bg-success">Hoạt động</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="badge bg-secondary">Ngừng KD</span>
-                                        }
-                                    </td>
-                                    <td class="text-center text-nowrap">
-                                        <a asp-action="Details" asp-route-id="@item.Id"
-                                           class="btn btn-sm btn-outline-info">Chi tiết</a>
-
-                                        <a asp-action="Edit" asp-route-id="@item.Id"
-                                           class="btn btn-sm btn-outline-warning">Sửa</a>
-
-                                        <a asp-action="Delete" asp-route-id="@item.Id"
-                                           class="btn btn-sm btn-outline-danger">Xóa</a>
-                                    </td>
-                                </tr>
-                            }
-                        }
-                        else
-                        {
-                            <tr>
-                                <td colspan="6" class="text-center py-5">
-                                    <p class="text-muted mb-1">Không tìm thấy dịch vụ nào.</p>
-                                    <a asp-action="Create">Thêm dịch vụ đầu tiên</a>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="card-footer bg-white text-muted">
-            Tổng số dịch vụ: <strong>@(Model?.Count() ?? 0)</strong>
-        </div>
+        <div class="goods-footer"><span>Hiển thị <strong>@items.Count</strong> mặt hàng</span><span>Hàng hóa đã sử dụng được lưu lịch sử; hãy ngừng kinh doanh thay vì xóa.</span></div>
     </div>
 </div>
-<style>
-   
-    h2 {
-        font-family: inherit !important;
-    }
-</style>

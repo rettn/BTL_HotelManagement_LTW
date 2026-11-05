@@ -22,6 +22,8 @@ namespace HotelManagement.Data
         public DbSet<ChiTietDatPhong> ChiTietDatPhongs { get; set; }
         public DbSet<LuuTru> LuuTrus { get; set; }
         public DbSet<DichVu> DichVus { get; set; }
+        public DbSet<PhieuNhapKho> PhieuNhapKhos { get; set; }
+        public DbSet<ChiTietNhapKho> ChiTietNhapKhos { get; set; }
         public DbSet<ChiTietDichVu> ChiTietDichVus { get; set; }
         public DbSet<HoaDon> HoaDons { get; set; }
         public DbSet<ChiTietHoaDon> ChiTietHoaDons { get; set; }

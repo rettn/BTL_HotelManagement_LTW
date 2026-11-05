@@ -1,137 +1,260 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using HotelManagement.Data;
 using HotelManagement.Models;
+using HotelManagement.ViewModels;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
-namespace HotelManagement.Controllers
+namespace HotelManagement.Controllers;
+
+[Authorize(Roles = "Admin")]
+public class DichVuController : Controller
 {
-    [Authorize(Roles = "Admin")]
-    public class DichVuController : Controller
+    private const long MaxImageBytes = 5 * 1024 * 1024;
+    private static readonly HashSet<string> ImageExtensions = new(StringComparer.OrdinalIgnoreCase)
+        { ".jpg", ".jpeg", ".png", ".webp" };
+
+    private readonly ApplicationDbContext _context;
+    private readonly IWebHostEnvironment _environment;
+
+    public DichVuController(ApplicationDbContext context, IWebHostEnvironment environment)
     {
-        private readonly ApplicationDbContext _context;
+        _context = context;
+        _environment = environment;
+    }
 
-        public DichVuController(ApplicationDbContext context)
+    public async Task<IActionResult> Index(string? keyword, string? loaiHang, string? nhomHang, string? tonKho, string? trangThai)
+    {
+        var query = _context.DichVus.AsNoTracking().AsQueryable();
+        if (!string.IsNullOrWhiteSpace(keyword))
+            query = query.Where(d => d.TenDichVu.Contains(keyword) || d.MaHang.Contains(keyword));
+        if (!string.IsNullOrWhiteSpace(loaiHang))
+            query = query.Where(d => d.LoaiHang == loaiHang);
+        if (!string.IsNullOrWhiteSpace(nhomHang))
+            query = query.Where(d => d.NhomHang == nhomHang);
+        if (trangThai == "active") query = query.Where(d => d.TrangThai);
+        if (trangThai == "inactive") query = query.Where(d => !d.TrangThai);
+        if (tonKho == "out") query = query.Where(d => d.LoaiHang == "SanPham" && d.TonKho == 0);
+        if (tonKho == "low") query = query.Where(d => d.LoaiHang == "SanPham" && d.TonKho > 0 && d.TonKho <= 10);
+
+        ViewBag.Keyword = keyword;
+        ViewBag.LoaiHang = loaiHang;
+        ViewBag.NhomHang = nhomHang;
+        ViewBag.TonKho = tonKho;
+        ViewBag.TrangThai = trangThai;
+        ViewBag.NhomHangs = await _context.DichVus.AsNoTracking()
+            .Where(d => d.NhomHang != null && d.NhomHang != "")
+            .Select(d => d.NhomHang).Distinct().OrderBy(x => x).ToListAsync();
+        return View(await query.OrderBy(d => d.LoaiHang).ThenBy(d => d.TenDichVu).ToListAsync());
+    }
+
+    public async Task<IActionResult> Details(int? id)
+    {
+        if (id == null) return NotFound();
+        var item = await _context.DichVus.FindAsync(id);
+        return item == null ? NotFound() : View(item);
+    }
+
+    public async Task<IActionResult> Create(string? loaiHang = null)
+    {
+        ViewBag.NhomHangs = await GetGroups();
+        return View(new DichVuFormViewModel
         {
-            _context = context;
+            LoaiHang = loaiHang == "SanPham" ? "SanPham" : "DichVu",
+            NhomHang = loaiHang == "SanPham" ? "Đồ ăn" : "Dịch vụ",
+            DonViTinh = loaiHang == "SanPham" ? "Gói" : "Lần"
+        });
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create(DichVuFormViewModel model)
+    {
+        Normalize(model);
+        string? uploadedImage = null;
+        if (ModelState.IsValid && model.Anh is not null)
+        {
+            var result = await SaveImageAsync(model.Anh);
+            if (result.Error is not null) ModelState.AddModelError(nameof(model.Anh), result.Error);
+            else uploadedImage = result.Url;
         }
 
-        // GET: DichVu
-        public async Task<IActionResult> Index(string keyword)
+        if (!ModelState.IsValid)
         {
-            ViewBag.Keyword = keyword;
-            var query = _context.DichVus.AsQueryable();
+            model.AnhUrl = null;
+            ViewBag.NhomHangs = await GetGroups();
+            return View(model);
+        }
 
-            if (!string.IsNullOrWhiteSpace(keyword))
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            var item = new DichVu
             {
-                query = query.Where(d => d.TenDichVu.Contains(keyword));
-            }
-
-            return View(await query.ToListAsync());
-        }
-
-        // GET: DichVu/Details/5
-        public async Task<IActionResult> Details(int? id)
-        {
-            if (id == null) return NotFound();
-
-            var dichVu = await _context.DichVus.FirstOrDefaultAsync(m => m.Id == id);
-            if (dichVu == null) return NotFound();
-
-            return View(dichVu);
-        }
-
-        // GET: DichVu/Create
-        public IActionResult Create()
-        {
-            return View();
-        }
-
-        // POST: DichVu/Create
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,TenDichVu,MoTa,Gia,TrangThai")] DichVu dichVu)
-        {
-            if (ModelState.IsValid)
-            {
-                _context.Add(dichVu);
-                await _context.SaveChangesAsync();
-                TempData["SuccessMessage"] = "Thêm dịch vụ thành công!";
-                return RedirectToAction(nameof(Index));
-            }
-            TempData["ErrorMessage"] = "Có lỗi xảy ra, vui lòng kiểm tra lại dữ liệu.";
-            return View(dichVu);
-        }
-
-        // GET: DichVu/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null) return NotFound();
-
-            var dichVu = await _context.DichVus.FindAsync(id);
-            if (dichVu == null) return NotFound();
-            return View(dichVu);
-        }
-
-        // POST: DichVu/Edit/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,TenDichVu,MoTa,Gia,TrangThai")] DichVu dichVu)
-        {
-            if (id != dichVu.Id) return NotFound();
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(dichVu);
-                    await _context.SaveChangesAsync();
-                    TempData["SuccessMessage"] = "Cập nhật dịch vụ thành công!";
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!DichVuExists(dichVu.Id)) return NotFound();
-                    else throw;
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            TempData["ErrorMessage"] = "Cập nhật thất bại, vui lòng kiểm tra lại.";
-            return View(dichVu);
-        }
-
-        // GET: DichVu/Delete/5
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null) return NotFound();
-
-            var dichVu = await _context.DichVus.FirstOrDefaultAsync(m => m.Id == id);
-            if (dichVu == null) return NotFound();
-
-            return View(dichVu);
-        }
-
-        // POST: DichVu/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var dichVu = await _context.DichVus.FindAsync(id);
-            if (dichVu != null)
-            {
-                _context.DichVus.Remove(dichVu);
-                await _context.SaveChangesAsync();
-                TempData["SuccessMessage"] = "Xóa dịch vụ thành công!";
-            }
-            else
-            {
-                TempData["ErrorMessage"] = "Không tìm thấy dịch vụ để xóa.";
-            }
+                TenDichVu = model.TenDichVu.Trim(),
+                MoTa = model.MoTa?.Trim() ?? string.Empty,
+                Gia = model.Gia,
+                GiaVon = model.GiaVon,
+                LoaiHang = model.LoaiHang,
+                NhomHang = model.NhomHang,
+                DonViTinh = model.DonViTinh,
+                TonKho = model.LoaiHang == "SanPham" ? model.TonKho : 0,
+                TrangThai = model.TrangThai,
+                YeuThich = model.YeuThich,
+                AnhUrl = uploadedImage
+            };
+            _context.DichVus.Add(item);
+            await _context.SaveChangesAsync();
+            item.MaHang = $"{(item.LoaiHang == "SanPham" ? "SP" : "DV")}{item.Id:D6}";
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+            TempData["SuccessMessage"] = "Đã thêm hàng hóa.";
             return RedirectToAction(nameof(Index));
         }
-
-        private bool DichVuExists(int id)
+        catch
         {
-            return _context.DichVus.Any(e => e.Id == id);
+            await transaction.RollbackAsync();
+            if (uploadedImage is not null) DeleteImage(uploadedImage);
+            ModelState.AddModelError(string.Empty, "Không thể lưu hàng hóa. Vui lòng thử lại.");
+            return View(model);
         }
+    }
+
+    public async Task<IActionResult> Edit(int? id)
+    {
+        if (id == null) return NotFound();
+        var item = await _context.DichVus.FindAsync(id);
+        ViewBag.NhomHangs = await GetGroups();
+        return item == null ? NotFound() : View(DichVuFormViewModel.From(item));
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(int id, DichVuFormViewModel model)
+    {
+        if (id != model.Id) return NotFound();
+        Normalize(model);
+        var item = await _context.DichVus.FirstOrDefaultAsync(d => d.Id == id);
+        if (item == null) return NotFound();
+        model.AnhUrl = item.AnhUrl;
+
+        string? uploadedImage = null;
+        if (ModelState.IsValid && model.Anh is not null)
+        {
+            var result = await SaveImageAsync(model.Anh);
+            if (result.Error is not null) ModelState.AddModelError(nameof(model.Anh), result.Error);
+            else uploadedImage = result.Url;
+        }
+        if (!ModelState.IsValid) { ViewBag.NhomHangs = await GetGroups(); return View(model); }
+
+        var oldImage = item.AnhUrl;
+        item.TenDichVu = model.TenDichVu.Trim();
+        item.MoTa = model.MoTa?.Trim() ?? string.Empty;
+        item.Gia = model.Gia;
+        item.GiaVon = model.GiaVon;
+        item.LoaiHang = model.LoaiHang;
+        item.NhomHang = model.NhomHang;
+        item.DonViTinh = model.DonViTinh;
+        if (item.LoaiHang == "SanPham") item.TonKho = model.TonKho;
+        item.TrangThai = model.TrangThai;
+        item.YeuThich = model.YeuThich;
+        if (uploadedImage is not null) item.AnhUrl = uploadedImage;
+
+        try
+        {
+            await _context.SaveChangesAsync();
+            if (uploadedImage is not null && oldImage is not null) DeleteImage(oldImage);
+            TempData["SuccessMessage"] = "Đã cập nhật hàng hóa.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (uploadedImage is not null) DeleteImage(uploadedImage);
+            if (!await _context.DichVus.AnyAsync(d => d.Id == id)) return NotFound();
+            throw;
+        }
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> ToggleStatus(int id)
+    {
+        var item = await _context.DichVus.FindAsync(id);
+        if (item == null) return NotFound();
+        item.TrangThai = !item.TrangThai;
+        await _context.SaveChangesAsync();
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> ToggleFavorite(int id)
+    {
+        var item = await _context.DichVus.FindAsync(id);
+        if (item == null) return NotFound();
+        item.YeuThich = !item.YeuThich;
+        await _context.SaveChangesAsync();
+        return RedirectToAction(nameof(Index));
+    }
+
+    public async Task<IActionResult> Delete(int? id)
+    {
+        if (id == null) return NotFound();
+        var item = await _context.DichVus.FindAsync(id);
+        return item == null ? NotFound() : View(item);
+    }
+
+    [HttpPost, ActionName("Delete"), ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteConfirmed(int id)
+    {
+        var item = await _context.DichVus.FindAsync(id);
+        if (item == null) return RedirectToAction(nameof(Index));
+        if (await _context.ChiTietDichVus.AnyAsync(x => x.MaDichVu == id)
+            || await _context.ChiTietNhapKhos.AnyAsync(x => x.DichVuId == id))
+        {
+            item.TrangThai = false;
+            TempData["ErrorMessage"] = "Hàng hóa đã phát sinh sử dụng nên được chuyển sang ngừng kinh doanh thay vì xóa.";
+        }
+        else
+        {
+            _context.DichVus.Remove(item);
+            if (item.AnhUrl is not null) DeleteImage(item.AnhUrl);
+            TempData["SuccessMessage"] = "Đã xóa hàng hóa.";
+        }
+        await _context.SaveChangesAsync();
+        return RedirectToAction(nameof(Index));
+    }
+
+    private static void Normalize(DichVuFormViewModel model)
+    {
+        model.LoaiHang = model.LoaiHang == "SanPham" ? "SanPham" : "DichVu";
+        model.NhomHang = string.IsNullOrWhiteSpace(model.NhomHang)
+            ? (model.LoaiHang == "SanPham" ? "Hàng hóa" : "Dịch vụ")
+            : model.NhomHang.Trim();
+        model.DonViTinh = string.IsNullOrWhiteSpace(model.DonViTinh)
+            ? (model.LoaiHang == "SanPham" ? "Cái" : "Lần")
+            : model.DonViTinh.Trim();
+    }
+
+    private Task<List<string>> GetGroups() => _context.DichVus.AsNoTracking().Where(d => d.NhomHang != null && d.NhomHang != "").Select(d => d.NhomHang).Distinct().OrderBy(x => x).ToListAsync();
+
+    private async Task<(string? Url, string? Error)> SaveImageAsync(IFormFile image)
+    {
+        var extension = Path.GetExtension(image.FileName);
+        if (!ImageExtensions.Contains(extension)) return (null, "Chỉ nhận ảnh JPG, PNG hoặc WEBP.");
+        if (image.Length == 0 || image.Length > MaxImageBytes) return (null, "Ảnh phải có dung lượng nhỏ hơn 5 MB.");
+
+        var folder = Path.Combine(_environment.WebRootPath, "uploads", "hang-hoa");
+        Directory.CreateDirectory(folder);
+        var fileName = $"{Guid.NewGuid():N}{extension.ToLowerInvariant()}";
+        var filePath = Path.Combine(folder, fileName);
+        await using (var stream = System.IO.File.Create(filePath))
+            await image.CopyToAsync(stream);
+        return ($"/uploads/hang-hoa/{fileName}", null);
+    }
+
+    private void DeleteImage(string url)
+    {
+        const string prefix = "/uploads/hang-hoa/";
+        if (!url.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) return;
+        var fileName = Path.GetFileName(url[prefix.Length..]);
+        var path = Path.Combine(_environment.WebRootPath, "uploads", "hang-hoa", fileName);
+        if (System.IO.File.Exists(path)) System.IO.File.Delete(path);
     }
 }

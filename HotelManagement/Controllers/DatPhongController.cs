@@ -514,6 +514,9 @@ namespace HotelManagement.Controllers
                 .AsNoTracking()
                 .Include(l => l.ChiTietDatPhong)
                     .ThenInclude(c => c!.Phong)
+                .Include(l => l.ChiTietDatPhong)
+                    .ThenInclude(c => c!.DatPhong)
+                        .ThenInclude(d => d!.KhachHang)
                 .Include(l => l.ChiTietDichVus)
                     .ThenInclude(d => d.DichVu)
                 .Where(l =>
@@ -531,9 +534,10 @@ namespace HotelManagement.Controllers
                     "text/html");
             }
 
+            var usedItemIds = luuTru.ChiTietDichVus.Select(x => x.MaDichVu).Distinct().ToList();
             ViewBag.DanhSachDichVu = await _context.DichVus
                 .AsNoTracking()
-                .Where(d => d.TrangThai)
+                .Where(d => (d.TrangThai && (d.LoaiHang != "SanPham" || d.TonKho > 0)) || usedItemIds.Contains(d.Id))
                 .OrderBy(d => d.TenDichVu)
                 .ToListAsync();
 
@@ -560,6 +564,14 @@ namespace HotelManagement.Controllers
             if (dichVu == null)
                 return BadRequest(new { success = false, message = "Dịch vụ không tồn tại hoặc đã ngừng cung cấp." });
 
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            if (dichVu.LoaiHang == "SanPham")
+            {
+                if (dichVu.TonKho < soLuong)
+                    return BadRequest(new { success = false, message = $"Tồn kho {dichVu.TonKho} {dichVu.DonViTinh} không đủ." });
+                dichVu.TonKho -= soLuong;
+            }
+
             _context.ChiTietDichVus.Add(new ChiTietDichVu
             {
                 MaLuuTru = luuTru.MaLuuTru,
@@ -570,6 +582,7 @@ namespace HotelManagement.Controllers
             });
 
             await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
             return Json(new { success = true, message = "Đã thêm dịch vụ." });
         }
         // POST: /DatPhong/SuaDichVu
@@ -582,6 +595,8 @@ namespace HotelManagement.Controllers
 
             var chiTiet = await _context.ChiTietDichVus
                 .FirstOrDefaultAsync(c => c.MaChiTietDichVu == maChiTietDichVu);
+            var oldDichVuId = chiTiet?.MaDichVu;
+            var oldSoLuong = chiTiet?.SoLuong ?? 0;
 
             if (chiTiet == null)
                 return NotFound(new { success = false, message = "Không tìm thấy dịch vụ cần sửa." });
@@ -605,8 +620,36 @@ namespace HotelManagement.Controllers
                 chiTiet.DonGia = dichVu.Gia;
             }
 
+            var oldItem = await _context.DichVus.FirstOrDefaultAsync(d => d.Id == oldDichVuId);
+            var newItem = await _context.DichVus.FirstOrDefaultAsync(d => d.Id == chiTiet.MaDichVu);
+            if (newItem == null)
+                return BadRequest(new { success = false, message = "Hàng hóa không tồn tại." });
+
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            if (oldDichVuId == chiTiet.MaDichVu)
+            {
+                if (newItem.LoaiHang == "SanPham")
+                {
+                    var thayDoi = soLuong - oldSoLuong;
+                    if (thayDoi > newItem.TonKho)
+                        return BadRequest(new { success = false, message = $"Tồn kho {newItem.TonKho} {newItem.DonViTinh} không đủ." });
+                    newItem.TonKho -= thayDoi;
+                }
+            }
+            else
+            {
+                if (oldItem?.LoaiHang == "SanPham") oldItem.TonKho += oldSoLuong;
+                if (newItem.LoaiHang == "SanPham")
+                {
+                    if (newItem.TonKho < soLuong)
+                        return BadRequest(new { success = false, message = $"Tồn kho {newItem.TonKho} {newItem.DonViTinh} không đủ." });
+                    newItem.TonKho -= soLuong;
+                }
+            }
+
             chiTiet.SoLuong = soLuong;
             await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
 
             return Json(new { success = true, message = "Đã cập nhật dịch vụ." });
         }
@@ -628,6 +671,8 @@ namespace HotelManagement.Controllers
             if (luuTru == null || luuTru.ThoiGianTraPhong != null)
                 return BadRequest(new { success = false, message = "Khách đã trả phòng, không thể xóa dịch vụ." });
 
+            var item = await _context.DichVus.FirstOrDefaultAsync(d => d.Id == chiTiet.MaDichVu);
+            if (item?.LoaiHang == "SanPham") item.TonKho += chiTiet.SoLuong;
             _context.ChiTietDichVus.Remove(chiTiet);
             await _context.SaveChangesAsync();
 

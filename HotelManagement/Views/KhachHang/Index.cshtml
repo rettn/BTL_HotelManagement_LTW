@@ -1,183 +1,20 @@
-﻿
-@model IEnumerable<HotelManagement.Models.KhachHang>
-
+﻿@model IEnumerable<HotelManagement.Models.KhachHang>
 @{
     ViewData["Title"] = "Khách hàng";
+    var customers = Model.ToList();
+    var now = DateTime.Today;
 }
-
 <style>
-    .customer-page { color: #263449; }
-    .customer-heading {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 16px;
-        margin-bottom: 24px;
-    }
-    .customer-heading h2 { font-size: 26px; font-weight: 700; margin: 0 0 6px; }
-    .customer-heading p { color: #748198; margin: 0; }
-    .customer-panel {
-        background: white;
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 20px;
-    }
-    .customer-search {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-        margin-bottom: 20px;
-    }
-
-    .customer-search input {
-        flex: 1;
-        min-width: 220px;
-        padding: 11px 14px;
-        border: 1px solid #dce3ed;
-        border-radius: 8px;
-    }
-    .customer-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 7px;
-        padding: 10px 13px;
-        border: 1px solid #dce3ed;
-        border-radius: 7px;
-        background: white;
-        color: #41516a;
-        text-decoration: none;
-        cursor: pointer;
-        white-space: nowrap;
-    }
-    .customer-btn:hover { background: #f1f6fc; }
-    .customer-btn-primary {
-        background: #209c60;
-        color: white;
-        border-color: #209c60;
-    }
-
-    .customer-btn-primary:hover { background: #16834f; color: white; }
-    .customer-table-wrap { overflow-x: auto; }
-    .customer-table { width: 100%; border-collapse: collapse; min-width: 900px; }
-    .customer-table th {
-        background: #f7f9fc;
-        color: #65748b;
-        text-align: left;
-        padding: 14px 12px;
-        font-size: 13px;
-        white-space: nowrap;
-    }
-    .customer-table td {
-        padding: 14px 12px;
-        border-bottom: 1px solid #edf0f5;
-        vertical-align: middle;
-    }
-    .customer-table tbody tr:hover { background: #fafcff; }
-    .customer-code { font-weight: 700; color: #287fd1; }
-    .customer-name { font-weight: 600; }
-    .customer-muted { color: #77849a; font-size: 13px; }
-    .customer-actions { display: flex; gap: 6px; }
-    .customer-alert { padding: 12px 15px; border-radius: 8px; margin-bottom: 16px; }
-    .customer-success { background: #e4f8ed; color: #16804a; }
-    .customer-error { background: #ffe8e8; color: #b83232; }
-    .customer-empty { padding: 42px 15px; text-align: center; color: #77849a; }
-    .customer-empty i { font-size: 36px; display: block; margin-bottom: 10px; }
+.customer-page{color:#263449}.customer-head,.customer-actions,.customer-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.customer-head{margin-bottom:17px}.customer-head h2{font-size:24px;font-weight:700;margin:0 0 4px}.customer-head p{margin:0;color:#748198}.customer-actions{justify-content:flex-end}.customer-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:9px 13px;border:1px solid #dce3ed;border-radius:8px;background:#fff;color:#41516a;text-decoration:none;cursor:pointer;white-space:nowrap}.customer-btn:hover{background:#f4f8fb;color:#198754}.customer-btn-primary{background:#198754;color:#fff;border-color:#198754}.customer-btn-primary:hover{background:#157347;color:#fff}.customer-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}.customer-stat{position:relative;padding:15px 17px;border:1px solid #e2e8f0;border-radius:11px;background:#fff}.customer-stat span{display:block;color:#718096;font-size:12px}.customer-stat strong{display:block;margin-top:5px;font-size:22px}.customer-stat i{position:absolute;top:14px;right:17px;color:#198754;font-size:20px}.customer-tools{padding:13px;margin-bottom:14px;border:1px solid #e2e8f0;border-radius:12px;background:#fff}.customer-toolbar{justify-content:flex-start}.customer-search{position:relative;min-width:260px;flex:1;max-width:600px}.customer-search i{position:absolute;top:12px;left:12px;color:#8290a5}.customer-search input{width:100%;height:42px;padding:8px 12px 8px 36px;border:1px solid #dce3ed;border-radius:9px;outline:0}.customer-search input:focus{border-color:#66b48a;box-shadow:0 0 0 3px #19875418}.customer-panel{overflow:hidden;border:1px solid #e2e8f0;border-radius:13px;background:#fff}.customer-table-wrap{overflow:auto}.customer-table{width:100%;min-width:940px;border-collapse:collapse}.customer-table th{padding:13px 12px;background:#e9f5ee;color:#41516a;text-align:left;font-size:12px;white-space:nowrap}.customer-table td{padding:12px;border-top:1px solid #edf0f5;vertical-align:middle;font-size:13px}.customer-table tbody tr:hover td{background:#f8fbf9}.customer-person{display:flex;align-items:center;gap:10px}.customer-avatar{width:38px;height:38px;flex:none;display:grid;place-items:center;border-radius:50%;background:#e3f3e9;color:#198754;font-size:13px;font-weight:700}.customer-code{color:#198754;font-weight:700}.customer-name{font-weight:650}.customer-muted{display:block;color:#8290a5;font-size:11px;margin-top:3px}.customer-actions{gap:5px;flex-wrap:nowrap}.customer-icon{width:32px;height:32px;padding:0;border:1px solid #dce3ed;border-radius:7px;background:#fff;color:#526174}.customer-icon:hover{background:#eef8f1;color:#198754}.customer-empty{padding:45px 12px;text-align:center;color:#8290a5}.customer-empty i{display:block;font-size:34px;margin-bottom:8px}.customer-footer{display:flex;justify-content:space-between;gap:10px;padding:11px 14px;border-top:1px solid #edf0f5;color:#748198;font-size:12px}@@media(max-width:800px){.customer-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.customer-head{align-items:flex-start}.customer-actions{width:100%;justify-content:flex-start}.customer-search{max-width:none}}
 </style>
-
 <div class="customer-page">
-    <div class="customer-heading">
-        <div>
-            <h2>Danh sách khách hàng</h2>
-            
-        </div>
-
-        <a asp-action="Create" class="customer-btn customer-btn-primary">
-            <i class="bi bi-person-plus"></i>
-            Thêm khách hàng
-        </a>
-    </div>
-
-    
-
-    <div class="customer-panel">
-        <form asp-action="Index" method="get" class="customer-search">
-            <input type="search"
-                   name="keyword"
-                   value="@ViewBag.Keyword"
-                   placeholder="Tìm mã, họ tên, số điện thoại, email, CCCD..." />
-
-            <button type="submit" class="customer-btn">
-                <i class="bi bi-search"></i> Tìm kiếm
-            </button>
-
-            <a asp-action="Index" class="customer-btn">
-                <i class="bi bi-arrow-counterclockwise"></i> Làm mới
-            </a>
-        </form>
-
-        <div class="customer-table-wrap">
-            <table class="customer-table">
-                <thead>
-                    <tr>
-                        <th>Mã KH</th>
-                        <th>Khách hàng</th>
-                        <th>Giới tính</th>
-                        <th>Ngày sinh</th>
-                        <th>Số điện thoại</th>
-                        <th>Email</th>
-                        <th>Ngày tạo</th>
-                        <th>Thao tác</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var kh in Model)
-                    {
-                        <tr>
-                            <td><span class="customer-code">@kh.MaKH.ToString("D4")</span></td>
-                            <td>
-                                <div class="customer-name">@kh.HoTen</div>
-                                <div class="customer-muted">CCCD: @(string.IsNullOrWhiteSpace(kh.CCCD) ? "Chưa cập nhật" : kh.CCCD)</div>
-                            </td>
-                            <td>@(string.IsNullOrWhiteSpace(kh.GioiTinh) ? "—" : kh.GioiTinh)</td>
-                            <td>@(kh.NgaySinh?.ToString("dd/MM/yyyy") ?? "—")</td>
-                            <td>@(string.IsNullOrWhiteSpace(kh.SoDienThoai) ? "—" : kh.SoDienThoai)</td>
-                            <td>@(string.IsNullOrWhiteSpace(kh.Email) ? "—" : kh.Email)</td>
-                            <td>@kh.NgayTao.ToString("dd/MM/yyyy")</td>
-                            <td>
-                                <div class="customer-actions">
-                                    <a asp-action="Details" asp-route-id="@kh.MaKH"
-                                       class="customer-btn" title="Chi tiết">
-                                        <i class="bi bi-eye"></i>
-                                    </a>
-                                    <a asp-action="Edit" asp-route-id="@kh.MaKH"
-                                       class="customer-btn" title="Chỉnh sửa">
-                                        <i class="bi bi-pencil"></i>
-                                    </a>
-                                    <a asp-action="Delete" asp-route-id="@kh.MaKH"
-                                       class="customer-btn" title="Xóa">
-                                        <i class="bi bi-trash"></i>
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-
-        @if (!Model.Any())
-        {
-            <div class="customer-empty">
-                <i class="bi bi-people"></i>
-                <h5>Không tìm thấy khách hàng</h5>
-                <p>Hãy thử từ khóa khác hoặc thêm khách hàng mới.</p>
-            </div>
-        }
-
-        <div class="customer-muted mt-3">
-            Tổng số kết quả: <strong>@Model.Count()</strong>
-        </div>
-    </div>
+    <div class="customer-head"><div><h2>Danh sách khách hàng</h2><p>Tra cứu hồ sơ và thông tin liên hệ của khách lưu trú</p></div><div class="customer-actions"><a asp-action="Create" class="customer-btn customer-btn-primary"><i class="bi bi-person-plus"></i>Thêm khách hàng</a></div></div>
+    @if (TempData["Success"] is string success) { <div class="alert alert-success">@success</div> }
+    @if (TempData["Error"] is string error) { <div class="alert alert-danger">@error</div> }
+    <div class="customer-summary"><div class="customer-stat"><span>Khách hàng hiển thị</span><strong>@customers.Count</strong><i class="bi bi-people"></i></div><div class="customer-stat"><span>Có số điện thoại</span><strong>@customers.Count(x=>!string.IsNullOrWhiteSpace(x.SoDienThoai))</strong><i class="bi bi-telephone"></i></div><div class="customer-stat"><span>Có email</span><strong>@customers.Count(x=>!string.IsNullOrWhiteSpace(x.Email))</strong><i class="bi bi-envelope"></i></div><div class="customer-stat"><span>Tạo trong tháng này</span><strong>@customers.Count(x=>x.NgayTao.Year==now.Year&&x.NgayTao.Month==now.Month)</strong><i class="bi bi-person-add"></i></div></div>
+    <div class="customer-tools"><form asp-action="Index" method="get" class="customer-toolbar"><label class="customer-search"><i class="bi bi-search"></i><input type="search" name="keyword" value="@ViewBag.Keyword" placeholder="Tìm mã, họ tên, số điện thoại, email, CCCD..." /></label><button type="submit" class="customer-btn customer-btn-primary"><i class="bi bi-funnel"></i>Tìm kiếm</button><a asp-action="Index" class="customer-btn"><i class="bi bi-arrow-counterclockwise"></i>Làm mới</a></form></div>
+    <section class="customer-panel"><div class="customer-table-wrap"><table class="customer-table"><thead><tr><th>STT</th><th>Khách hàng</th><th>Giới tính</th><th>Ngày sinh</th><th>Số điện thoại</th><th>Email</th><th>Ngày tạo</th><th>Thao tác</th></tr></thead><tbody>
+    @for(var i=0;i<customers.Count;i++){var kh=customers[i];<tr><td>@(i+1)</td><td><div class="customer-person"><span class="customer-avatar">@(string.IsNullOrWhiteSpace(kh.HoTen)?"?":kh.HoTen.Trim()[0].ToString().ToUpperInvariant())</span><div><span class="customer-name">@kh.HoTen</span><span class="customer-muted"><span class="customer-code">KH@(kh.MaKH.ToString("D4"))</span> · CCCD @(string.IsNullOrWhiteSpace(kh.CCCD)?"Chưa cập nhật":kh.CCCD)</span></div></div></td><td>@(string.IsNullOrWhiteSpace(kh.GioiTinh)?"—":kh.GioiTinh)</td><td>@(kh.NgaySinh?.ToString("dd/MM/yyyy")??"—")</td><td>@(string.IsNullOrWhiteSpace(kh.SoDienThoai)?"—":kh.SoDienThoai)</td><td>@(string.IsNullOrWhiteSpace(kh.Email)?"—":kh.Email)</td><td>@kh.NgayTao.ToString("dd/MM/yyyy")</td><td><div class="customer-actions"><a asp-action="Details" asp-route-id="@kh.MaKH" class="customer-icon" title="Chi tiết"><i class="bi bi-eye"></i></a><a asp-action="Edit" asp-route-id="@kh.MaKH" class="customer-icon" title="Chỉnh sửa"><i class="bi bi-pencil"></i></a><a asp-action="Delete" asp-route-id="@kh.MaKH" class="customer-icon" title="Xóa"><i class="bi bi-trash"></i></a></div></td></tr>}
+    @if(customers.Count==0){<tr><td colspan="8"><div class="customer-empty"><i class="bi bi-people"></i><strong>Không tìm thấy khách hàng</strong><span class="customer-muted">Hãy thử từ khóa khác hoặc thêm hồ sơ khách mới.</span></div></td></tr>}
+    </tbody></table></div><div class="customer-footer"><span>Hiển thị <strong>@customers.Count</strong> khách hàng</span><span>Thông tin được tìm theo tên, mã, liên hệ và giấy tờ.</span></div></section>
 </div>

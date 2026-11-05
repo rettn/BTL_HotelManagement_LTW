@@ -1095,3 +1095,230 @@ input[type="password"]::-ms-clear {
     padding-left: 0;
     padding-right: 0;
 }
+
+/* User-selected dark theme */
+html[data-theme="dark"] {
+    color-scheme: dark;
+    --admin-page-bg: #171c25;
+    --admin-border: #343d4c;
+    --admin-text: #e5eaf2;
+    --admin-muted: #a1adbf;
+    --cui-body-bg: #171c25;
+    --cui-body-color: #e5eaf2;
+    --cui-tertiary-bg: #232a36;
+    --cui-secondary-bg: #202733;
+    --cui-border-color: #343d4c;
+    --cui-card-bg: #202733;
+    --cui-card-cap-bg: #252d3a;
+    --cui-form-control-bg: #1b222d;
+    --cui-form-control-color: #e5eaf2;
+    --cui-form-control-border-color: #414b5c;
+    --cui-table-color: #e5eaf2;
+    --cui-table-bg: transparent;
+    --cui-table-border-color: #343d4c;
+    --cui-table-striped-bg: #252d3a;
+    --cui-table-hover-bg: #293342;
+}
+
+html[data-theme="dark"] body,
+html[data-theme="dark"] .admin-main,
+html[data-theme="dark"] .admin-content {
+    background: var(--admin-page-bg);
+    color: var(--admin-text);
+}
+
+html[data-theme="dark"] .admin-topbar,
+html[data-theme="dark"] .admin-footer,
+html[data-theme="dark"] .content-heading,
+html[data-theme="dark"] .content-date,
+html[data-theme="dark"] .card,
+html[data-theme="dark"] .card-header,
+html[data-theme="dark"] .card-body,
+html[data-theme="dark"] .modal-content,
+html[data-theme="dark"] .dropdown-menu {
+    background-color: #202733;
+    color: var(--admin-text);
+    border-color: var(--admin-border);
+}
+
+html[data-theme="dark"] .topbar-icon,
+html[data-theme="dark"] .topbar-search,
+html[data-theme="dark"] .profile-chip,
+html[data-theme="dark"] .profile-popover {
+    background-color: #202733;
+    color: var(--admin-text);
+    border-color: var(--admin-border);
+}
+
+html[data-theme="dark"] .topbar-search input,
+html[data-theme="dark"] .form-control,
+html[data-theme="dark"] .form-select,
+html[data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]),
+html[data-theme="dark"] textarea,
+html[data-theme="dark"] select {
+    background-color: #1b222d;
+    color: var(--admin-text);
+    border-color: #414b5c;
+}
+
+html[data-theme="dark"] .form-control::placeholder,
+html[data-theme="dark"] input::placeholder,
+html[data-theme="dark"] textarea::placeholder,
+html[data-theme="dark"] .text-muted,
+html[data-theme="dark"] .customer-muted,
+html[data-theme="dark"] .payroll-muted,
+html[data-theme="dark"] .warehouse-muted,
+html[data-theme="dark"] .content-heading .breadcrumb-line {
+    color: #a1adbf !important;
+}
+
+html[data-theme="dark"] .table,
+html[data-theme="dark"] .customer-table,
+html[data-theme="dark"] .payroll-table,
+html[data-theme="dark"] .warehouse-table,
+html[data-theme="dark"] .goods-table,
+html[data-theme="dark"] .dv-table {
+    color: var(--admin-text);
+    --cui-table-color: var(--admin-text);
+    --cui-table-bg: transparent;
+    --cui-table-border-color: #343d4c;
+}
+
+html[data-theme="dark"] .table-light th,
+html[data-theme="dark"] .customer-table th,
+html[data-theme="dark"] .payroll-table th,
+html[data-theme="dark"] .warehouse-table th,
+html[data-theme="dark"] .goods-table th,
+html[data-theme="dark"] .dv-table th {
+    background: #293342;
+    color: #dce5f1;
+}
+
+html[data-theme="dark"] .customer-stat,
+html[data-theme="dark"] .customer-tools,
+html[data-theme="dark"] .customer-panel,
+html[data-theme="dark"] .payroll-stat,
+html[data-theme="dark"] .payroll-tools,
+html[data-theme="dark"] .payroll-panel,
+html[data-theme="dark"] .warehouse-card,
+html[data-theme="dark"] .warehouse-tools,
+html[data-theme="dark"] .warehouse-panel,
+html[data-theme="dark"] .goods-summary-card,
+html[data-theme="dark"] .goods-tools,
+html[data-theme="dark"] .goods-table-panel,
+html[data-theme="dark"] .goods-form-card,
+html[data-theme="dark"] .receive-card,
+html[data-theme="dark"] .dv-picker,
+html[data-theme="dark"] .dv-catalog,
+html[data-theme="dark"] .dv-cart {
+    background: #202733;
+    color: var(--admin-text);
+    border-color: var(--admin-border);
+}
+
+html[data-theme="dark"] .customer-table td,
+html[data-theme="dark"] .payroll-table td,
+html[data-theme="dark"] .warehouse-table td,
+html[data-theme="dark"] .goods-table td,
+html[data-theme="dark"] .dv-table td,
+html[data-theme="dark"] .warehouse-receipt,
+html[data-theme="dark"] .customer-footer,
+html[data-theme="dark"] .payroll-footer,
+html[data-theme="dark"] .warehouse-footer,
+html[data-theme="dark"] .goods-form-section,
+html[data-theme="dark"] .dv-header,
+html[data-theme="dark"] .dv-footer,
+html[data-theme="dark"] .dv-cart-title,
+html[data-theme="dark"] .dv-cart-total {
+    border-color: var(--admin-border);
+}
+
+html[data-theme="dark"] .customer-table tbody tr:hover td,
+html[data-theme="dark"] .payroll-table tbody tr:hover td,
+html[data-theme="dark"] .warehouse-table tbody tr:hover td,
+html[data-theme="dark"] .goods-table tr:hover td,
+html[data-theme="dark"] .dv-product:hover {
+    background: #293342;
+}
+
+html[data-theme="dark"] .warehouse-line-chip,
+html[data-theme="dark"] .dv-cart-empty,
+html[data-theme="dark"] .goods-upload,
+html[data-theme="dark"] .goods-upload-preview,
+html[data-theme="dark"] .goods-form-footer,
+html[data-theme="dark"] .receive-actions {
+    background-color: #293342;
+    color: var(--admin-text);
+}
+
+html[data-theme="dark"] .customer-btn,
+html[data-theme="dark"] .customer-icon,
+html[data-theme="dark"] .goods-icon-btn,
+html[data-theme="dark"] .dv-close,
+html[data-theme="dark"] .dv-icon-btn,
+html[data-theme="dark"] .receive-remove,
+html[data-theme="dark"] .btn-light {
+    background-color: #293342;
+    color: #e5eaf2;
+    border-color: #414b5c;
+}
+
+html[data-theme="dark"] .btn-outline-secondary,
+html[data-theme="dark"] .btn-outline-primary,
+html[data-theme="dark"] .btn-outline-success {
+    color: #9fc5ff;
+    border-color: #536985;
+}
+
+html[data-theme="dark"] .alert-success { background-color: #193b2a; color: #a8e3bb; border-color: #286342; }
+html[data-theme="dark"] .alert-danger { background-color: #48272b; color: #ffc2c6; border-color: #763a42; }
+html[data-theme="dark"] .alert-warning { background-color: #45391e; color: #f4d58a; border-color: #6a5627; }
+
+html[data-theme="dark"] .customer-page,
+html[data-theme="dark"] .payroll-page,
+html[data-theme="dark"] .warehouse-page,
+html[data-theme="dark"] .goods-page,
+html[data-theme="dark"] .goods-form-page,
+html[data-theme="dark"] .receive-page {
+    color: var(--admin-text);
+}
+
+html[data-theme="dark"] .customer-head p,
+html[data-theme="dark"] .payroll-head p,
+html[data-theme="dark"] .warehouse-head p,
+html[data-theme="dark"] .customer-stat span,
+html[data-theme="dark"] .payroll-stat span,
+html[data-theme="dark"] .warehouse-card span,
+html[data-theme="dark"] .goods-summary-card span,
+html[data-theme="dark"] .customer-empty,
+html[data-theme="dark"] .payroll-empty,
+html[data-theme="dark"] .dv-product-info small {
+    color: #a1adbf;
+}
+
+html[data-theme="dark"] .customer-name,
+html[data-theme="dark"] .payroll-employee,
+html[data-theme="dark"] .goods-name,
+html[data-theme="dark"] .dv-header h2,
+html[data-theme="dark"] .dv-product-info b,
+html[data-theme="dark"] .goods-form-section h3 {
+    color: #e5eaf2;
+}
+
+html[data-theme="dark"] .warehouse-receipt-head span,
+html[data-theme="dark"] .receive-field label,
+html[data-theme="dark"] .goods-form-field label {
+    color: #c0c9d6;
+}
+
+html[data-theme="dark"] .bg-white,
+html[data-theme="dark"] .bg-light,
+html[data-theme="dark"] .bg-body,
+html[data-theme="dark"] .bg-body-tertiary {
+    background-color: #202733 !important;
+    color: var(--admin-text) !important;
+}
+
+html[data-theme="dark"] .text-dark {
+    color: #e5eaf2 !important;
+}
