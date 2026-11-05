@@ -1,0 +1,41 @@
+@model HotelManagement.ViewModels.PaginationViewModel
+@using Microsoft.AspNetCore.Routing
+@{
+    var firstPage = Math.Max(1, Model.PageIndex - 2);
+    var lastPage = Math.Min(Model.TotalPages, Model.PageIndex + 2);
+    string PageUrl(int page)
+    {
+        var values = new RouteValueDictionary(Model.RouteValues);
+        values["page"] = page;
+        values["pageSize"] = Model.PageSize;
+        return Url.Action(Model.Action, Model.Controller, values) ?? "#";
+    }
+}
+<div class="shared-pagination">
+    <div class="shared-pagination-summary">Hi&#7875;n th&#7883; <strong>@Model.FirstItem&ndash;@Model.LastItem</strong> trong <strong>@Model.TotalItems</strong> k&#7871;t qu&#7843;</div>
+    <div class="shared-pagination-controls">
+        <form method="get" action="@Url.Action(Model.Action, Model.Controller)" class="shared-page-size">
+            @foreach (var pair in Model.RouteValues.Where(x => x.Value != null && x.Key != "page" && x.Key != "pageSize"))
+            { <input type="hidden" name="@pair.Key" value="@pair.Value" /> }
+            <input type="hidden" name="page" value="1" />
+            <label for="pageSize-@Model.Controller">M&#7895;i trang</label>
+            <select id="pageSize-@Model.Controller" name="pageSize" onchange="this.form.submit()">
+                <option value="10" selected="@(Model.PageSize == 10)">10</option>
+                <option value="20" selected="@(Model.PageSize == 20)">20</option>
+                <option value="50" selected="@(Model.PageSize == 50)">50</option>
+            </select>
+        </form>
+        <nav aria-label="Chuy&#7875;n trang" class="shared-page-links">
+            @if (Model.HasPrevious) { <a href="@PageUrl(1)" aria-label="Trang &#273;&#7847;u"><i class="bi bi-chevron-bar-left"></i></a><a href="@PageUrl(Model.PageIndex-1)" aria-label="Trang tr&#432;&#7899;c"><i class="bi bi-chevron-left"></i></a> }
+            else { <span class="disabled"><i class="bi bi-chevron-bar-left"></i></span><span class="disabled"><i class="bi bi-chevron-left"></i></span> }
+            @for (var page = firstPage; page <= lastPage; page++)
+            { if (page == Model.PageIndex) { <span class="current" aria-current="page">@(page)</span> } else { <a href="@PageUrl(page)">@(page)</a> } }
+            @if (Model.HasNext) { <a href="@PageUrl(Model.PageIndex+1)" aria-label="Trang sau"><i class="bi bi-chevron-right"></i></a><a href="@PageUrl(Model.TotalPages)" aria-label="Trang cu&#7889;i"><i class="bi bi-chevron-bar-right"></i></a> }
+            else { <span class="disabled"><i class="bi bi-chevron-right"></i></span><span class="disabled"><i class="bi bi-chevron-bar-right"></i></span> }
+        </nav>
+    </div>
+</div>
+<style>
+.shared-pagination{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 15px;border-top:1px solid #e8edf2;background:#fff;color:#738198;font-size:12px}.shared-pagination-summary strong{color:#34445a}.shared-pagination-controls{display:flex;align-items:center;gap:14px}.shared-page-size{display:flex;align-items:center;gap:7px}.shared-page-size select{height:31px;padding:0 8px;border:1px solid #dce3ed;border-radius:7px;background:#fff;color:#40516a}.shared-page-links{display:flex;align-items:center;gap:4px}.shared-page-links a,.shared-page-links span{display:inline-grid;min-width:30px;height:30px;place-items:center;border:1px solid #dce3ed;border-radius:7px;background:#fff;color:#526174;text-decoration:none}.shared-page-links a:hover,.shared-page-links .current{border-color:#198754;background:#198754;color:#fff}.shared-page-links .disabled{color:#b4bdc9;background:#f7f9fb}
+@@media(max-width:600px){.shared-pagination{align-items:flex-start}.shared-pagination-controls{width:100%;justify-content:space-between}}
+</style>

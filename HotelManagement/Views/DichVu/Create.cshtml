@@ -36,6 +36,7 @@
 </div>
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <partial name="_RichTextEditor" />
     <script>
         document.querySelectorAll('.goods-tab').forEach(tab => tab.addEventListener('click', () => { document.querySelectorAll('.goods-tab').forEach(x => x.classList.toggle('active', x === tab)); document.querySelectorAll('.goods-tab-panel').forEach(panel => panel.hidden = panel.dataset.panel !== tab.dataset.tab); }));
         const typeSelect = document.getElementById('LoaiHang'); const stockFields = document.getElementById('stockFields');

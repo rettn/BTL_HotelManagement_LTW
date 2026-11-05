@@ -179,8 +179,9 @@
                 </table>
             </div>
             <div class="text-muted small">
-                Tổng số: @(Model?.Count() ?? 0) nhân viên
+                Nhân viên trên trang: @(Model?.Count() ?? 0)
             </div>
+            @await Html.PartialAsync("_Pagination", (HotelManagement.ViewModels.PaginationViewModel)ViewBag.Pagination)
         </div>
     </div>
 </div>

@@ -2,6 +2,7 @@
 using HotelManagement.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using HotelManagement.ViewModels;
 
 namespace HotelManagement.Controllers
 {
@@ -23,11 +24,12 @@ namespace HotelManagement.Controllers
             ViewBag.ChucVus = await _chucVuService.GetAllAsync();
         }
         // Danh sach nhan vien
-        public async Task<IActionResult> Index(string? search)
+        public async Task<IActionResult> Index(string? search, int page = 1, int pageSize = 10)
         {
-            var nhanViens = await _nhanVienService.GetAllAsync(search);
+            var result = await _nhanVienService.GetPageAsync(search, page, pageSize);
 
             ViewBag.Search = search;
+            ViewBag.Pagination = result.ToPagination(nameof(Index), "NhanVien", new Dictionary<string, string?> { ["search"] = search });
 
             var statistics = await _nhanVienService.GetStatisticsAsync();
 
@@ -35,7 +37,7 @@ namespace HotelManagement.Controllers
             ViewBag.DangLam = statistics.DangLam;
             ViewBag.DaNghi = statistics.DaNghi;
 
-            return View(nhanViens);
+            return View(result.Items);
         }
 
         // Xem chi tiet

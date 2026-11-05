@@ -1,6 +1,8 @@
 ﻿
 using HotelManagement.Data;
 using HotelManagement.Models;
+using HotelManagement.Extensions;
+using HotelManagement.ViewModels;
 using Microsoft.EntityFrameworkCore;
 
 namespace HotelManagement.Repositories
@@ -35,6 +37,23 @@ namespace HotelManagement.Repositories
             return await query
                 .OrderBy(k => k.MaKH)
                 .ToListAsync();
+        }
+
+        public Task<PagedResult<KhachHang>> GetPageAsync(string? keyword, int page, int pageSize)
+        {
+            var query = _context.KhachHangs.AsNoTracking().AsQueryable();
+            if (!string.IsNullOrWhiteSpace(keyword))
+            {
+                keyword = keyword.Trim();
+                var code = keyword.StartsWith("KH", StringComparison.OrdinalIgnoreCase) ? keyword[2..] : keyword;
+                var maKH = int.TryParse(code, out var parsedId) ? parsedId : -1;
+                query = query.Where(k => k.HoTen.Contains(keyword)
+                    || k.MaKH == maKH
+                    || (k.SoDienThoai != null && k.SoDienThoai.Contains(keyword))
+                    || (k.Email != null && k.Email.Contains(keyword))
+                    || (k.CCCD != null && k.CCCD.Contains(keyword)));
+            }
+            return query.OrderBy(k => k.MaKH).ToPagedResultAsync(page, pageSize);
         }
 
         public async Task<KhachHang?> GetByIdAsync(int id)

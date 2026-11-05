@@ -3,6 +3,7 @@ using HotelManagement.Models;
 using HotelManagement.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using HotelManagement.ViewModels;
 
 namespace HotelManagement.Controllers
 {
@@ -17,12 +18,13 @@ namespace HotelManagement.Controllers
         }
 
         // GET: /KhachHang
-        public async Task<IActionResult> Index(string? keyword)
+        public async Task<IActionResult> Index(string? keyword, int page = 1, int pageSize = 10)
         {
-            var danhSach = await _service.GetAllAsync(keyword);
+            var result = await _service.GetPageAsync(keyword, page, pageSize);
 
             ViewBag.Keyword = keyword;
-            return View(danhSach);
+            ViewBag.Pagination = result.ToPagination(nameof(Index), "KhachHang", new Dictionary<string, string?> { ["keyword"] = keyword });
+            return View(result.Items);
         }
 
         // GET: /KhachHang/Create

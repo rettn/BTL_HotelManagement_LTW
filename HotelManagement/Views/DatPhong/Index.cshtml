@@ -508,6 +508,7 @@
         color: #748198;
         font-size: 12px
     }
+    .booking-pagination{display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:10px 0;color:#748198;font-size:12px}.booking-pagination button,.booking-pagination select{height:32px;padding:0 10px;border:1px solid #dce3ed;border-radius:7px;background:#fff;color:#40516a}.booking-pagination button:disabled{opacity:.45;cursor:not-allowed}.booking-pagination strong{min-width:74px;text-align:center;color:#344258}
 
     .booking-cards {
         display: none;
@@ -1017,6 +1018,12 @@
             <div class="booking-empty" id="bookingEmpty"><i class="bi bi-calendar2-x"></i><h3>Chưa có lượt đặt phòng</h3><p>Các lượt đặt phòng sẽ xuất hiện tại đây sau khi được tạo.</p></div>
         }
         <div class="booking-foot"><span>Đang hiển thị <strong id="visibleCount">0</strong> / @bookings.Count lượt đặt</span><span>Tiền đã trả được cộng từ các giao dịch đã ghi nhận</span></div>
+        <div class="booking-pagination" id="bookingPagination">
+            <label for="bookingPageSize">Mỗi trang</label><select id="bookingPageSize"><option>10</option><option>20</option><option>50</option></select>
+            <button type="button" id="bookingFirst" aria-label="Trang đầu">«</button><button type="button" id="bookingPrev" aria-label="Trang trước">‹</button>
+            <strong id="bookingPageLabel">1 / 1</strong>
+            <button type="button" id="bookingNext" aria-label="Trang sau">›</button><button type="button" id="bookingLast" aria-label="Trang cuối">»</button>
+        </div>
     </div>
 </div>
 
@@ -1107,6 +1114,7 @@
             const today = new Date(); today.setHours(0,0,0,0); const end = new Date(today); end.setDate(end.getDate()+6);
             from.value = fmt(today); to.value = fmt(end);
             let currentStatus = 'all';
+            let currentPage = 1;
             const cards = document.getElementById('cardView');
             rows.forEach(row => {
                 const card = document.createElement('article'); card.className = 'booking-card';
@@ -1120,28 +1128,41 @@
                 const query = document.getElementById('bookingSearch').value.trim().toLocaleLowerCase('vi');
                 const type = document.getElementById('roomTypeFilter').value.toLocaleLowerCase('vi');
                 const payment = document.getElementById('paymentFilter').value;
-                const start = from.value, finish = to.value; let visible = 0; const counts = {};
+                const start = from.value, finish = to.value; let visible = 0; const counts = {}; const matched = [];
                 rows.forEach((row, i) => {
                     const overlaps = !start || !finish || (row.dataset.arrival <= finish && row.dataset.departure >= start);
                     const status = row.dataset.status; if (overlaps) counts[status] = (counts[status]||0)+1;
                     const match = (!query || row.dataset.search.toLocaleLowerCase('vi').includes(query)) && (!type || row.dataset.types.toLocaleLowerCase('vi').includes(type)) && (!payment || (payment === 'paid' ? Number(row.dataset.balance) === 0 : Number(row.dataset.balance) > 0));
                     const show = overlaps && match && (currentStatus === 'all' || status === currentStatus);
-                    row.classList.toggle('booking-hidden', !show); cards.children[i].classList.toggle('booking-hidden', !show);
-                    if (row._detailsRow) row._detailsRow.classList.toggle('booking-hidden', !show || row.dataset.expanded !== 'true');
-                    if (show) { visible++; row.querySelector('.row-number').textContent = visible; }
+                    if (show) matched.push({row, card: cards.children[i]});
+                });
+                const pageSize = Number(document.getElementById('bookingPageSize').value);
+                const pageCount = Math.max(1, Math.ceil(matched.length / pageSize)); currentPage = Math.min(currentPage, pageCount);
+                const first = (currentPage - 1) * pageSize;
+                matched.forEach(({row, card}, index) => {
+                    const onPage = index >= first && index < first + pageSize;
+                    row.classList.toggle('booking-hidden', !onPage); card.classList.toggle('booking-hidden', !onPage);
+                    if (row._detailsRow) row._detailsRow.classList.toggle('booking-hidden', !onPage || row.dataset.expanded !== 'true');
+                    if (onPage) { visible++; row.querySelector('.row-number').textContent = index + 1; }
                 });
                 document.querySelectorAll('.booking-chip').forEach(chip => { const f=chip.dataset.filter; chip.querySelector('.chip-count').textContent = f === 'all' ? rows.filter(r => (!start || !finish || (r.dataset.arrival <= finish && r.dataset.departure >= start))).length : counts[f]||0; });
-                document.getElementById('visibleCount').textContent = visible;
-                document.getElementById('bookingNoResult').classList.toggle('booking-hidden', visible !== 0 || rows.length === 0);
+                document.getElementById('visibleCount').textContent = matched.length;
+                document.getElementById('bookingPageLabel').textContent = `${pageCount === 0 ? 0 : currentPage} / ${pageCount}`;
+                document.getElementById('bookingFirst').disabled = currentPage <= 1; document.getElementById('bookingPrev').disabled = currentPage <= 1;
+                document.getElementById('bookingNext').disabled = currentPage >= pageCount; document.getElementById('bookingLast').disabled = currentPage >= pageCount;
+                document.getElementById('bookingPagination').classList.toggle('booking-hidden', matched.length === 0);
+                document.getElementById('bookingNoResult').classList.toggle('booking-hidden', matched.length !== 0 || rows.length === 0);
                 document.getElementById('listView').classList.toggle('booking-hidden', cards.classList.contains('grid'));
             }
-            document.querySelectorAll('.booking-chip').forEach(chip => chip.addEventListener('click', () => { document.querySelector('.booking-chip.active')?.classList.remove('active'); chip.classList.add('active'); currentStatus = chip.dataset.filter; applyFilters(); }));
-            ['bookingSearch','roomTypeFilter','paymentFilter','rangeFrom','rangeTo'].forEach(id => document.getElementById(id).addEventListener(id.includes('range') ? 'change' : 'input', applyFilters));
+            document.querySelectorAll('.booking-chip').forEach(chip => chip.addEventListener('click', () => { document.querySelector('.booking-chip.active')?.classList.remove('active'); chip.classList.add('active'); currentStatus = chip.dataset.filter; currentPage=1; applyFilters(); }));
+            ['bookingSearch','roomTypeFilter','paymentFilter','rangeFrom','rangeTo'].forEach(id => document.getElementById(id).addEventListener(id.includes('range') ? 'change' : 'input', () => { currentPage=1; applyFilters(); }));
+            document.getElementById('bookingPageSize').addEventListener('change',()=>{currentPage=1;applyFilters();});
+            document.getElementById('bookingFirst').addEventListener('click',()=>{currentPage=1;applyFilters();});document.getElementById('bookingPrev').addEventListener('click',()=>{currentPage--;applyFilters();});document.getElementById('bookingNext').addEventListener('click',()=>{currentPage++;applyFilters();});document.getElementById('bookingLast').addEventListener('click',()=>{const n=Math.ceil(Number(document.getElementById('visibleCount').textContent)/Number(document.getElementById('bookingPageSize').value));currentPage=n;applyFilters();});
             document.querySelectorAll('[data-view]').forEach(btn => btn.addEventListener('click', () => { document.querySelector('[data-view].active')?.classList.remove('active'); btn.classList.add('active'); const grid=btn.dataset.view==='grid'; cards.classList.toggle('grid',grid); cards.style.display=grid?'grid':'none'; applyFilters(); }));
             document.getElementById('previousRange').addEventListener('click', () => shiftRange(-7)); document.getElementById('nextRange').addEventListener('click', () => shiftRange(7));
             function shiftRange(days) { const a=new Date(from.value+'T00:00:00'),b=new Date(to.value+'T00:00:00');a.setDate(a.getDate()+days);b.setDate(b.getDate()+days);from.value=fmt(a);to.value=fmt(b);applyFilters(); }
             document.getElementById('toggleFilters').addEventListener('click',()=>document.getElementById('bookingFilters').classList.toggle('show'));
-            document.getElementById('clearFilters').addEventListener('click',()=>{document.getElementById('roomTypeFilter').value='';document.getElementById('paymentFilter').value='';document.getElementById('bookingSearch').value='';from.value=fmt(today);to.value=fmt(end);currentStatus='all';document.querySelector('.booking-chip.active')?.classList.remove('active');document.querySelector('[data-filter="all"]').classList.add('active');applyFilters();});
+            document.getElementById('clearFilters').addEventListener('click',()=>{document.getElementById('roomTypeFilter').value='';document.getElementById('paymentFilter').value='';document.getElementById('bookingSearch').value='';from.value=fmt(today);to.value=fmt(end);currentStatus='all';currentPage=1;document.querySelector('.booking-chip.active')?.classList.remove('active');document.querySelector('[data-filter="all"]').classList.add('active');applyFilters();});
             document.getElementById('syncBookings').addEventListener('click',()=>location.reload());
             document.querySelectorAll('.sort-bookings').forEach(button=>button.addEventListener('click',()=>{const key=button.dataset.sort,dir=button.dataset.direction==='asc'?'desc':'asc';button.dataset.direction=dir;const sorted=[...rows].sort((a,b)=>a.dataset[key].localeCompare(b.dataset[key])*(dir==='asc'?1:-1));const body=document.getElementById('bookingRows');sorted.forEach(row=>{body.appendChild(row);if(row._detailsRow)body.appendChild(row._detailsRow);});sorted.forEach(row=>cards.appendChild(row._card));rows.splice(0,rows.length,...sorted);applyFilters();}));
             document.addEventListener('click', async event => {

@@ -70,5 +70,6 @@
             </table>
         </div>
         <div class="goods-footer"><span>Hiển thị <strong>@items.Count</strong> mặt hàng</span><span>Hàng hóa đã sử dụng được lưu lịch sử; hãy ngừng kinh doanh thay vì xóa.</span></div>
+        @await Html.PartialAsync("_Pagination", (HotelManagement.ViewModels.PaginationViewModel)ViewBag.Pagination)
     </div>
 </div>

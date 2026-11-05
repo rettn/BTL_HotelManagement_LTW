@@ -1,6 +1,7 @@
 ﻿
 using HotelManagement.Models;
 using HotelManagement.Repositories;
+using HotelManagement.ViewModels;
 
 namespace HotelManagement.Services
 {
@@ -17,6 +18,9 @@ namespace HotelManagement.Services
         {
             return _repository.GetAllAsync(search);
         }
+
+        public Task<PagedResult<NhanVien>> GetPageAsync(string? search, int page, int pageSize) =>
+            _repository.GetPageAsync(search, page, pageSize);
 
         public Task<NhanVien?> GetByIdAsync(int id)
         {

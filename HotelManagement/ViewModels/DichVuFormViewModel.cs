@@ -11,7 +11,7 @@ public class DichVuFormViewModel
     [StringLength(100)]
     public string TenDichVu { get; set; } = string.Empty;
 
-    [StringLength(500)]
+    [StringLength(10000)]
     public string? MoTa { get; set; }
 
     [Range(0, 100000000000)]

@@ -1,4 +1,5 @@
 using HotelManagement.Data;
+using HotelManagement.Extensions;
 using HotelManagement.Models;
 using HotelManagement.ViewModels;
 using Microsoft.AspNetCore.Authorization;
@@ -14,7 +15,7 @@ public class KhoController : Controller
 
     public KhoController(ApplicationDbContext context) => _context = context;
 
-    public async Task<IActionResult> Index(string? keyword, string? tonKho = null)
+    public async Task<IActionResult> Index(string? keyword, string? tonKho = null, int page = 1, int pageSize = 10)
     {
         var products = _context.DichVus.AsNoTracking().Where(x => x.LoaiHang == "SanPham");
         if (!string.IsNullOrWhiteSpace(keyword))
@@ -31,7 +32,12 @@ public class KhoController : Controller
         ViewBag.Receipts = await _context.PhieuNhapKhos.AsNoTracking()
             .Include(x => x.ChiTietNhapKhos).ThenInclude(x => x.DichVu)
             .OrderByDescending(x => x.NgayNhap).Take(15).ToListAsync();
-        return View(await products.OrderBy(x => x.TonKho).ThenBy(x => x.TenDichVu).ToListAsync());
+        var result = await products.OrderBy(x => x.TonKho).ThenBy(x => x.TenDichVu).ToPagedResultAsync(page, pageSize);
+        ViewBag.Pagination = result.ToPagination(nameof(Index), "Kho", new Dictionary<string, string?>
+        {
+            ["keyword"] = keyword, ["tonKho"] = tonKho
+        });
+        return View(result.Items);
     }
 
     [HttpGet]

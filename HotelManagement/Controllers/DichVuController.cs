@@ -1,5 +1,7 @@
 using HotelManagement.Data;
+using HotelManagement.Extensions;
 using HotelManagement.Models;
+using HotelManagement.Security;
 using HotelManagement.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -23,7 +25,7 @@ public class DichVuController : Controller
         _environment = environment;
     }
 
-    public async Task<IActionResult> Index(string? keyword, string? loaiHang, string? nhomHang, string? tonKho, string? trangThai)
+    public async Task<IActionResult> Index(string? keyword, string? loaiHang, string? nhomHang, string? tonKho, string? trangThai, int page = 1, int pageSize = 10)
     {
         var query = _context.DichVus.AsNoTracking().AsQueryable();
         if (!string.IsNullOrWhiteSpace(keyword))
@@ -45,7 +47,13 @@ public class DichVuController : Controller
         ViewBag.NhomHangs = await _context.DichVus.AsNoTracking()
             .Where(d => d.NhomHang != null && d.NhomHang != "")
             .Select(d => d.NhomHang).Distinct().OrderBy(x => x).ToListAsync();
-        return View(await query.OrderBy(d => d.LoaiHang).ThenBy(d => d.TenDichVu).ToListAsync());
+        var result = await query.OrderBy(d => d.LoaiHang).ThenBy(d => d.TenDichVu).ToPagedResultAsync(page, pageSize);
+        ViewBag.Pagination = result.ToPagination(nameof(Index), "DichVu", new Dictionary<string, string?>
+        {
+            ["keyword"] = keyword, ["loaiHang"] = loaiHang, ["nhomHang"] = nhomHang,
+            ["tonKho"] = tonKho, ["trangThai"] = trangThai
+        });
+        return View(result.Items);
     }
 
     public async Task<IActionResult> Details(int? id)
@@ -223,6 +231,7 @@ public class DichVuController : Controller
 
     private static void Normalize(DichVuFormViewModel model)
     {
+        model.MoTa = RichTextSanitizer.Sanitize(model.MoTa);
         model.LoaiHang = model.LoaiHang == "SanPham" ? "SanPham" : "DichVu";
         model.NhomHang = string.IsNullOrWhiteSpace(model.NhomHang)
             ? (model.LoaiHang == "SanPham" ? "Hàng hóa" : "Dịch vụ")

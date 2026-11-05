@@ -53,12 +53,20 @@ namespace HotelManagement.Controllers
             if (result.Succeeded)
             {
                 var user = await _userManager.FindByEmailAsync(email);
+                if (user != null)
+                {
+                    HttpContext.Session.SetString("UserId", user.Id);
+                    HttpContext.Session.SetString("UserEmail", user.Email ?? email);
+                    HttpContext.Session.SetString("LoginAtUtc", DateTimeOffset.UtcNow.ToString("O"));
+                }
 
                 // 1. Kiểm tra Role trước: Admin hoặc Nhân viên luôn bị ép về Dashboard
                 if (user != null && (await _userManager.IsInRoleAsync(user, "Admin") || await _userManager.IsInRoleAsync(user, "NhanVien")))
                 {
+                    HttpContext.Session.SetString("UserRole", "Staff");
                     return RedirectToAction("Index", "Dashboard");
                 }
+                HttpContext.Session.SetString("UserRole", "Customer");
 
                 // 2. Đối với khách hàng bình thường: Ưu tiên trả về trang họ đang muốn truy cập (returnUrl)
                 if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
@@ -82,6 +90,7 @@ namespace HotelManagement.Controllers
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
+            HttpContext.Session.Clear();
             await _signInManager.SignOutAsync();
             return RedirectToAction("Index", "Home");
         }

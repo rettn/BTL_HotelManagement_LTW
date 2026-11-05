@@ -1,5 +1,7 @@
 ﻿using HotelManagement.Data;
 using HotelManagement.Models;
+using HotelManagement.Extensions;
+using HotelManagement.ViewModels;
 using Microsoft.EntityFrameworkCore;
 
 namespace HotelManagement.Repositories
@@ -15,36 +17,28 @@ namespace HotelManagement.Repositories
 
         public async Task<List<NhanVien>> GetAllAsync(string? search = null)
         {
+            return await BuildQuery(search).ToListAsync();
+        }
+
+        public Task<PagedResult<NhanVien>> GetPageAsync(string? search, int page, int pageSize) =>
+            BuildQuery(search).ToPagedResultAsync(page, pageSize);
+
+        private IQueryable<NhanVien> BuildQuery(string? search)
+        {
             var query = _context.NhanViens.AsNoTracking();
-
-            if (!string.IsNullOrWhiteSpace(search))
-            {
-                search = search.Trim();
-
-                // Collation nhị phân của MySQL: phân biệt chữ hoa, chữ thường và dấu
-                const string collation = "utf8mb4_bin";
-
-                // Cho phép gõ "NV0001", "nv1", "0001" hoặc "1" để tìm theo mã nhân viên
-                var maText = search.StartsWith("NV", StringComparison.OrdinalIgnoreCase)
-                    ? search.Substring(2)
-                    : search;
-                var maNV = int.TryParse(maText, out var id) ? id : -1;
-
-                var laEmail = search.Contains('@');
-                var laSo = search.All(char.IsDigit);
-
-                query = query.Where(n =>
-                    n.MaNV == maNV ||
-                    EF.Functions.Collate(n.HoTen, collation).Contains(search) ||
-                    EF.Functions.Collate(n.ChucVu, collation).Contains(search) ||
-                    (laEmail && n.Email != null &&
-                     EF.Functions.Collate(n.Email, collation).Contains(search)) ||
-                    (laSo && n.SoDienThoai != null && n.SoDienThoai.Contains(search)));
-            }
-
-            return await query
-                .OrderBy(n => n.MaNV)
-                .ToListAsync();
+            if (string.IsNullOrWhiteSpace(search)) return query.OrderBy(n => n.MaNV);
+            search = search.Trim();
+            const string collation = "utf8mb4_bin";
+            var maText = search.StartsWith("NV", StringComparison.OrdinalIgnoreCase) ? search.Substring(2) : search;
+            var maNV = int.TryParse(maText, out var id) ? id : -1;
+            var laEmail = search.Contains('@');
+            var laSo = search.All(char.IsDigit);
+            return query.Where(n => n.MaNV == maNV ||
+                EF.Functions.Collate(n.HoTen, collation).Contains(search) ||
+                EF.Functions.Collate(n.ChucVu, collation).Contains(search) ||
+                (laEmail && n.Email != null && EF.Functions.Collate(n.Email, collation).Contains(search)) ||
+                (laSo && n.SoDienThoai != null && n.SoDienThoai.Contains(search)))
+                .OrderBy(n => n.MaNV);
         }
 
         public Task<NhanVien?> GetByIdAsync(int id)

@@ -29,13 +29,13 @@ namespace HotelManagement.Services
             return _repository.GetByIdAsync(id);
         }
 
-        public async Task<(bool Success, string Message)> CreateAsync(
+        public async Task<(bool Success, string Message, int? Id)> CreateAsync(
             DatPhongViewModel model)
         {
             var validation = await ValidateAsync(model);
 
             if (validation != null)
-                return (false, validation);
+                return (false, validation, null);
 
             await using var transaction =
                 await _context.Database.BeginTransactionAsync();
@@ -74,12 +74,12 @@ namespace HotelManagement.Services
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                return (true, "Tạo phiếu đặt phòng thành công.");
+                return (true, "Tạo phiếu đặt phòng thành công.", datPhong.MaDatPhong);
             }
             catch
             {
                 await transaction.RollbackAsync();
-                return (false, "Không thể tạo phiếu đặt phòng.");
+                return (false, "Không thể tạo phiếu đặt phòng.", null);
             }
         }
 

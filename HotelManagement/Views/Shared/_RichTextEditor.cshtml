@@ -1,0 +1,30 @@
+<style>
+.rich-editor{border:1px solid #dce3ed;border-radius:9px;overflow:hidden;background:#fff}.rich-editor:focus-within{border-color:#75b798;box-shadow:0 0 0 .2rem rgba(25,135,84,.12)}.rich-editor-toolbar{display:flex;align-items:center;gap:4px;flex-wrap:wrap;padding:7px;border-bottom:1px solid #e8edf2;background:#f8fafc}.rich-editor-toolbar button{width:34px;height:32px;border:1px solid transparent;border-radius:6px;background:transparent;color:#526174}.rich-editor-toolbar button:hover{border-color:#dce3ed;background:#fff;color:#198754}.rich-editor-divider{height:22px;border-left:1px solid #dce3ed;margin:0 4px}.rich-editor-content{min-height:140px;padding:12px 14px;outline:0;color:#344258;line-height:1.6}.rich-editor-content:empty:before{content:attr(data-placeholder);color:#9aa5b1}.rich-editor-content p{margin:0 0 8px}.rich-editor-content blockquote{margin:8px 0;padding:6px 12px;border-left:3px solid #198754;background:#f5faf7;color:#607168}.rich-editor-content ul,.rich-editor-content ol{padding-left:24px}.rich-editor-original{display:none!important}
+</style>
+<script>
+(() => {
+    const source = document.querySelector('textarea[name="MoTa"]');
+    if (!source || source.dataset.richReady) return;
+    source.dataset.richReady = 'true'; source.classList.add('rich-editor-original');
+    const wrapper = document.createElement('div'); wrapper.className = 'rich-editor';
+    const toolbar = document.createElement('div'); toolbar.className = 'rich-editor-toolbar'; toolbar.setAttribute('role','toolbar');
+    const buttons = [
+        ['bold','B','In đậm'],['italic','I','In nghiêng'],['underline','U','Gạch chân'],
+        ['insertUnorderedList','☷','Danh sách dấu đầu dòng'],['insertOrderedList','1.','Danh sách đánh số'],
+        ['formatBlock','❝','Trích dẫn','blockquote'],['createLink','↗','Chèn liên kết'],['removeFormat','×','Xóa định dạng']
+    ];
+    for (const [command,label,title,value] of buttons) {
+        const button=document.createElement('button');button.type='button';button.title=title;button.textContent=label;button.dataset.command=command;if(value)button.dataset.value=value;
+        button.addEventListener('mousedown',event=>event.preventDefault());
+        button.addEventListener('click',()=>{editor.focus();if(command==='createLink'){const url=prompt('Nhập địa chỉ liên kết (https://...)');if(url&&/^https?:\/\//i.test(url))document.execCommand(command,false,url);}else document.execCommand(command,false,value||null);sync();});toolbar.append(button);
+    }
+    const editor=document.createElement('div');editor.className='rich-editor-content';editor.contentEditable='true';editor.setAttribute('role','textbox');editor.setAttribute('aria-multiline','true');editor.dataset.placeholder='Nhập nội dung mô tả...';
+    source.parentNode.insertBefore(wrapper,source);wrapper.append(toolbar,editor,source);
+    const allowed=new Set(['P','BR','STRONG','B','EM','I','U','S','UL','OL','LI','H1','H2','H3','BLOCKQUOTE','DIV','SPAN','A']);
+    const clean=node=>{const f=document.createDocumentFragment();for(const child of [...node.childNodes]){if(child.nodeType===Node.TEXT_NODE)f.append(document.createTextNode(child.textContent||''));else if(child.nodeType===Node.ELEMENT_NODE){if(['SCRIPT','STYLE','IFRAME','OBJECT','SVG','MATH'].includes(child.tagName))continue;if(!allowed.has(child.tagName)){f.append(clean(child));continue;}const el=document.createElement(child.tagName.toLowerCase());if(child.tagName==='A'&&/^https?:\/\//i.test(child.getAttribute('href')||'')){el.href=child.href;el.target='_blank';el.rel='noopener noreferrer';}el.append(clean(child));f.append(el);}}return f;};
+    const template=document.createElement('template');template.innerHTML=source.value;editor.append(clean(template.content));
+    function sync(){const t=document.createElement('template');t.innerHTML=editor.innerHTML;source.value=[...clean(t.content).childNodes].map(n=>n.outerHTML||n.textContent).join('');source.dispatchEvent(new Event('input',{bubbles:true}));}
+    editor.addEventListener('input',sync);editor.addEventListener('paste',event=>{event.preventDefault();const t=document.createElement('template');t.innerHTML=event.clipboardData.getData('text/html')||'';const safe=clean(t.content);if(!safe.childNodes.length)safe.append(document.createTextNode(event.clipboardData.getData('text/plain')));const holder=document.createElement('div');holder.append(safe);document.execCommand('insertHTML',false,holder.innerHTML);sync();});
+    source.closest('form')?.addEventListener('submit',sync);
+})();
+</script>
