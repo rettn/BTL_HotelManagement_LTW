@@ -109,15 +109,18 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr>
-                                        <td>
-                                            <div class="fw-bold text-dark">Tiền phòng (@Model.TenLoaiPhong)</div>
-                                            <small class="text-muted">Phòng @Model.SoPhong</small>
-                                        </td>
-                                        <td class="text-center">@Model.SoDem đêm</td>
-                                        <td class="text-end">@Model.GiaTheoDem.ToString("N0") đ</td>
-                                        <td class="text-end fw-bold text-dark">@Model.TienPhong.ToString("N0") đ</td>
-                                    </tr>
+                                    @foreach (var phongItem in Model.DanhSachPhong)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="fw-bold text-dark">Tiền phòng (@phongItem.TenLoaiPhong)</div>
+                                                <small class="text-muted">Phòng @phongItem.SoPhong</small>
+                                            </td>
+                                            <td class="text-center">@Model.SoDem đêm</td>
+                                            <td class="text-end">@phongItem.GiaTheoDem.ToString("N0") đ</td>
+                                            <td class="text-end fw-bold text-dark">@phongItem.ThanhTien.ToString("N0") đ</td>
+                                        </tr>
+                                    }
 
                                     @if (Model.DanhSachDichVu != null && Model.DanhSachDichVu.Any())
                                     {
