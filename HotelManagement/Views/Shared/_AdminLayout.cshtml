@@ -6,8 +6,8 @@
 
     var isDashboardIndex = currentController.Equals("Dashboard", StringComparison.OrdinalIgnoreCase)
     && (currentAction.Equals("Index", StringComparison.OrdinalIgnoreCase) || string.IsNullOrEmpty(currentAction));
-    var isReportSection = currentController.Equals("Dashboard", StringComparison.OrdinalIgnoreCase)
-    && currentAction.Equals("TaiChinh", StringComparison.OrdinalIgnoreCase);
+    var isReportSection = currentController.Equals("Report", StringComparison.OrdinalIgnoreCase)
+    || (currentController.Equals("Dashboard", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("TaiChinh", StringComparison.OrdinalIgnoreCase));
 
     var isReservationSection = currentController.Equals("DatPhong", StringComparison.OrdinalIgnoreCase);
     var isFinanceSection = currentController.Equals("HoaDon", StringComparison.OrdinalIgnoreCase)
@@ -171,8 +171,11 @@
             </div> *@
 
                     <div class="sidebar-section-label">BÁO CÁO & HỆ THỐNG</div>
-                    <a asp-controller="Dashboard" asp-action="TaiChinh" class="sidebar-link @(isReportSection ? "active" : "")">
-                        <i class="bi bi-bar-chart-line"></i><span>Báo cáo thống kê</span>
+                    <a asp-controller="Report" asp-action="Dashboard" class="sidebar-link @(currentController.Equals("Report", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
+                        <i class="bi bi-pie-chart-fill"></i><span>Báo cáo tổng quan</span>
+                    </a>
+                    <a asp-controller="Dashboard" asp-action="TaiChinh" class="sidebar-link @(currentController.Equals("Dashboard", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("TaiChinh", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
+                        <i class="bi bi-bar-chart-line-fill"></i><span>Báo cáo tài chính</span>
                     </a>
 
                     @if (User.IsInRole("Admin"))

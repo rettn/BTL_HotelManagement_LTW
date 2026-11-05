@@ -1,0 +1,579 @@
+@model HotelManagement.ViewModels.ReportDashboardViewModel
+@using System.Text.Json
+
+@{
+    ViewData["Title"] = "Quản lý Báo cáo & Thống kê Tổng quan";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    var totalRevenueAllRooms = Model.DoanhThuTheoHangPhong.Sum(x => x.DoanhThu);
+    var totalNightsAllRooms = Model.DoanhThuTheoHangPhong.Sum(x => x.TongSoDemThue);
+    var totalBookingsAllRooms = Model.DoanhThuTheoHangPhong.Sum(x => x.SoLuotDat);
+}
+
+<div class="container-fluid px-4 py-4">
+    <!-- TIÊU ĐỀ & FORM LỌC KHOẢNG THỜI GIAN -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">
+        <div class="card-body p-4">
+            <div class="row align-items-center g-3">
+                <div class="col-xl-5 col-lg-12">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-circle bg-primary-subtle text-primary p-3 d-flex align-items-center justify-content-center" style="width: 54px; height: 54px;">
+                            <i class="bi bi-graph-up-arrow fs-3"></i>
+                        </div>
+                        <div>
+                            <h3 class="fw-bold text-dark mb-1">Báo cáo & Thống kê Tổng quan</h3>
+                            <p class="text-muted small mb-0">Biểu đồ doanh thu 7 ngày, cơ cấu phòng/dịch vụ, hạng phòng, top khách hàng & trạng thái đặt phòng</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-7 col-lg-12">
+                    <form method="get" asp-action="Dashboard" class="row g-2 justify-content-xl-end align-items-center d-print-none">
+                        <div class="col-sm-4 col-12">
+                            <label class="form-label small fw-semibold text-secondary mb-1">
+                                <i class="bi bi-calendar-event me-1"></i>Từ ngày
+                            </label>
+                            <input type="date" name="startDate" value="@(Model.StartDate?.ToString("yyyy-MM-dd"))" class="form-control form-control-sm" required />
+                        </div>
+
+                        <div class="col-sm-4 col-12">
+                            <label class="form-label small fw-semibold text-secondary mb-1">
+                                <i class="bi bi-calendar-check me-1"></i>Đến ngày
+                            </label>
+                            <input type="date" name="endDate" value="@(Model.EndDate?.ToString("yyyy-MM-dd"))" class="form-control form-control-sm" required />
+                        </div>
+
+                        <div class="col-sm-4 col-12 d-flex gap-2 pt-sm-4">
+                            <button type="submit" class="btn btn-primary btn-sm w-100 fw-semibold shadow-sm">
+                                <i class="bi bi-funnel-fill me-1"></i>Lọc
+                            </button>
+                            <a asp-action="Dashboard" class="btn btn-outline-secondary btn-sm" title="Đặt lại">
+                                <i class="bi bi-arrow-counterclockwise"></i>
+                            </a>
+                            <button type="button" onclick="window.print()" class="btn btn-outline-dark btn-sm" title="In báo cáo">
+                                <i class="bi bi-printer"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4 THẺ CHỈ SỐ DOANH THU & KPI CHÍNH -->
+    <div class="row g-3 mb-4">
+        <!-- Doanh thu hôm nay -->
+        <div class="col-xl-3 col-sm-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100 bg-white">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <span class="text-muted small text-uppercase fw-semibold">Hôm nay</span>
+                            <h4 class="fw-bold text-primary mb-0 mt-1">@Model.DoanhThuHomNay.ToString("N0") đ</h4>
+                            <small class="text-muted">Doanh thu phát sinh trong ngày</small>
+                        </div>
+                        <div class="rounded-3 bg-primary-subtle text-primary p-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                            <i class="bi bi-calendar2-day fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Doanh thu tuần này -->
+        <div class="col-xl-3 col-sm-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100 bg-white">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <span class="text-muted small text-uppercase fw-semibold">Tuần này</span>
+                            <h4 class="fw-bold text-info mb-0 mt-1">@Model.DoanhThuTuanNay.ToString("N0") đ</h4>
+                            <small class="text-muted">Tính từ đầu tuần đến nay</small>
+                        </div>
+                        <div class="rounded-3 bg-info-subtle text-info p-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                            <i class="bi bi-calendar-week fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Doanh thu tháng này -->
+        <div class="col-xl-3 col-sm-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100 bg-white">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <span class="text-muted small text-uppercase fw-semibold">Tháng @DateTime.Now.Month/@DateTime.Now.Year</span>
+                            <h4 class="fw-bold text-success mb-0 mt-1">@Model.DoanhThuThangNay.ToString("N0") đ</h4>
+                            <small class="text-muted">Doanh thu tháng hiện tại</small>
+                        </div>
+                        <div class="rounded-3 bg-success-subtle text-success p-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                            <i class="bi bi-calendar-month fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tổng doanh thu trong khoảng lọc -->
+        <div class="col-xl-3 col-sm-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100 bg-white">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <span class="text-muted small text-uppercase fw-semibold">Tổng doanh thu kỳ lọc</span>
+                            <h4 class="fw-bold text-danger mb-0 mt-1">@Model.TongDoanhThuKyNay.ToString("N0") đ</h4>
+                            <small class="text-muted">@Model.TongLuotDatPhong đơn đặt phòng</small>
+                        </div>
+                        <div class="rounded-3 bg-danger-subtle text-danger p-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                            <i class="bi bi-cash-coin fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- HÀNG BIỂU ĐỒ 1: BIỂU ĐỒ CỘT 7 NGÀY GẦN NHẤT & BIỂU ĐỒ TRÒN CƠ CẤU DOANH THU -->
+    <div class="row g-4 mb-4">
+        <!-- Biểu đồ cột: Biến động doanh thu 7 ngày gần nhất -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 h-100 bg-white">
+                <div class="card-header bg-white border-0 pt-4 px-4 pb-2 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="fw-bold text-dark mb-1">
+                            <i class="bi bi-bar-chart-line-fill text-primary me-2"></i>Biến động Doanh thu 7 ngày gần nhất
+                        </h5>
+                        <p class="text-muted small mb-0">Biểu đồ cột phân rã chi tiết giữa tiền phòng và tiền dịch vụ theo từng ngày</p>
+                    </div>
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2">
+                        7 ngày qua
+                    </span>
+                </div>
+                <div class="card-body px-4 py-3">
+                    <div style="height: 310px; width: 100%; position: relative;">
+                        <canvas id="revenue7DaysBarChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Biểu đồ tròn: Cơ cấu Doanh thu (Tiền phòng vs Tiền dịch vụ) -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100 bg-white">
+                <div class="card-header bg-white border-0 pt-4 px-4 pb-2">
+                    <h5 class="fw-bold text-dark mb-1">
+                        <i class="bi bi-pie-chart-fill me-2" style="color: #0d6efd;"></i>Cơ cấu Doanh thu
+                    </h5>
+                    <p class="text-muted small mb-0">Tỷ lệ tiền phòng so với dịch vụ phát sinh</p>
+                </div>
+                <div class="card-body px-4 py-3 d-flex flex-column align-items-center justify-content-center">
+                    <div style="height: 200px; width: 100%; position: relative;">
+                        <canvas id="revenueStructureDonutChart"></canvas>
+                    </div>
+                    <div class="w-100 mt-3 pt-3 border-top">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span><i class="bi bi-circle-fill me-2" style="color: #0d6efd;"></i>Tiền phòng:</span>
+                            <strong>@Model.DoanhThuPhong.ToString("N0") đ <span class="badge ms-1" style="background-color: rgba(13, 110, 253, 0.12); color: #0d6efd;">@Model.TiLeDoanhThuPhong%</span></strong>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-circle-fill me-2" style="color: #ff9800;"></i>Tiền dịch vụ:</span>
+                            <strong>@Model.DoanhThuDichVu.ToString("N0") đ <span class="badge ms-1" style="background-color: rgba(255, 152, 0, 0.15); color: #e65100;">@Model.TiLeDoanhThuDichVu%</span></strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- HÀNG 2: BÁO CÁO DOANH THU HẠNG PHÒNG & BIỂU ĐỒ TRÒN TRẠNG THÁI ĐẶT PHÒNG -->
+    <div class="row g-4 mb-4">
+        <!-- PHẦN 1: BÁO CÁO DOANH THU THEO HẠNG PHÒNG -->
+        <div class="col-xl-7 col-lg-12">
+            <div class="card border-0 shadow-sm rounded-4 h-100 bg-white">
+                <div class="card-header bg-white border-0 pt-4 px-4 pb-2 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="fw-bold text-dark mb-1">
+                            <i class="bi bi-door-open-fill text-primary me-2"></i>1. Doanh thu theo hạng phòng
+                        </h5>
+                        <p class="text-muted small mb-0">Thống kê doanh thu tiền phòng phân rã theo từng loại phòng</p>
+                    </div>
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2">
+                        @Model.DoanhThuTheoHangPhong.Count hạng phòng
+                    </span>
+                </div>
+                <div class="card-body px-4 py-2">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light text-secondary text-uppercase fs-7 fw-bold">
+                                <tr>
+                                    <th>Hạng phòng</th>
+                                    <th class="text-center">Số lượt đặt</th>
+                                    <th class="text-center">Tổng đêm</th>
+                                    <th class="text-end">Doanh thu</th>
+                                    <th style="width: 140px;">Tỷ lệ đóng góp</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (!Model.DoanhThuTheoHangPhong.Any())
+                                {
+                                    <tr>
+                                        <td colspan="5" class="text-center py-4 text-muted">
+                                            <i class="bi bi-inbox fs-2 d-block mb-1 opacity-50"></i>
+                                            Chưa có dữ liệu đặt phòng trong khoảng thời gian đã chọn.
+                                        </td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    @foreach (var item in Model.DoanhThuTheoHangPhong)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="fw-bold text-dark">@item.TenLoaiPhong</div>
+                                                <small class="text-muted">Giá niêm yết: @item.GiaTheoDemHienTai.ToString("N0") đ/đêm</small>
+                                            </td>
+                                            <td class="text-center fw-semibold">
+                                                <span class="badge bg-light text-dark border px-2 py-1">@item.SoLuotDat lượt</span>
+                                            </td>
+                                            <td class="text-center fw-semibold text-secondary">
+                                                @item.TongSoDemThue đêm
+                                            </td>
+                                            <td class="text-end fw-bold text-primary">
+                                                @item.DoanhThu.ToString("N0") đ
+                                            </td>
+                                            <td>
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <div class="progress flex-grow-1" style="height: 6px;">
+                                                        <div class="progress-bar bg-primary" role="progressbar" style="width: @item.TiLePhanTram%;" aria-valuenow="@item.TiLePhanTram" aria-valuemin="0" aria-valuemax="100"></div>
+                                                    </div>
+                                                    <span class="small fw-semibold text-secondary" style="min-width: 42px;">@item.TiLePhanTram%</span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                            <tfoot class="table-light border-top border-2">
+                                <tr class="fw-bold text-dark">
+                                    <td>TỔNG CỘNG:</td>
+                                    <td class="text-center">@totalBookingsAllRooms lượt</td>
+                                    <td class="text-center">@totalNightsAllRooms đêm</td>
+                                    <td class="text-end text-danger fs-6">@totalRevenueAllRooms.ToString("N0") đ</td>
+                                    <td><span class="badge bg-success">100%</span></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PHẦN 3: BIỂU ĐỒ TRÒN TRỰC QUAN TRẠNG THÁI ĐƠN HÀNG -->
+        <div class="col-xl-5 col-lg-12">
+            <div class="card border-0 shadow-sm rounded-4 h-100 bg-white">
+                <div class="card-header bg-white border-0 pt-4 px-4 pb-2">
+                    <h5 class="fw-bold text-dark mb-1">
+                        <i class="bi bi-diagram-3-fill text-warning me-2"></i>2. Trạng thái đơn đặt phòng
+                    </h5>
+                    <p class="text-muted small mb-0">Biểu đồ tỷ lệ cơ cấu các trạng thái đơn trong kỳ</p>
+                </div>
+                <div class="card-body px-4 py-3 d-flex flex-column align-items-center justify-content-center">
+                    <div style="height: 230px; width: 100%; position: relative;">
+                        <canvas id="bookingStatusChart"></canvas>
+                    </div>
+
+                    <div class="w-100 mt-3 pt-3 border-top">
+                        <div class="row g-2">
+                            @foreach (var st in Model.ThongKeTrangThaiDatPhong)
+                            {
+                                <div class="col-6">
+                                    <div class="d-flex align-items-center justify-content-between p-2 rounded bg-light border">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="d-inline-block rounded-circle" style="width: 10px; height: 10px; background-color: @st.MauSac;"></span>
+                                            <span class="small fw-semibold text-dark">@st.TenHienThi</span>
+                                        </div>
+                                        <div class="text-end">
+                                            <span class="fw-bold small">@st.SoLuong</span>
+                                            <small class="text-muted">(@st.TiLePhanTram%)</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- HÀNG 3: TOP KHÁCH HÀNG THÂN THIẾT CHI TIÊU NHIỀU NHẤT -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm rounded-4 bg-white">
+                <div class="card-header bg-white border-0 pt-4 px-4 pb-2 d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div>
+                        <h5 class="fw-bold text-dark mb-1">
+                            <i class="bi bi-trophy-fill text-warning me-2"></i>3. Top khách hàng thân thiết chi tiêu nhiều nhất
+                        </h5>
+                        <p class="text-muted small mb-0">Danh sách các khách hàng có tổng giá trị chi trả cao nhất</p>
+                    </div>
+                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-3 py-2">
+                        <i class="bi bi-star-fill me-1 text-warning"></i>Top Khách VIP
+                    </span>
+                </div>
+                <div class="card-body px-4 py-2">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light text-secondary text-uppercase fs-7 fw-bold">
+                                <tr>
+                                    <th class="ps-3" style="width: 80px;">Hạng</th>
+                                    <th>Khách hàng</th>
+                                    <th>Liên hệ</th>
+                                    <th class="text-center">Số lần đặt</th>
+                                    <th class="text-end">Tổng chi tiêu</th>
+                                    <th class="text-center">Hạng thành viên</th>
+                                    <th class="text-center pe-3">Đặt gần nhất</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (!Model.TopKhachHangThanThiet.Any())
+                                {
+                                    <tr>
+                                        <td colspan="7" class="text-center py-4 text-muted">
+                                            <i class="bi bi-person-x fs-2 d-block mb-1 opacity-50"></i>
+                                            Chưa ghi nhận dữ liệu chi tiêu khách hàng trong khoảng thời gian này.
+                                        </td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    int rank = 1;
+                                    @foreach (var kh in Model.TopKhachHangThanThiet)
+                                    {
+                                        <tr>
+                                            <td class="ps-3">
+                                                @if (rank == 1)
+                                                {
+                                                    <span class="badge rounded-circle bg-warning text-dark p-2 fs-6 shadow-sm" title="Quán quân">
+                                                        <i class="bi bi-trophy-fill"></i> #1
+                                                    </span>
+                                                }
+                                                else if (rank == 2)
+                                                {
+                                                    <span class="badge rounded-circle bg-secondary text-white p-2 fs-6 shadow-sm" title="Á quân">
+                                                        <i class="bi bi-award-fill"></i> #2
+                                                    </span>
+                                                }
+                                                else if (rank == 3)
+                                                {
+                                                    <span class="badge rounded-circle bg-danger-subtle text-danger p-2 fs-6 shadow-sm" title="Hạng ba">
+                                                        <i class="bi bi-award"></i> #3
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-light text-secondary border px-2 py-1 fw-bold">#@rank</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <div class="fw-bold text-dark">@kh.TenKhachHang</div>
+                                                <small class="text-muted">Mã KH: #KH@kh.MaKH</small>
+                                            </td>
+                                            <td>
+                                                <div><i class="bi bi-telephone me-1 text-muted"></i>@kh.SoDienThoai</div>
+                                                <small class="text-muted"><i class="bi bi-envelope me-1"></i>@(string.IsNullOrEmpty(kh.Email) ? "Chưa lưu" : kh.Email)</small>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="badge bg-light text-primary border fw-semibold px-3 py-1">
+                                                    @kh.SoLanDatPhong lần
+                                                </span>
+                                            </td>
+                                            <td class="text-end fw-bold text-danger fs-6">
+                                                @kh.TongChiTieu.ToString("N0") đ
+                                            </td>
+                                            <td class="text-center">
+                                                @switch (kh.HangThanhVien)
+                                                {
+                                                    case "VIP Kim Cương":
+                                                        <span class="badge rounded-pill bg-primary px-3 py-1 text-white shadow-sm">
+                                                            <i class="bi bi-gem me-1"></i>Kim Cương
+                                                        </span>
+                                                        break;
+                                                    case "VIP Vàng":
+                                                        <span class="badge rounded-pill bg-warning text-dark px-3 py-1 shadow-sm">
+                                                            <i class="bi bi-star-fill me-1"></i>Vàng
+                                                        </span>
+                                                        break;
+                                                    case "VIP Bạc":
+                                                        <span class="badge rounded-pill bg-secondary text-white px-3 py-1">
+                                                            <i class="bi bi-shield me-1"></i>Bạc
+                                                        </span>
+                                                        break;
+                                                    default:
+                                                        <span class="badge rounded-pill bg-light text-dark border px-3 py-1">
+                                                            Thân thiết
+                                                        </span>
+                                                        break;
+                                                }
+                                            </td>
+                                            <td class="text-center pe-3 text-muted small">
+                                                @(kh.NgayDatGanNhat.HasValue ? kh.NgayDatGanNhat.Value.ToString("dd/MM/yyyy") : "---")
+                                            </td>
+                                        </tr>
+                                        rank++;
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // -------------------------------------------------------------
+            // 1. BIỂU ĐỒ CỘT: BIẾN ĐỘNG DOANH THU 7 NGÀY GẦN NHẤT
+            // -------------------------------------------------------------
+            const labels7Ngay = @Html.Raw(JsonSerializer.Serialize(Model.Labels7Ngay));
+            const dataPhong7Ngay = @Html.Raw(JsonSerializer.Serialize(Model.DoanhThuPhong7Ngay));
+            const dataDichVu7Ngay = @Html.Raw(JsonSerializer.Serialize(Model.DoanhThuDichVu7Ngay));
+
+            const ctx7Days = document.getElementById('revenue7DaysBarChart').getContext('2d');
+            new Chart(ctx7Days, {
+                type: 'bar',
+                data: {
+                    labels: labels7Ngay,
+                    datasets: [
+                        {
+                            label: 'Tiền phòng',
+                            data: dataPhong7Ngay,
+                            backgroundColor: '#0d6efd',
+                            borderRadius: 6
+                        },
+                        {
+                            label: 'Tiền dịch vụ',
+                            data: dataDichVu7Ngay,
+                            backgroundColor: '#ff9800',
+                            borderRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ' ' + context.dataset.label + ': ' + Number(context.parsed.y).toLocaleString('vi-VN') + ' đ';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return (value / 1000000) + ' Tr';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // -------------------------------------------------------------
+            // 2. BIỂU ĐỒ TRÒN: CƠ CẤU DOANH THU (TIỀN PHÒNG VS TIỀN DỊCH VỤ)
+            // -------------------------------------------------------------
+            const valPhong = @Html.Raw(JsonSerializer.Serialize(Model.DoanhThuPhong));
+            const valDichVu = @Html.Raw(JsonSerializer.Serialize(Model.DoanhThuDichVu));
+            const tongCoCau = (valPhong + valDichVu) > 0 ? (valPhong + valDichVu) : 1;
+
+            const ctxStructure = document.getElementById('revenueStructureDonutChart').getContext('2d');
+            new Chart(ctxStructure, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Tiền phòng', 'Tiền dịch vụ'],
+                    datasets: [{
+                        data: [valPhong, valDichVu],
+                        backgroundColor: ['#0d6efd', '#ff9800'],
+                        borderWidth: 2,
+                        borderColor: '#ffffff',
+                        hoverOffset: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const val = Number(context.parsed).toLocaleString('vi-VN') + ' đ';
+                                    const pct = ((context.parsed / tongCoCau) * 100).toFixed(1);
+                                    return ` ${context.label}: ${val} (${pct}%)`;
+                                }
+                            }
+                        }
+                    },
+                    cutout: '70%'
+                }
+            });
+
+            // -------------------------------------------------------------
+            // 3. BIỂU ĐỒ TRÒN: TRẠNG THÁI ĐƠN ĐẶT PHÒNG
+            // -------------------------------------------------------------
+            const statusLabels = @Html.Raw(JsonSerializer.Serialize(Model.ChartStatusLabels));
+            const statusCounts = @Html.Raw(JsonSerializer.Serialize(Model.ChartStatusCounts));
+            const statusColors = @Html.Raw(JsonSerializer.Serialize(Model.ChartStatusColors));
+
+            const totalBookings = statusCounts.reduce((acc, curr) => acc + curr, 0);
+            const chartData = totalBookings > 0 ? statusCounts : [1];
+            const chartLabels = totalBookings > 0 ? statusLabels : ['Chưa có đơn'];
+            const chartColors = totalBookings > 0 ? statusColors : ['#e9ecef'];
+
+            const ctxStatus = document.getElementById('bookingStatusChart').getContext('2d');
+            new Chart(ctxStatus, {
+                type: 'doughnut',
+                data: {
+                    labels: chartLabels,
+                    datasets: [{
+                        data: chartData,
+                        backgroundColor: chartColors,
+                        borderWidth: 2,
+                        borderColor: '#ffffff',
+                        hoverOffset: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    if (totalBookings === 0) return ' Chưa có đơn đặt phòng';
+                                    const value = context.parsed;
+                                    const percent = ((value / totalBookings) * 100).toFixed(1);
+                                    return ` ${context.label}: ${value} đơn (${percent}%)`;
+                                }
+                            }
+                        }
+                    },
+                    cutout: '72%'
+                }
+            });
+        });
+    </script>
+}
