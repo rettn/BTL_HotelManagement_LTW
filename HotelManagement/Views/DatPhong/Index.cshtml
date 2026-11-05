@@ -11,7 +11,7 @@
         "DaCoc" => "Đã đặt cọc",
         "DangLuuTru" => "Đã nhận phòng",
         "DaThanhToan" => "Đã thanh toán",
-        "DaHoanThanh" => "Đã trả",
+        "DaHoanThanh" => "Đã thanh toán",
         _ => status ?? "Chưa xác định"
     };
     string StatusClass(string? status) => status switch
@@ -23,37 +23,825 @@
         _ => "booking-state-pending"
     };
     string FmtDate(DateTime date) => date.ToString("dd/MM, HH:mm");
-    var statusOrder = new[] { "ChoXacNhan", "DaXacNhan", "DaCoc", "DangLuuTru", "DaThanhToan", "DaHoanThanh" };
-    var statuses = statusOrder.Where(s => bookings.Any(b => b.TrangThai == s)).ToList();
+    string StatusGroup(string? status) => status == "DaHoanThanh" ? "DaThanhToan" : (status ?? "");
+    var statusOrder = new[] { "ChoXacNhan", "DaXacNhan", "DaCoc", "DangLuuTru", "DaThanhToan" };
+    var statuses = statusOrder.Where(s => bookings.Any(b => StatusGroup(b.TrangThai) == s)).ToList();
 }
 
 <style>
-    .booking-page{color:#263449}.booking-head{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:16px}
-    .booking-head h2{font-size:26px;font-weight:700;margin:0 0 5px}.booking-head p{color:#748198;margin:0}
-    .booking-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
-    .booking-tools-left,.booking-tools-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-    .booking-search-wrap{position:relative;min-width:min(290px,80vw)}.booking-search-wrap i{position:absolute;left:12px;top:12px;color:#8290a5}
-    .booking-search{width:100%;padding:10px 12px 10px 36px;border:1px solid #dce3ed;border-radius:9px;outline:none}.booking-search:focus,.booking-date:focus{border-color:#3997f5;box-shadow:0 0 0 3px rgba(57,151,245,.12)}
-    .booking-tool-btn,.booking-range-btn{height:40px;border:1px solid #dce3ed;border-radius:9px;background:#fff;color:#40516a;padding:0 12px;display:inline-flex;align-items:center;gap:7px;cursor:pointer;text-decoration:none;white-space:nowrap}
-    .booking-tool-btn:hover,.booking-range-btn:hover{background:#f4f8fc;color:#246caa}.booking-primary{height:40px;display:inline-flex;align-items:center;gap:8px;padding:0 15px;border-radius:9px;background:#209c60;color:white;text-decoration:none;font-weight:650}.booking-primary:hover{background:#16834f;color:#fff}
-    .booking-date{height:40px;width:138px;border:1px solid #dce3ed;border-radius:9px;padding:0 9px;color:#40516a}.booking-range{display:flex;align-items:center;gap:5px;padding:0 5px;border:1px solid #e2e8f0;background:white;border-radius:10px}
-    .booking-range .booking-range-btn{border:0;padding:0 8px}.booking-range-sep{color:#98a3b3}.booking-view-toggle{display:inline-flex;padding:3px;border:1px solid #dce3ed;border-radius:9px;background:#fff}.booking-view-toggle button{border:0;border-radius:6px;background:transparent;color:#718096;padding:6px 9px;cursor:pointer}.booking-view-toggle button.active{background:#209c60;color:#fff}
-    .booking-chips{display:flex;gap:8px;overflow:auto;padding:2px 1px 12px}.booking-chip{flex:0 0 auto;border:1px solid #dce3ed;border-radius:99px;background:#fff;padding:7px 12px;color:#56657a;cursor:pointer;font-size:13px}.booking-chip.active{border-color:#209c60;background:#eef8f2;color:#18764b}.booking-chip .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;background:#8b98a9}.dot-pending{background:#2379e8!important}.dot-returned{background:#718096!important}.dot-booked{background:#c77d4c!important}.dot-arriving{background:#f28c00!important}.dot-staying{background:#209c60!important}.dot-due{background:#047f77!important}.dot-overdue{background:#c93535!important}.dot-invoice{background:#11aeb0!important}
-    .booking-panel{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:12px}.booking-table-wrap{overflow:auto}.booking-table{width:100%;min-width:1190px;border-collapse:separate;border-spacing:0 7px}.booking-table th{padding:10px 9px;color:#65748b;font-size:12px;font-weight:650;white-space:nowrap;text-align:left}.booking-table th:first-child,.booking-table td:first-child{text-align:center;width:48px}.booking-table tbody tr{background:#f8fafc;transition:background .15s}.booking-table tbody tr:hover{background:#f2f7fc}.booking-table td{padding:13px 9px;vertical-align:top;font-size:13px}.booking-table tbody td:first-child{border-radius:12px 0 0 12px;padding-top:19px}.booking-table tbody td:last-child{border-radius:0 12px 12px 0}.booking-code{color:#16834f;font-weight:750;text-decoration:none}.booking-muted{display:block;margin-top:4px;color:#8290a5;font-size:12px}.booking-customer{font-weight:650;color:#263449}.booking-source{color:#53647b;white-space:nowrap}.booking-source i{color:#7b8ba1;margin-right:5px}.booking-money{white-space:nowrap;font-variant-numeric:tabular-nums}.booking-due{color:#d83d3d}.booking-roomline{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:11px;color:#526278;white-space:nowrap}.booking-room-badge{background:#dff2e8;color:#18764b;border-radius:5px;padding:3px 7px;font-size:11px;font-weight:700}.booking-state{display:inline-flex;border-radius:99px;padding:4px 8px;font-size:11px;font-weight:650;white-space:nowrap}.booking-state-pending{background:#fff3d6;color:#986500}.booking-state-booked{background:#e5f1ff;color:#2168b3}.booking-state-staying{background:#e4f8ed;color:#16804a}.booking-state-returned{background:#eef1f5;color:#596579}.booking-row-actions{display:flex;align-items:center;justify-content:flex-end;gap:6px;white-space:nowrap}.booking-act{border:0;border-radius:7px;background:#209c60;color:#fff;padding:7px 11px;font-size:12px;font-weight:650;text-decoration:none;cursor:pointer}.booking-act:hover{background:#16834f;color:#fff}.booking-act.checkout{background:#2176df}.booking-act.checkout:hover{background:#145cb7}.booking-act.neutral{background:#fff;border:1px solid #dce3ed;color:#40516a}.booking-act.neutral:hover{background:#f4f8fc}.booking-more{position:relative}.booking-more summary{list-style:none;border:1px solid #dce3ed;border-radius:7px;padding:5px 8px;cursor:pointer;background:#fff}.booking-more summary::-webkit-details-marker{display:none}.booking-menu{position:absolute;z-index:5;right:0;top:32px;min-width:160px;background:#fff;border:1px solid #e2e8f0;border-radius:9px;box-shadow:0 10px 28px rgba(20,40,70,.13);padding:5px}.booking-menu a,.booking-menu button{display:block;width:100%;padding:8px;text-align:left;border:0;background:none;color:#40516a;text-decoration:none;border-radius:6px;font-size:12px}.booking-menu a:hover,.booking-menu button:hover{background:#f3f7fb}.booking-menu .danger{color:#c03939}.booking-empty{text-align:center;padding:46px 15px;color:#7b8798}.booking-empty i{display:block;font-size:35px;margin-bottom:10px}.booking-empty h3{font-size:18px;color:#344258}.booking-foot{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:9px 4px 0;color:#748198;font-size:12px}.booking-cards{display:none;gap:10px}.booking-cards.grid{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}.booking-card{border:1px solid #e2e8f0;background:#f9fbfd;border-radius:12px;padding:15px}.booking-card-head{display:flex;justify-content:space-between;gap:8px}.booking-card .booking-roomline{margin:10px 0}.booking-card-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}.booking-card-grid small{display:block;color:#8290a5}.booking-hidden{display:none!important}
-    .sort-bookings{border:0;padding:0;background:transparent;color:inherit;font:inherit;white-space:nowrap}.sort-bookings:hover{color:#287fd1}
-    .booking-actions-cell{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
-    .booking-expand-toggle{display:inline-flex;align-items:center;gap:6px;border:0;background:transparent;padding:5px 0;color:#40516a;cursor:pointer}.booking-expand-toggle:hover{color:#16834f}.booking-room-status{display:inline-block;border-radius:5px;padding:3px 7px;font-size:11px;font-weight:700}.room-status-reserved{background:#fff0d7;color:#a86706}.room-status-occupied{background:#dff2e8;color:#18764b}.room-status-cleaning{background:#e5efff;color:#2563b7}.room-details-row td{padding:0!important;background:#fff!important;border-top:1px solid #e4e9ef;border-bottom:1px solid #e4e9ef}.room-details-list{padding:7px 14px 10px 58px}.room-details-head,.room-details-item{display:grid;grid-template-columns:minmax(210px,1.6fr) minmax(140px,1fr) minmax(140px,1fr) 100px minmax(120px,1fr) minmax(110px,.8fr) 135px;align-items:center;gap:12px;padding:11px 10px}.room-details-head{color:#738198;font-size:11px;font-weight:700;text-transform:uppercase}.room-details-item{border-top:1px solid #edf0f4;color:#42516a;font-size:12px}.room-details-name strong{display:block;color:#263449;font-size:13px}.room-details-name small{color:#7b8798}.room-details-action{justify-self:end}
-    .booking-card-details .room-details-list{padding:0}.booking-card-details .room-details-head{display:none}.booking-card-details .room-details-item{grid-template-columns:1fr;gap:5px;padding:10px 0}.booking-card-details .room-details-action{justify-self:start}
-    .booking-filters{display:none;gap:8px;align-items:center;flex-wrap:wrap}.booking-filters.show{display:flex}.booking-filter-select{height:38px;border:1px solid #dce3ed;border-radius:8px;padding:0 9px;color:#40516a;background:white}
-    @@media(max-width:760px){.booking-toolbar{align-items:stretch}.booking-tools-left,.booking-tools-right{width:100%}.booking-search-wrap{flex:1}.booking-range{order:3;width:100%;justify-content:center}.booking-date{width:120px}.booking-panel{padding:8px}.booking-table{min-width:1100px}.booking-head h2{font-size:23px}}
+    .booking-page {
+        color: #263449
+    }
+
+    .booking-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 16px
+    }
+
+        .booking-head h2 {
+            font-size: 26px;
+            font-weight: 700;
+            margin: 0 0 5px
+        }
+
+        .booking-head p {
+            color: #748198;
+            margin: 0
+        }
+
+    .booking-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 12px
+    }
+
+    .booking-tools-left, .booking-tools-right {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap
+    }
+
+    .booking-search-wrap {
+        position: relative;
+        min-width: min(290px,80vw)
+    }
+
+        .booking-search-wrap i {
+            position: absolute;
+            left: 12px;
+            top: 12px;
+            color: #8290a5
+        }
+
+    .booking-search {
+        width: 100%;
+        padding: 10px 12px 10px 36px;
+        border: 1px solid #dce3ed;
+        border-radius: 9px;
+        outline: none
+    }
+
+        .booking-search:focus, .booking-date:focus {
+            border-color: #3997f5;
+            box-shadow: 0 0 0 3px rgba(57,151,245,.12)
+        }
+
+    .booking-tool-btn, .booking-range-btn {
+        height: 40px;
+        border: 1px solid #dce3ed;
+        border-radius: 9px;
+        background: #fff;
+        color: #40516a;
+        padding: 0 12px;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        cursor: pointer;
+        text-decoration: none;
+        white-space: nowrap
+    }
+
+        .booking-tool-btn:hover, .booking-range-btn:hover {
+            background: #f4f8fc;
+            color: #246caa
+        }
+
+    .booking-primary {
+        height: 40px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0 15px;
+        border-radius: 9px;
+        background: #209c60;
+        color: white;
+        text-decoration: none;
+        font-weight: 650
+    }
+
+        .booking-primary:hover {
+            background: #16834f;
+            color: #fff
+        }
+
+    .booking-date {
+        height: 40px;
+        width: 138px;
+        border: 1px solid #dce3ed;
+        border-radius: 9px;
+        padding: 0 9px;
+        color: #40516a
+    }
+
+    .booking-range {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        padding: 0 5px;
+        border: 1px solid #e2e8f0;
+        background: white;
+        border-radius: 10px
+    }
+
+        .booking-range .booking-range-btn {
+            border: 0;
+            padding: 0 8px
+        }
+
+    .booking-range-sep {
+        color: #98a3b3
+    }
+
+    .booking-view-toggle {
+        display: inline-flex;
+        padding: 3px;
+        border: 1px solid #dce3ed;
+        border-radius: 9px;
+        background: #fff
+    }
+
+        .booking-view-toggle button {
+            border: 0;
+            border-radius: 6px;
+            background: transparent;
+            color: #718096;
+            padding: 6px 9px;
+            cursor: pointer
+        }
+
+            .booking-view-toggle button.active {
+                background: #209c60;
+                color: #fff
+            }
+
+    .booking-chips {
+        display: flex;
+        gap: 8px;
+        overflow: auto;
+        padding: 2px 1px 12px
+    }
+
+    .booking-chip {
+        flex: 0 0 auto;
+        border: 1px solid #dce3ed;
+        border-radius: 99px;
+        background: #fff;
+        padding: 7px 12px;
+        color: #56657a;
+        cursor: pointer;
+        font-size: 13px
+    }
+
+        .booking-chip.active {
+            border-color: #209c60;
+            background: #eef8f2;
+            color: #18764b
+        }
+
+        .booking-chip .dot {
+            display: inline-block;
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            margin-right: 7px;
+            background: #8b98a9
+        }
+
+    .dot-pending {
+        background: #2379e8 !important
+    }
+
+    .dot-returned {
+        background: #718096 !important
+    }
+
+    .dot-booked {
+        background: #c77d4c !important
+    }
+
+    .dot-arriving {
+        background: #f28c00 !important
+    }
+
+    .dot-staying {
+        background: #209c60 !important
+    }
+
+    .dot-due {
+        background: #047f77 !important
+    }
+
+    .dot-overdue {
+        background: #c93535 !important
+    }
+
+    .dot-invoice {
+        background: #11aeb0 !important
+    }
+
+    .booking-panel {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 12px
+    }
+
+    .booking-table-wrap {
+        overflow: auto
+    }
+
+    .booking-table {
+        width: 100%;
+        min-width: 1190px;
+        border-collapse: separate;
+        border-spacing: 0 7px
+    }
+
+        .booking-table th {
+            padding: 10px 9px;
+            color: #65748b;
+            font-size: 12px;
+            font-weight: 650;
+            white-space: nowrap;
+            text-align: left
+        }
+
+            .booking-table th:first-child, .booking-table td:first-child {
+                text-align: center;
+                width: 48px
+            }
+
+        .booking-table tbody tr {
+            background: #f8fafc;
+            transition: background .15s
+        }
+
+            .booking-table tbody tr:hover {
+                background: #f2f7fc
+            }
+
+        .booking-table td {
+            padding: 13px 9px;
+            vertical-align: top;
+            font-size: 13px
+        }
+
+        .booking-table tbody td:first-child {
+            border-radius: 12px 0 0 12px;
+            padding-top: 19px
+        }
+
+        .booking-table tbody td:last-child {
+            border-radius: 0 12px 12px 0
+        }
+
+    .booking-code {
+        color: #16834f;
+        font-weight: 750;
+        text-decoration: none
+    }
+
+    .booking-muted {
+        display: block;
+        margin-top: 4px;
+        color: #8290a5;
+        font-size: 12px
+    }
+
+    .booking-customer {
+        font-weight: 650;
+        color: #263449
+    }
+
+    .booking-source {
+        color: #53647b;
+        white-space: nowrap
+    }
+
+        .booking-source i {
+            color: #7b8ba1;
+            margin-right: 5px
+        }
+
+    .booking-money {
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums
+    }
+
+    .booking-due {
+        color: #d83d3d
+    }
+
+    .booking-roomline {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-top: 11px;
+        color: #526278;
+        white-space: nowrap
+    }
+
+    .booking-room-badge {
+        background: #dff2e8;
+        color: #18764b;
+        border-radius: 5px;
+        padding: 3px 7px;
+        font-size: 11px;
+        font-weight: 700
+    }
+
+    .booking-state {
+        display: inline-flex;
+        border-radius: 99px;
+        padding: 4px 8px;
+        font-size: 11px;
+        font-weight: 650;
+        white-space: nowrap
+    }
+
+    .booking-state-pending {
+        background: #fff3d6;
+        color: #986500
+    }
+
+    .booking-state-booked {
+        background: #e5f1ff;
+        color: #2168b3
+    }
+
+    .booking-state-staying {
+        background: #e4f8ed;
+        color: #16804a
+    }
+
+    .booking-state-returned {
+        background: #eef1f5;
+        color: #596579
+    }
+
+    .booking-row-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 6px;
+        white-space: nowrap
+    }
+
+    .booking-act {
+        border: 0;
+        border-radius: 7px;
+        background: #209c60;
+        color: #fff;
+        padding: 7px 11px;
+        font-size: 12px;
+        font-weight: 650;
+        text-decoration: none;
+        cursor: pointer
+    }
+
+        .booking-act:hover {
+            background: #16834f;
+            color: #fff
+        }
+
+        .booking-act.checkout {
+            background: #2176df
+        }
+
+            .booking-act.checkout:hover {
+                background: #145cb7
+            }
+
+        .booking-act.neutral {
+            background: #fff;
+            border: 1px solid #dce3ed;
+            color: #40516a
+        }
+
+            .booking-act.neutral:hover {
+                background: #f4f8fc
+            }
+
+    .booking-more {
+        position: relative
+    }
+
+        .booking-more summary {
+            list-style: none;
+            border: 1px solid #dce3ed;
+            border-radius: 7px;
+            padding: 5px 8px;
+            cursor: pointer;
+            background: #fff
+        }
+
+            .booking-more summary::-webkit-details-marker {
+                display: none
+            }
+
+    .booking-menu {
+        position: absolute;
+        z-index: 5;
+        right: 0;
+        top: 32px;
+        min-width: 160px;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 9px;
+        box-shadow: 0 10px 28px rgba(20,40,70,.13);
+        padding: 5px
+    }
+
+        .booking-menu a, .booking-menu button {
+            display: block;
+            width: 100%;
+            padding: 8px;
+            text-align: left;
+            border: 0;
+            background: none;
+            color: #40516a;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 12px
+        }
+
+            .booking-menu a:hover, .booking-menu button:hover {
+                background: #f3f7fb
+            }
+
+        .booking-menu .danger {
+            color: #c03939
+        }
+
+    .booking-empty {
+        text-align: center;
+        padding: 46px 15px;
+        color: #7b8798
+    }
+
+        .booking-empty i {
+            display: block;
+            font-size: 35px;
+            margin-bottom: 10px
+        }
+
+        .booking-empty h3 {
+            font-size: 18px;
+            color: #344258
+        }
+
+    .booking-foot {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        flex-wrap: wrap;
+        padding: 9px 4px 0;
+        color: #748198;
+        font-size: 12px
+    }
+
+    .booking-cards {
+        display: none;
+        gap: 10px
+    }
+
+        .booking-cards.grid {
+            grid-template-columns: repeat(auto-fill,minmax(300px,1fr))
+        }
+
+    .booking-card {
+        border: 1px solid #e2e8f0;
+        background: #f9fbfd;
+        border-radius: 12px;
+        padding: 15px
+    }
+
+    .booking-card-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px
+    }
+
+    .booking-card .booking-roomline {
+        margin: 10px 0
+    }
+
+    .booking-card-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin: 12px 0
+    }
+
+        .booking-card-grid small {
+            display: block;
+            color: #8290a5
+        }
+
+    .booking-hidden {
+        display: none !important
+    }
+
+    .sort-bookings {
+        border: 0;
+        padding: 0;
+        background: transparent;
+        color: inherit;
+        font: inherit;
+        white-space: nowrap
+    }
+
+        .sort-bookings:hover {
+            color: #287fd1
+        }
+
+    .booking-actions-cell {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 6px
+    }
+
+    .booking-expand-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border: 0;
+        background: transparent;
+        padding: 5px 0;
+        color: #40516a;
+        cursor: pointer
+    }
+
+        .booking-expand-toggle:hover {
+            color: #16834f
+        }
+
+    .booking-room-status {
+        display: inline-block;
+        border-radius: 5px;
+        padding: 3px 7px;
+        font-size: 11px;
+        font-weight: 700
+    }
+
+    .room-status-reserved {
+        background: #fff0d7;
+        color: #a86706
+    }
+
+    .room-status-occupied {
+        background: #dff2e8;
+        color: #18764b
+    }
+
+    .room-status-cleaning {
+        background: #e5efff;
+        color: #2563b7
+    }
+
+    .room-details-row td {
+        padding: 0 !important;
+        background: #fff !important;
+        border-top: 1px solid #e4e9ef;
+        border-bottom: 1px solid #e4e9ef
+    }
+
+    .room-details-list {
+        padding: 7px 14px 10px 58px
+    }
+
+    .room-details-head, .room-details-item {
+        display: grid;
+        grid-template-columns: minmax(210px,1.6fr) minmax(140px,1fr) minmax(140px,1fr) 100px minmax(120px,1fr) minmax(110px,.8fr) 135px;
+        align-items: center;
+        gap: 12px;
+        padding: 11px 10px
+    }
+
+    .room-details-head {
+        color: #738198;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase
+    }
+
+    .room-details-item {
+        border-top: 1px solid #edf0f4;
+        color: #42516a;
+        font-size: 12px
+    }
+
+    .room-details-name strong {
+        display: block;
+        color: #263449;
+        font-size: 13px
+    }
+
+    .room-details-name small {
+        color: #7b8798
+    }
+
+    .room-details-action {
+        justify-self: end
+    }
+
+    .booking-card-details .room-details-list {
+        padding: 0
+    }
+
+    .booking-card-details .room-details-head {
+        display: none
+    }
+
+    .booking-card-details .room-details-item {
+        grid-template-columns: 1fr;
+        gap: 5px;
+        padding: 10px 0
+    }
+
+    .booking-card-details .room-details-action {
+        justify-self: start
+    }
+
+    .booking-filters {
+        display: none;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap
+    }
+
+        .booking-filters.show {
+            display: flex
+        }
+
+    .booking-filter-select {
+        height: 38px;
+        border: 1px solid #dce3ed;
+        border-radius: 8px;
+        padding: 0 9px;
+        color: #40516a;
+        background: white
+    }
+
+    @@media(max-width:760px) {
+        .booking-toolbar {
+            align-items: stretch
+        }
+
+        .booking-tools-left, .booking-tools-right {
+            width: 100%
+        }
+
+        .booking-search-wrap {
+            flex: 1
+        }
+
+        .booking-range {
+            order: 3;
+            width: 100%;
+            justify-content: center
+        }
+
+        .booking-date {
+            width: 120px
+        }
+
+        .booking-panel {
+            padding: 8px
+        }
+
+        .booking-table {
+            min-width: 1100px
+        }
+
+        .booking-head h2 {
+            font-size: 23px
+        }
+    }
+
+    .confirm-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 2000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+        background: rgba(20,26,38,.5)
+    }
+
+    .confirm-box {
+        width: min(440px,100%);
+        background: #fff;
+        border-radius: 16px;
+        padding: 26px 24px 20px;
+        text-align: center;
+        box-shadow: 0 20px 50px rgba(20,40,70,.25)
+    }
+
+    .confirm-icon {
+        width: 56px;
+        height: 56px;
+        margin: 0 auto 14px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: #e5f1ff;
+        color: #2176df;
+        font-size: 26px
+    }
+
+    .confirm-box h3 {
+        margin: 0 0 8px;
+        font-size: 19px;
+        font-weight: 700;
+        color: #263449
+    }
+
+    .confirm-box p {
+        margin: 0 0 14px;
+        color: #56657a;
+        line-height: 1.5
+    }
+
+    .confirm-items {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 7px;
+        margin-bottom: 14px
+    }
+
+    .confirm-chip {
+        background: #eef1f5;
+        color: #263449;
+        border-radius: 99px;
+        padding: 5px 11px;
+        font-size: 13px;
+        font-weight: 650
+    }
+
+    .confirm-note {
+        background: #f4f8fc;
+        border-radius: 9px;
+        padding: 10px 12px;
+        margin-bottom: 16px;
+        color: #65748b;
+        font-size: 12.5px;
+        text-align: left
+    }
+
+    .confirm-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: center
+    }
+
+    .confirm-btn {
+        flex: 1;
+        height: 42px;
+        border-radius: 9px;
+        font-weight: 650;
+        cursor: pointer
+    }
+
+    .confirm-cancel {
+        border: 1px solid #dce3ed;
+        background: #fff;
+        color: #40516a
+    }
+
+        .confirm-cancel:hover {
+            background: #f4f8fc
+        }
+
+    .confirm-ok {
+        border: 0;
+        background: #2176df;
+        color: #fff
+    }
+
+        .confirm-ok:hover {
+            background: #145cb7
+        }
 </style>
 
 <div class="booking-page">
     <div class="booking-head">
-        <div><h2>Danh sách đặt phòng</h2><p>Theo dõi lịch lưu trú, nhận phòng và thanh toán</p></div>
+        <div><h2>Danh sách đặt phòng</h2></div>
         <div class="d-flex gap-2 flex-wrap">
-            <a asp-action="History" class="booking-tool-btn"><i class="bi bi-clock-history"></i> Lịch sử</a>
-            <a asp-controller="Phong" asp-action="Index" class="booking-tool-btn"><i class="bi bi-grid-3x3-gap"></i> Xếp phòng</a>
+
+            <a asp-controller="Phong" asp-action="Index" class="booking-tool-btn"><i class="bi bi-grid-3x3-gap"></i> Sơ đồ phòng</a>
             <a asp-action="Create" class="booking-primary"><i class="bi bi-plus-lg"></i> Đặt phòng</a>
         </div>
     </div>
@@ -80,8 +868,12 @@
     </div>
 
     <div class="booking-toolbar booking-filters" id="bookingFilters">
-        <select id="roomTypeFilter" class="booking-filter-select"><option value="">Tất cả loại phòng</option>
-            @foreach (var type in bookings.SelectMany(b => b.ChiTietDatPhongs).Where(c => c.Phong?.LoaiPhong != null).Select(c => c.Phong!.LoaiPhong!.TenLoaiPhong).Distinct().OrderBy(x => x)) { <option value="@type">@type</option> }
+        <select id="roomTypeFilter" class="booking-filter-select">
+            <option value="">Tất cả loại phòng</option>
+            @foreach (var type in bookings.SelectMany(b => b.ChiTietDatPhongs).Where(c => c.Phong?.LoaiPhong != null).Select(c => c.Phong!.LoaiPhong!.TenLoaiPhong).Distinct().OrderBy(x => x))
+            {
+                <option value="@type">@type</option>
+            }
         </select>
         <select id="paymentFilter" class="booking-filter-select"><option value="">Mọi trạng thái thanh toán</option><option value="unpaid">Còn cần trả</option><option value="paid">Đã thanh toán</option></select>
         <button type="button" class="booking-tool-btn" id="clearFilters">Xóa bộ lọc</button>
@@ -100,27 +892,31 @@
             <table class="booking-table">
                 <thead><tr><th>STT</th><th>Mã đặt phòng</th><th>Kênh bán</th><th>Thông tin khách</th><th><button type="button" class="sort-bookings" data-sort="arrival">Giờ nhận <i class="bi bi-arrow-down-up"></i></button></th><th><button type="button" class="sort-bookings" data-sort="departure">Giờ trả <i class="bi bi-arrow-down-up"></i></button></th><th>Lưu trú</th><th>Giá tiền</th><th>Tổng cộng</th><th>Khách đã trả</th><th>Còn cần trả</th><th></th></tr></thead>
                 <tbody id="bookingRows">
-                @foreach (var booking in bookings)
-                {
-                    var rooms = booking.ChiTietDatPhongs?.ToList() ?? new List<HotelManagement.Models.ChiTietDatPhong>();
-                    var guest = booking.KhachHang?.HoTen ?? "Khách lẻ";
-                    var search = $"DP{booking.MaDatPhong:D6} {booking.MaDatPhong} {guest} {booking.KhachHang?.SoDienThoai} {string.Join(" ", rooms.Select(r => r.Phong?.SoPhong))}";
-                    var nights = Math.Max(1, (booking.NgayTraDuKien.Date - booking.NgayNhanDuKien.Date).Days);
-                    var nightly = rooms.Sum(r => r.DonGia);
-                    var roomSubtotal = nightly * nights;
-                    var total = booking.HoaDons?.Any() == true ? booking.HoaDons.Sum(h => h.TongTien) : roomSubtotal;
-                    var recordedPayments = booking.HoaDons?.SelectMany(h => h.ThanhToans ?? new List<HotelManagement.Models.ThanhToan>()).Where(t => t.TrangThai == "DaThanhToan" || t.TrangThai == "DaCoc").Sum(t => t.SoTien) ?? 0;
-                    var paid = Math.Max(booking.TienCoc, recordedPayments);
-                    var balance = Math.Max(0, total - paid);
-                    var hasInvoice = booking.HoaDons?.Any() == true;
-                    var hasActiveStay = rooms.Any(r => r.DanhSachLuuTru?.Any(l => l.ThoiGianNhanPhong != null && l.ThoiGianTraPhong == null) == true);
-                    var roomTypes = string.Join("|", rooms.Select(r => r.Phong?.LoaiPhong?.TenLoaiPhong).Where(s => !string.IsNullOrWhiteSpace(s)).Distinct());
-                    var arrivalDisplay = booking.NgayNhanThucTe != default ? booking.NgayNhanThucTe : booking.NgayNhanDuKien.TimeOfDay == TimeSpan.Zero ? booking.NgayNhanDuKien.Date.AddHours(14) : booking.NgayNhanDuKien;
-                    var departureDisplay = booking.NgayTraThucTe != default ? booking.NgayTraThucTe : booking.NgayTraDuKien.TimeOfDay == TimeSpan.Zero ? booking.NgayTraDuKien.Date.AddHours(12) : booking.NgayTraDuKien;
-                    <tr class="booking-row" data-search="@search" data-status="@booking.TrangThai" data-arrival="@booking.NgayNhanDuKien.ToString("yyyy-MM-dd")" data-departure="@booking.NgayTraDuKien.ToString("yyyy-MM-dd")" data-types="@roomTypes" data-balance="@balance" data-has-stay="@hasActiveStay.ToString().ToLowerInvariant()" data-has-invoice="@hasInvoice.ToString().ToLowerInvariant()">
-                        <td class="row-number"></td>
-                        <td><a asp-action="Details" asp-route-id="@booking.MaDatPhong" class="booking-code">@("DP" + booking.MaDatPhong.ToString("D6"))</a><span class="booking-muted">@booking.NgayDat.ToString("dd/MM/yyyy HH:mm")</span>
-                            <div class="booking-roomline"><button type="button" class="booking-expand-toggle" data-booking-expand="@booking.MaDatPhong" aria-expanded="false"><i class="bi bi-chevron-right"></i><span>@rooms.Count phòng</span></button>@foreach (var room in rooms) { var active = room.DanhSachLuuTru?.Any(l => l.ThoiGianNhanPhong != null && l.ThoiGianTraPhong == null) == true; var returned = room.DanhSachLuuTru?.Any(l => l.ThoiGianTraPhong != null) == true; <span title="@(active ? "Đang lưu trú" : returned ? "Đã trả · đang dọn" : "Chưa nhận phòng")" class="booking-room-status @(active ? "room-status-occupied" : returned ? "room-status-cleaning" : "room-status-reserved")">@room.Phong?.SoPhong</span> }</div>
+                    @foreach (var booking in bookings)
+                    {
+                        var rooms = booking.ChiTietDatPhongs?.ToList() ?? new List<HotelManagement.Models.ChiTietDatPhong>();
+                        var guest = booking.KhachHang?.HoTen ?? "Khách lẻ";
+                        var search = $"DP{booking.MaDatPhong:D6} {booking.MaDatPhong} {guest} {booking.KhachHang?.SoDienThoai} {string.Join(" ", rooms.Select(r => r.Phong?.SoPhong))}";
+                        var nights = Math.Max(1, (booking.NgayTraDuKien.Date - booking.NgayNhanDuKien.Date).Days);
+                        var nightly = rooms.Sum(r => r.DonGia);
+                        var roomSubtotal = nightly * nights;
+                        var total = booking.HoaDons?.Any() == true ? booking.HoaDons.Sum(h => h.TongTien) : roomSubtotal;
+                        var recordedPayments = booking.HoaDons?.SelectMany(h => h.ThanhToans ?? new List<HotelManagement.Models.ThanhToan>()).Where(t => t.TrangThai == "DaThanhToan" || t.TrangThai == "DaCoc" || t.TrangThai == "ThanhCong").Sum(t => t.SoTien) ?? 0;
+                        var paid = Math.Max(booking.TienCoc, recordedPayments);
+                        var balance = Math.Max(0, total - paid);
+                        var hasInvoice = booking.HoaDons?.Any() == true;
+                        var hasActiveStay = rooms.Any(r => r.DanhSachLuuTru?.Any(l => l.ThoiGianNhanPhong != null && l.ThoiGianTraPhong == null) == true);
+                        var roomTypes = string.Join("|", rooms.Select(r => r.Phong?.LoaiPhong?.TenLoaiPhong).Where(s => !string.IsNullOrWhiteSpace(s)).Distinct());
+                        var arrivalDisplay = booking.NgayNhanThucTe != default ? booking.NgayNhanThucTe : booking.NgayNhanDuKien.TimeOfDay == TimeSpan.Zero ? booking.NgayNhanDuKien.Date.AddHours(14) : booking.NgayNhanDuKien;
+                        var departureDisplay = booking.NgayTraThucTe != default ? booking.NgayTraThucTe : booking.NgayTraDuKien.TimeOfDay == TimeSpan.Zero ? booking.NgayTraDuKien.Date.AddHours(12) : booking.NgayTraDuKien;
+                        <tr class="booking-row" data-search="@search" data-status="@StatusGroup(booking.TrangThai)" data-arrival="@booking.NgayNhanDuKien.ToString("yyyy-MM-dd")" data-departure="@booking.NgayTraDuKien.ToString("yyyy-MM-dd")" data-types="@roomTypes" data-balance="@balance" data-has-stay="@hasActiveStay.ToString().ToLowerInvariant()" data-has-invoice="@hasInvoice.ToString().ToLowerInvariant()">
+                            <td class="row-number"></td>
+                            <td>
+                                <a asp-action="Details" asp-route-id="@booking.MaDatPhong" class="booking-code">@("DP" + booking.MaDatPhong.ToString("D6"))</a><span class="booking-muted">@booking.NgayDat.ToString("dd/MM/yyyy HH:mm")</span>
+                                <div class="booking-roomline"><button type="button" class="booking-expand-toggle" data-booking-expand="@booking.MaDatPhong" aria-expanded="false"><i class="bi bi-chevron-right"></i><span>@rooms.Count phòng</span></button>@foreach (var room in rooms) { var active = room.DanhSachLuuTru?.Any(l => l.ThoiGianNhanPhong != null && l.ThoiGianTraPhong == null) == true; var returned = room.DanhSachLuuTru?.Any(l => l.ThoiGianTraPhong != null) == true;
+                                <span title="@(active ? "Đang lưu trú" : returned ? "Đã trả · đang dọn" : "Chưa nhận phòng")" class="booking-room-status @(active ? "room-status-occupied" : returned ? "room-status-cleaning" : "room-status-reserved")">@room.Phong?.SoPhong</span>
+                            }
+</div>
                         </td>
                         <td><span class="booking-source"><i class="bi @(booking.GhiChu?.Contains("Khách tự đặt trực tuyến", StringComparison.OrdinalIgnoreCase) == true ? "bi-globe2" : "bi-person-walking")"></i>@(booking.GhiChu?.Contains("Khách tự đặt trực tuyến", StringComparison.OrdinalIgnoreCase) == true ? "Kênh đặt online" : "Khách đến trực tiếp")</span></td>
                         <td><span class="booking-customer">@guest</span><span class="booking-muted">@(booking.KhachHang?.SoDienThoai ?? "Chưa có số điện thoại")</span></td>
@@ -133,27 +929,43 @@
                         <td class="booking-money booking-due">@balance.ToString("N0")</td>
                         <td>
                             <div class="booking-actions-cell">
-                            <div class="booking-row-actions">
-                                @{ var nextRoom = (booking.TrangThai == "ChoXacNhan" || booking.TrangThai == "DaXacNhan" || booking.TrangThai == "DaCoc" || booking.TrangThai == "DangLuuTru") ? rooms.FirstOrDefault(r => r.DanhSachLuuTru?.Any(l => l.ThoiGianNhanPhong != null) != true) : null; }
-                                @if (nextRoom != null)
-                                {
-                                    <button type="button" class="booking-act js-checkin" data-booking="@booking.MaDatPhong" data-room="@nextRoom.MaPhong">Nhận phòng</button>
-                                }
-                                @if (booking.TrangThai == "DangLuuTru")
-                                {
-                                    <a asp-action="Checkout" asp-route-id="@booking.MaDatPhong" class="booking-act checkout">Trả phòng</a>
-                                }
-                                else if (booking.TrangThai == "DaHoanThanh" && !hasInvoice)
-                                {
-                                    <a asp-action="XuatHoaDon" asp-route-id="@booking.MaDatPhong" class="booking-act">Xuất hóa đơn</a>
-                                }
-                                <details class="booking-more"><summary><i class="bi bi-three-dots"></i></summary><div class="booking-menu">
-                                    <a asp-action="Details" asp-route-id="@booking.MaDatPhong"><i class="bi bi-eye me-1"></i>Chi tiết phiếu</a>
-                                    @if (booking.TrangThai == "ChoXacNhan" || booking.TrangThai == "DaCoc") { <button type="button" class="danger" onclick="moModalHuyPhong(@booking.MaDatPhong)"><i class="bi bi-x-circle me-1"></i>Hủy đặt phòng</button> }
-                                    @if (booking.TrangThai == "DangLuuTru") { <a asp-action="Checkout" asp-route-id="@booking.MaDatPhong"><i class="bi bi-receipt me-1"></i>Thanh toán</a> }
-                                </div></details>
-                            </div>
-                            <span class="booking-state @StatusClass(booking.TrangThai) status-label">@StatusLabel(booking.TrangThai)</span>
+                                <div class="booking-row-actions">
+                                    @{
+                                        var nextRoom = (booking.TrangThai == "ChoXacNhan" || booking.TrangThai == "DaXacNhan" || booking.TrangThai == "DaCoc" || booking.TrangThai == "DangLuuTru") ? rooms.FirstOrDefault(r => r.DanhSachLuuTru?.Any(l => l.ThoiGianNhanPhong != null) != true) : null;
+                                    }
+                                    @if (nextRoom != null)
+                                    {
+                                        var soPhongChuaNhan = rooms.Count(r => r.DanhSachLuuTru?.Any(l => l.ThoiGianNhanPhong != null) != true);
+                                        <button type="button" class="booking-act js-checkin-all" data-booking="@booking.MaDatPhong" data-count="@soPhongChuaNhan" title="Nhận tất cả phòng chưa nhận">Nhận phòng</button>
+                                    }
+                                    @if (booking.TrangThai == "DangLuuTru" && hasActiveStay)
+                                    {
+                                        var phongDangO = rooms.Where(r => r.DanhSachLuuTru?.Any(l => l.ThoiGianNhanPhong != null && l.ThoiGianTraPhong == null) == true).ToList();
+                                        <button type="button" class="booking-act checkout js-checkout-all"
+                                                data-booking="@booking.MaDatPhong"
+                                                data-count="@phongDangO.Count"
+                                                data-code="@("DP" + booking.MaDatPhong.ToString("D6"))"
+                                                data-rooms="@string.Join("|", phongDangO.Select(r => "Phòng " + r.Phong?.SoPhong))"
+                                                title="Trả tất cả phòng đang ở">
+                                            Trả phòng
+                                        </button>
+                                    }
+                                    else if (booking.TrangThai == "DaHoanThanh" && !hasInvoice)
+                                    {
+                                        <a asp-action="Checkout" asp-route-id="@booking.MaDatPhong" class="booking-act">Xuất hóa đơn</a>
+                                    }
+                                    <details class="booking-more">
+                                        <summary><i class="bi bi-three-dots"></i></summary><div class="booking-menu">
+                                            <a asp-action="Details" asp-route-id="@booking.MaDatPhong"><i class="bi bi-eye me-1"></i>Chi tiết phiếu</a>
+                                            @if (booking.TrangThai == "ChoXacNhan" || booking.TrangThai == "DaCoc")
+                                            {
+                                                <button type="button" class="danger" onclick="moModalHuyPhong(@booking.MaDatPhong)"><i class="bi bi-x-circle me-1"></i>Hủy đặt phòng</button>
+                                            }
+
+                                        </div>
+                                    </details>
+                                </div>
+                                <span class="booking-state @StatusClass(booking.TrangThai) status-label">@StatusLabel(booking.TrangThai)</span>
                             </div>
                         </td>
                     </tr>
@@ -170,6 +982,8 @@
                                     var roomTotal = room.DonGia * roomNights;
                                     var roomArrival = activeStay?.ThoiGianNhanPhong ?? lastStay?.ThoiGianNhanPhong ?? room.NgayNhan;
                                     var roomDeparture = activeStay?.ThoiGianTraPhong ?? lastStay?.ThoiGianTraPhong ?? room.NgayTra;
+                                    var chuaNhan = room.DanhSachLuuTru?.Any(l => l.ThoiGianNhanPhong != null) != true;
+                                    var choPhepNhan = chuaNhan && (booking.TrangThai == "ChoXacNhan" || booking.TrangThai == "DaXacNhan" || booking.TrangThai == "DaCoc" || booking.TrangThai == "DangLuuTru");
                                     <div class="room-details-item">
                                         <div class="room-details-name"><strong>@room.Phong?.LoaiPhong?.TenLoaiPhong</strong><small>@room.Phong?.SoPhong · @roomTotal.ToString("N0") đ dự kiến</small></div>
                                         <span>@roomArrival.ToString("dd/MM HH:mm")</span>
@@ -177,129 +991,263 @@
                                         <span>@roomNights đêm</span>
                                         <span>@room.DonGia.ToString("N0") đ</span>
                                         <span><span class="booking-room-status @(activeStay != null ? "room-status-occupied" : alreadyReturned ? "room-status-cleaning" : "room-status-reserved")">@(activeStay != null ? "Đang lưu trú" : alreadyReturned ? "Đã trả · đang dọn" : "Chưa nhận phòng")</span></span>
-                                        <span class="room-details-action">@if (activeStay != null) { <button type="button" class="booking-act checkout js-checkout-room" data-booking="@booking.MaDatPhong" data-room="@room.MaPhong" data-room-number="@room.Phong?.SoPhong">Trả phòng</button> }</span>
+                                        <span class="room-details-action">
+                                            @if (activeStay != null)
+                                            {
+                                                <button type="button" class="booking-act checkout js-checkout-room" data-booking="@booking.MaDatPhong" data-room="@room.MaPhong" data-room-number="@room.Phong?.SoPhong">Trả phòng</button>
+                                            }
+                                            else if (choPhepNhan)
+                                            {
+                                                <button type="button" class="booking-act js-checkin" data-booking="@booking.MaDatPhong" data-room="@room.MaPhong">Nhận phòng</button>
+                                            }
+                                        </span>
                                     </div>
                                 }
                             </div>
                         </td>
                     </tr>
-                }
+                                        }
                 </tbody>
             </table>
         </div>
         <div id="cardView" class="booking-cards"></div>
         <div class="booking-empty booking-hidden" id="bookingNoResult"><i class="bi bi-search"></i><h3>Không tìm thấy đặt phòng</h3><p>Thử đổi trạng thái, khoảng ngày hoặc từ khóa tìm kiếm.</p></div>
-        @if (!bookings.Any()) { <div class="booking-empty" id="bookingEmpty"><i class="bi bi-calendar2-x"></i><h3>Chưa có lượt đặt phòng</h3><p>Các lượt đặt phòng sẽ xuất hiện tại đây sau khi được tạo.</p></div> }
+        @if (!bookings.Any())
+        {
+            <div class="booking-empty" id="bookingEmpty"><i class="bi bi-calendar2-x"></i><h3>Chưa có lượt đặt phòng</h3><p>Các lượt đặt phòng sẽ xuất hiện tại đây sau khi được tạo.</p></div>
+        }
         <div class="booking-foot"><span>Đang hiển thị <strong id="visibleCount">0</strong> / @bookings.Count lượt đặt</span><span>Tiền đã trả được cộng từ các giao dịch đã ghi nhận</span></div>
     </div>
 </div>
 
+<div class="confirm-overlay booking-hidden" id="confirmDialog" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+    <div class="confirm-box">
+        <div class="confirm-icon"><i class="bi bi-box-arrow-right"></i></div>
+        <h3 id="confirmTitle"></h3>
+        <p id="confirmMessage"></p>
+        <div class="confirm-items booking-hidden" id="confirmItems"></div>
+        <div class="confirm-note booking-hidden" id="confirmNote"></div>
+        <div class="confirm-actions">
+            <button type="button" class="confirm-btn confirm-cancel" id="confirmCancel">Hủy bỏ</button>
+            <button type="button" class="confirm-btn confirm-ok" id="confirmOk">Xác nhận</button>
+        </div>
+    </div>
+</div>
 <partial name="_ModalHuyVaHoanTien" />
 
 @section Scripts {
-<script>
-    const bookingToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
-    let currentTienCoc = 0;
-    function moModalHuyPhong(id) {
-        fetch(`/DatPhong/GetThongTinHuyPhong?id=${id}`).then(r => r.json()).then(data => {
-            if (!data.success) { alert(data.message); return; }
-            document.getElementById('modalMaDatPhong').value = data.maDatPhong;
-            document.getElementById('lblMaDatPhong').innerText = '#DP' + String(data.maDatPhong).padStart(6, '0');
-            document.getElementById('lblTenKhachHang').innerText = data.tenKhachHang;
-            document.getElementById('lblNgayNhan').innerText = data.ngayNhanDuKien;
-            document.getElementById('lblTienCoc').innerText = Number(data.tienCoc).toLocaleString('vi-VN') + ' đ';
-            document.getElementById('lblNhanVienThucHien').innerText = data.nhanVienThucHien;
-            document.getElementById('txtQuyDinhChinhSach').innerHTML = `<i class="bi bi-info-circle me-1"></i>${data.quyDinh}`;
-            currentTienCoc = data.tienCoc;
-            document.getElementById('txtPhanTramHoan').value = data.tiLeHoan;
-            document.getElementById('txtSoTienHoan').value = data.soTienHoanGoiY;
-            document.getElementById('txtLyDoHuy').value = '';
-            bootstrap.Modal.getOrCreateInstance(document.getElementById('modalHuyVaHoanTien')).show();
-        }).catch(() => alert('Không thể tải thông tin đặt phòng.'));
-    }
-    document.addEventListener('DOMContentLoaded', () => {
-        const rows = [...document.querySelectorAll('.booking-row')];
-        const from = document.getElementById('rangeFrom'), to = document.getElementById('rangeTo');
-        const fmt = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-        const today = new Date(); today.setHours(0,0,0,0); const end = new Date(today); end.setDate(end.getDate()+6);
-        from.value = fmt(today); to.value = fmt(end);
-        let currentStatus = 'all';
-        const cards = document.getElementById('cardView');
-        rows.forEach(row => {
-            const card = document.createElement('article'); card.className = 'booking-card';
-            const detailsRow = row.nextElementSibling?.matches('.room-details-row') ? row.nextElementSibling : null;
-            row._detailsRow = detailsRow;
-            const detailMarkup = detailsRow?.querySelector('.room-details-list')?.innerHTML || '';
-            card.innerHTML = `<div class="booking-card-head"><a class="booking-code" href="${row.querySelector('.booking-code').getAttribute('href')}">${row.querySelector('.booking-code').textContent}</a>${row.querySelector('.status-label').outerHTML}</div><div class="booking-muted">${row.cells[3].innerText}</div><div class="booking-roomline">${row.cells[1].querySelector('.booking-roomline').innerHTML}</div><div class="booking-card-details booking-hidden">${detailMarkup}</div><div class="booking-card-grid"><div><small>Nhận phòng</small>${row.cells[4].innerText}</div><div><small>Trả phòng</small>${row.cells[5].innerText}</div><div><small>Tổng cộng</small>${row.cells[8].innerText}</div><div><small>Còn cần trả</small>${row.cells[10].innerText}</div></div><div class="booking-row-actions">${row.querySelector('.booking-row-actions').innerHTML}</div>`;
-            row._card = card; cards.appendChild(card);
-        });
-        function applyFilters() {
-            const query = document.getElementById('bookingSearch').value.trim().toLocaleLowerCase('vi');
-            const type = document.getElementById('roomTypeFilter').value.toLocaleLowerCase('vi');
-            const payment = document.getElementById('paymentFilter').value;
-            const start = from.value, finish = to.value; let visible = 0; const counts = {};
-            rows.forEach((row, i) => {
-                const overlaps = !start || !finish || (row.dataset.arrival <= finish && row.dataset.departure >= start);
-                const status = row.dataset.status; if (overlaps) counts[status] = (counts[status]||0)+1;
-                const match = (!query || row.dataset.search.toLocaleLowerCase('vi').includes(query)) && (!type || row.dataset.types.toLocaleLowerCase('vi').includes(type)) && (!payment || (payment === 'paid' ? Number(row.dataset.balance) === 0 : Number(row.dataset.balance) > 0));
-                const show = overlaps && match && (currentStatus === 'all' || status === currentStatus);
-                row.classList.toggle('booking-hidden', !show); cards.children[i].classList.toggle('booking-hidden', !show);
-                if (row._detailsRow) row._detailsRow.classList.toggle('booking-hidden', !show || row.dataset.expanded !== 'true');
-                if (show) { visible++; row.querySelector('.row-number').textContent = visible; }
-            });
-            document.querySelectorAll('.booking-chip').forEach(chip => { const f=chip.dataset.filter; chip.querySelector('.chip-count').textContent = f === 'all' ? rows.filter(r => (!start || !finish || (r.dataset.arrival <= finish && r.dataset.departure >= start))).length : counts[f]||0; });
-            document.getElementById('visibleCount').textContent = visible;
-            document.getElementById('bookingNoResult').classList.toggle('booking-hidden', visible !== 0 || rows.length === 0);
-            document.getElementById('listView').classList.toggle('booking-hidden', cards.classList.contains('grid'));
-        }
-        document.querySelectorAll('.booking-chip').forEach(chip => chip.addEventListener('click', () => { document.querySelector('.booking-chip.active')?.classList.remove('active'); chip.classList.add('active'); currentStatus = chip.dataset.filter; applyFilters(); }));
-        ['bookingSearch','roomTypeFilter','paymentFilter','rangeFrom','rangeTo'].forEach(id => document.getElementById(id).addEventListener(id.includes('range') ? 'change' : 'input', applyFilters));
-        document.querySelectorAll('[data-view]').forEach(btn => btn.addEventListener('click', () => { document.querySelector('[data-view].active')?.classList.remove('active'); btn.classList.add('active'); const grid=btn.dataset.view==='grid'; cards.classList.toggle('grid',grid); cards.style.display=grid?'grid':'none'; applyFilters(); }));
-        document.getElementById('previousRange').addEventListener('click', () => shiftRange(-7)); document.getElementById('nextRange').addEventListener('click', () => shiftRange(7));
-        function shiftRange(days) { const a=new Date(from.value+'T00:00:00'),b=new Date(to.value+'T00:00:00');a.setDate(a.getDate()+days);b.setDate(b.getDate()+days);from.value=fmt(a);to.value=fmt(b);applyFilters(); }
-        document.getElementById('toggleFilters').addEventListener('click',()=>document.getElementById('bookingFilters').classList.toggle('show'));
-        document.getElementById('clearFilters').addEventListener('click',()=>{document.getElementById('roomTypeFilter').value='';document.getElementById('paymentFilter').value='';document.getElementById('bookingSearch').value='';from.value=fmt(today);to.value=fmt(end);currentStatus='all';document.querySelector('.booking-chip.active')?.classList.remove('active');document.querySelector('[data-filter="all"]').classList.add('active');applyFilters();});
-        document.getElementById('syncBookings').addEventListener('click',()=>location.reload());
-        document.querySelectorAll('.sort-bookings').forEach(button=>button.addEventListener('click',()=>{const key=button.dataset.sort,dir=button.dataset.direction==='asc'?'desc':'asc';button.dataset.direction=dir;const sorted=[...rows].sort((a,b)=>a.dataset[key].localeCompare(b.dataset[key])*(dir==='asc'?1:-1));const body=document.getElementById('bookingRows');sorted.forEach(row=>{body.appendChild(row);if(row._detailsRow)body.appendChild(row._detailsRow);});sorted.forEach(row=>cards.appendChild(row._card));rows.splice(0,rows.length,...sorted);applyFilters();}));
-        document.addEventListener('click', async event => {
-            const expander = event.target.closest('.booking-expand-toggle');
-            if (expander) {
-                const id = expander.dataset.bookingExpand;
-                const row = document.querySelector(`.booking-row .booking-expand-toggle[data-booking-expand="${id}"]`)?.closest('.booking-row');
-                if (row) {
-                    const open = row.dataset.expanded !== 'true'; row.dataset.expanded = String(open);
-                    if (row._detailsRow) row._detailsRow.classList.toggle('booking-hidden', !open || row.classList.contains('booking-hidden'));
-                    row.querySelector('.booking-expand-toggle i').className = open ? 'bi bi-chevron-down' : 'bi bi-chevron-right';
-                    document.querySelectorAll(`.booking-card .booking-expand-toggle[data-booking-expand="${id}"]`).forEach(button => {
-                        const cardDetails = button.closest('.booking-card').querySelector('.booking-card-details');
-                        if (cardDetails) cardDetails.classList.toggle('booking-hidden', !open);
-                        button.querySelector('i').className = open ? 'bi bi-chevron-down' : 'bi bi-chevron-right';
+    <script>
+        const bookingToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+        let currentTienCoc = 0;
+                function askConfirm(opts) {
+                return new Promise(resolve => {
+                    const box = document.getElementById('confirmDialog');
+                    const ok = document.getElementById('confirmOk');
+                    const cancel = document.getElementById('confirmCancel');
+                    const items = document.getElementById('confirmItems');
+                    const note = document.getElementById('confirmNote');
+                    const list = opts.items || [];
+
+                    document.getElementById('confirmTitle').textContent = opts.title;
+                    document.getElementById('confirmMessage').textContent = opts.message;
+                    items.innerHTML = '';
+                    list.forEach(text => {
+                        const chip = document.createElement('span');
+                        chip.className = 'confirm-chip';
+                        chip.textContent = text;
+                        items.appendChild(chip);
                     });
-                } else {
-                    const button = expander; const cardDetails = button.closest('.booking-card')?.querySelector('.booking-card-details');
-                    cardDetails?.classList.toggle('booking-hidden');
-                    button.querySelector('i').className = cardDetails?.classList.contains('booking-hidden') ? 'bi bi-chevron-right' : 'bi bi-chevron-down';
-                }
-                return;
+                    items.classList.toggle('booking-hidden', list.length === 0);
+                    note.textContent = opts.note || '';
+                    note.classList.toggle('booking-hidden', !opts.note);
+                    ok.textContent = opts.confirmText || 'Xác nhận';
+
+                    const close = result => {
+                        box.classList.add('booking-hidden');
+                        ok.removeEventListener('click', onOk);
+                        cancel.removeEventListener('click', onCancel);
+                        box.removeEventListener('click', onBackdrop);
+                        document.removeEventListener('keydown', onKey);
+                        resolve(result);
+                    };
+                    const onOk = () => close(true);
+                    const onCancel = () => close(false);
+                    const onBackdrop = e => { if (e.target === box) close(false); };
+                    const onKey = e => { if (e.key === 'Escape') close(false); };
+
+                    ok.addEventListener('click', onOk);
+                    cancel.addEventListener('click', onCancel);
+                    box.addEventListener('click', onBackdrop);
+                    document.addEventListener('keydown', onKey);
+                    box.classList.remove('booking-hidden');
+                    ok.focus();
+                });
             }
-            const checkoutButton = event.target.closest('.js-checkout-room');
-            if (!checkoutButton) return;
-            const roomNumber = checkoutButton.dataset.roomNumber || 'đã chọn';
-            if (!confirm(`Xác nhận trả phòng ${roomNumber}?`)) return;
-            checkoutButton.disabled = true;
-            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
-            const body = new URLSearchParams({ id: checkoutButton.dataset.booking, maPhong: checkoutButton.dataset.room, __RequestVerificationToken: token });
-            try {
-                const response = await fetch('/DatPhong/CheckOut', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body });
-                const data = await response.json();
-                if (!response.ok || !data.success) throw new Error(data.message || 'Không thể trả phòng.');
-                location.reload();
-            } catch (error) { alert(error.message); checkoutButton.disabled = false; }
+        function moModalHuyPhong(id) {
+            fetch(`/DatPhong/GetThongTinHuyPhong?id=${id}`).then(r => r.json()).then(data => {
+                if (!data.success) { alert(data.message); return; }
+                document.getElementById('modalMaDatPhong').value = data.maDatPhong;
+                document.getElementById('lblMaDatPhong').innerText = '#DP' + String(data.maDatPhong).padStart(6, '0');
+                document.getElementById('lblTenKhachHang').innerText = data.tenKhachHang;
+                document.getElementById('lblNgayNhan').innerText = data.ngayNhanDuKien;
+                document.getElementById('lblTienCoc').innerText = Number(data.tienCoc).toLocaleString('vi-VN') + ' đ';
+                document.getElementById('lblNhanVienThucHien').innerText = data.nhanVienThucHien;
+                document.getElementById('txtQuyDinhChinhSach').innerHTML = `<i class="bi bi-info-circle me-1"></i>${data.quyDinh}`;
+                currentTienCoc = data.tienCoc;
+                document.getElementById('txtPhanTramHoan').value = data.tiLeHoan;
+                document.getElementById('txtSoTienHoan').value = data.soTienHoanGoiY;
+                document.getElementById('txtLyDoHuy').value = '';
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('modalHuyVaHoanTien')).show();
+            }).catch(() => alert('Không thể tải thông tin đặt phòng.'));
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            const rows = [...document.querySelectorAll('.booking-row')];
+            const from = document.getElementById('rangeFrom'), to = document.getElementById('rangeTo');
+            const fmt = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+            const today = new Date(); today.setHours(0,0,0,0); const end = new Date(today); end.setDate(end.getDate()+6);
+            from.value = fmt(today); to.value = fmt(end);
+            let currentStatus = 'all';
+            const cards = document.getElementById('cardView');
+            rows.forEach(row => {
+                const card = document.createElement('article'); card.className = 'booking-card';
+                const detailsRow = row.nextElementSibling?.matches('.room-details-row') ? row.nextElementSibling : null;
+                row._detailsRow = detailsRow;
+                const detailMarkup = detailsRow?.querySelector('.room-details-list')?.innerHTML || '';
+                card.innerHTML = `<div class="booking-card-head"><a class="booking-code" href="${row.querySelector('.booking-code').getAttribute('href')}">${row.querySelector('.booking-code').textContent}</a>${row.querySelector('.status-label').outerHTML}</div><div class="booking-muted">${row.cells[3].innerText}</div><div class="booking-roomline">${row.cells[1].querySelector('.booking-roomline').innerHTML}</div><div class="booking-card-details booking-hidden">${detailMarkup}</div><div class="booking-card-grid"><div><small>Nhận phòng</small>${row.cells[4].innerText}</div><div><small>Trả phòng</small>${row.cells[5].innerText}</div><div><small>Tổng cộng</small>${row.cells[8].innerText}</div><div><small>Còn cần trả</small>${row.cells[10].innerText}</div></div><div class="booking-row-actions">${row.querySelector('.booking-row-actions').innerHTML}</div>`;
+                row._card = card; cards.appendChild(card);
+            });
+            function applyFilters() {
+                const query = document.getElementById('bookingSearch').value.trim().toLocaleLowerCase('vi');
+                const type = document.getElementById('roomTypeFilter').value.toLocaleLowerCase('vi');
+                const payment = document.getElementById('paymentFilter').value;
+                const start = from.value, finish = to.value; let visible = 0; const counts = {};
+                rows.forEach((row, i) => {
+                    const overlaps = !start || !finish || (row.dataset.arrival <= finish && row.dataset.departure >= start);
+                    const status = row.dataset.status; if (overlaps) counts[status] = (counts[status]||0)+1;
+                    const match = (!query || row.dataset.search.toLocaleLowerCase('vi').includes(query)) && (!type || row.dataset.types.toLocaleLowerCase('vi').includes(type)) && (!payment || (payment === 'paid' ? Number(row.dataset.balance) === 0 : Number(row.dataset.balance) > 0));
+                    const show = overlaps && match && (currentStatus === 'all' || status === currentStatus);
+                    row.classList.toggle('booking-hidden', !show); cards.children[i].classList.toggle('booking-hidden', !show);
+                    if (row._detailsRow) row._detailsRow.classList.toggle('booking-hidden', !show || row.dataset.expanded !== 'true');
+                    if (show) { visible++; row.querySelector('.row-number').textContent = visible; }
+                });
+                document.querySelectorAll('.booking-chip').forEach(chip => { const f=chip.dataset.filter; chip.querySelector('.chip-count').textContent = f === 'all' ? rows.filter(r => (!start || !finish || (r.dataset.arrival <= finish && r.dataset.departure >= start))).length : counts[f]||0; });
+                document.getElementById('visibleCount').textContent = visible;
+                document.getElementById('bookingNoResult').classList.toggle('booking-hidden', visible !== 0 || rows.length === 0);
+                document.getElementById('listView').classList.toggle('booking-hidden', cards.classList.contains('grid'));
+            }
+            document.querySelectorAll('.booking-chip').forEach(chip => chip.addEventListener('click', () => { document.querySelector('.booking-chip.active')?.classList.remove('active'); chip.classList.add('active'); currentStatus = chip.dataset.filter; applyFilters(); }));
+            ['bookingSearch','roomTypeFilter','paymentFilter','rangeFrom','rangeTo'].forEach(id => document.getElementById(id).addEventListener(id.includes('range') ? 'change' : 'input', applyFilters));
+            document.querySelectorAll('[data-view]').forEach(btn => btn.addEventListener('click', () => { document.querySelector('[data-view].active')?.classList.remove('active'); btn.classList.add('active'); const grid=btn.dataset.view==='grid'; cards.classList.toggle('grid',grid); cards.style.display=grid?'grid':'none'; applyFilters(); }));
+            document.getElementById('previousRange').addEventListener('click', () => shiftRange(-7)); document.getElementById('nextRange').addEventListener('click', () => shiftRange(7));
+            function shiftRange(days) { const a=new Date(from.value+'T00:00:00'),b=new Date(to.value+'T00:00:00');a.setDate(a.getDate()+days);b.setDate(b.getDate()+days);from.value=fmt(a);to.value=fmt(b);applyFilters(); }
+            document.getElementById('toggleFilters').addEventListener('click',()=>document.getElementById('bookingFilters').classList.toggle('show'));
+            document.getElementById('clearFilters').addEventListener('click',()=>{document.getElementById('roomTypeFilter').value='';document.getElementById('paymentFilter').value='';document.getElementById('bookingSearch').value='';from.value=fmt(today);to.value=fmt(end);currentStatus='all';document.querySelector('.booking-chip.active')?.classList.remove('active');document.querySelector('[data-filter="all"]').classList.add('active');applyFilters();});
+            document.getElementById('syncBookings').addEventListener('click',()=>location.reload());
+            document.querySelectorAll('.sort-bookings').forEach(button=>button.addEventListener('click',()=>{const key=button.dataset.sort,dir=button.dataset.direction==='asc'?'desc':'asc';button.dataset.direction=dir;const sorted=[...rows].sort((a,b)=>a.dataset[key].localeCompare(b.dataset[key])*(dir==='asc'?1:-1));const body=document.getElementById('bookingRows');sorted.forEach(row=>{body.appendChild(row);if(row._detailsRow)body.appendChild(row._detailsRow);});sorted.forEach(row=>cards.appendChild(row._card));rows.splice(0,rows.length,...sorted);applyFilters();}));
+            document.addEventListener('click', async event => {
+                const expander = event.target.closest('.booking-expand-toggle');
+                if (expander) {
+                    const id = expander.dataset.bookingExpand;
+                    const row = document.querySelector(`.booking-row .booking-expand-toggle[data-booking-expand="${id}"]`)?.closest('.booking-row');
+                    if (row) {
+                        const open = row.dataset.expanded !== 'true'; row.dataset.expanded = String(open);
+                        if (row._detailsRow) row._detailsRow.classList.toggle('booking-hidden', !open || row.classList.contains('booking-hidden'));
+                        row.querySelector('.booking-expand-toggle i').className = open ? 'bi bi-chevron-down' : 'bi bi-chevron-right';
+                        document.querySelectorAll(`.booking-card .booking-expand-toggle[data-booking-expand="${id}"]`).forEach(button => {
+                            const cardDetails = button.closest('.booking-card').querySelector('.booking-card-details');
+                            if (cardDetails) cardDetails.classList.toggle('booking-hidden', !open);
+                            button.querySelector('i').className = open ? 'bi bi-chevron-down' : 'bi bi-chevron-right';
+                        });
+                    } else {
+                        const button = expander; const cardDetails = button.closest('.booking-card')?.querySelector('.booking-card-details');
+                        cardDetails?.classList.toggle('booking-hidden');
+                        button.querySelector('i').className = cardDetails?.classList.contains('booking-hidden') ? 'bi bi-chevron-right' : 'bi bi-chevron-down';
+                    }
+                    return;
+                }
+                const checkoutButton = event.target.closest('.js-checkout-room');
+                if (!checkoutButton) return;
+                const roomNumber = checkoutButton.dataset.roomNumber || 'đã chọn';
+                        const agreedRoom = await askConfirm({
+                title: 'Xác nhận trả phòng',
+                message: `Bạn có muốn trả phòng ${roomNumber} không?`,
+                items: [`Phòng ${roomNumber}`],
+                note: 'Phòng sẽ chuyển sang trạng thái đang dọn dẹp.',
+                confirmText: 'Trả phòng'
+            });
+            if (!agreedRoom) return;
+                checkoutButton.disabled = true;
+                const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+                const body = new URLSearchParams({ id: checkoutButton.dataset.booking, maPhong: checkoutButton.dataset.room, __RequestVerificationToken: token });
+                try {
+                    const response = await fetch('/DatPhong/CheckOut', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body });
+                    const data = await response.json();
+                    if (!response.ok || !data.success) throw new Error(data.message || 'Không thể trả phòng.');
+                    location.reload();
+                } catch (error) { alert(error.message); checkoutButton.disabled = false; }
+            });
+            document.getElementById('txtPhanTramHoan')?.addEventListener('input',function(){let n=Math.min(100,Math.max(0,Number(this.value)||0));document.getElementById('txtSoTienHoan').value=currentTienCoc*n/100;});
+            document.getElementById('btnSubmitHuyPhong')?.addEventListener('click',async function(){const request={maDatPhong:Number(document.getElementById('modalMaDatPhong').value),lyDoHuy:document.getElementById('txtLyDoHuy').value.trim(),phanTramHoan:Number(document.getElementById('txtPhanTramHoan').value)||0,soTienHoan:Number(document.getElementById('txtSoTienHoan').value)||0,hinhThucHoan:document.getElementById('ddlHinhThucHoan').value};if(!request.lyDoHuy){alert('Vui lòng nhập lý do hủy phòng.');return;}this.disabled=true;try{const res=await fetch('/DatPhong/XacNhanHuyPhong',{method:'POST',headers:{'Content-Type':'application/json','RequestVerificationToken':bookingToken},body:JSON.stringify(request)});const data=await res.json();if(!res.ok||!data.success)throw new Error(data.message||'Hủy phòng thất bại');location.reload();}catch(e){alert(e.message);this.disabled=false;}});
+                    document.addEventListener('click', async e => {
+                const button = e.target.closest('.js-checkin, .js-checkin-all');
+                if (!button) return;
+
+                const all = button.classList.contains('js-checkin-all');
+                const count = Number(button.dataset.count || 1);
+                if (all && count > 1 && !confirm(`Nhận tất cả ${count} phòng chưa nhận của lượt đặt này?`)) return;
+
+                button.disabled = true;
+                const params = { id: button.dataset.booking, __RequestVerificationToken: bookingToken };
+                if (!all) params.maPhong = button.dataset.room;
+
+                try {
+                    const res = await fetch(all ? '/DatPhong/CheckInAll' : '/DatPhong/CheckIn', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: new URLSearchParams(params)
+                    });
+                    const data = await res.json();
+                    if (!res.ok || !data.success) throw new Error(data.message || 'Không thể nhận phòng');
+                    location.reload();
+                } catch (err) {
+                    alert(err.message);
+                    if (all) location.reload(); else button.disabled = false;
+                }
+            });
+                    document.addEventListener('click', async e => {
+                const button = e.target.closest('.js-checkout-all');
+                if (!button) return;
+
+            const count = Number(button.dataset.count || 1);
+            const code = button.dataset.code || '';
+            const rooms = (button.dataset.rooms || '').split('|').filter(Boolean);
+            const agreed = await askConfirm({
+                title: 'Xác nhận trả phòng',
+                message: count > 1
+                    ? `Bạn có muốn trả cả ${count} phòng của lượt đặt ${code} không?`
+                    : `Bạn có muốn trả phòng của lượt đặt ${code} không?`,
+                items: rooms,
+                note: 'Phòng sẽ chuyển sang trạng thái đang dọn dẹp. Sau khi trả, bạn có thể xuất hóa đơn cho lượt đặt này.',
+                confirmText: count > 1 ? `Trả ${count} phòng` : 'Trả phòng'
+            });
+            if (!agreed) return;
+
+                button.disabled = true;
+                try {
+                    const res = await fetch('/DatPhong/CheckOutAll', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: new URLSearchParams({ id: button.dataset.booking, __RequestVerificationToken: bookingToken })
+                    });
+                    const data = await res.json();
+                    if (!res.ok || !data.success) throw new Error(data.message || 'Không thể trả phòng');
+                    location.reload();
+                } catch (err) {
+                    alert(err.message);
+                    location.reload();
+                }
+            });
+            applyFilters();
         });
-        document.getElementById('txtPhanTramHoan')?.addEventListener('input',function(){let n=Math.min(100,Math.max(0,Number(this.value)||0));document.getElementById('txtSoTienHoan').value=currentTienCoc*n/100;});
-        document.getElementById('btnSubmitHuyPhong')?.addEventListener('click',async function(){const request={maDatPhong:Number(document.getElementById('modalMaDatPhong').value),lyDoHuy:document.getElementById('txtLyDoHuy').value.trim(),phanTramHoan:Number(document.getElementById('txtPhanTramHoan').value)||0,soTienHoan:Number(document.getElementById('txtSoTienHoan').value)||0,hinhThucHoan:document.getElementById('ddlHinhThucHoan').value};if(!request.lyDoHuy){alert('Vui lòng nhập lý do hủy phòng.');return;}this.disabled=true;try{const res=await fetch('/DatPhong/XacNhanHuyPhong',{method:'POST',headers:{'Content-Type':'application/json','RequestVerificationToken':bookingToken},body:JSON.stringify(request)});const data=await res.json();if(!res.ok||!data.success)throw new Error(data.message||'Hủy phòng thất bại');location.reload();}catch(e){alert(e.message);this.disabled=false;}});
-        document.addEventListener('click',async e=>{const button=e.target.closest('.js-checkin');if(!button)return;button.disabled=true;const body=new URLSearchParams({id:button.dataset.booking,maPhong:button.dataset.room,__RequestVerificationToken:bookingToken});try{const res=await fetch('/DatPhong/CheckIn',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body});const data=await res.json();if(!res.ok||!data.success)throw new Error(data.message||'Không thể nhận phòng');location.reload();}catch(err){alert(err.message);button.disabled=false;}});
-        applyFilters();
-    });
-</script>
+    </script>
 }

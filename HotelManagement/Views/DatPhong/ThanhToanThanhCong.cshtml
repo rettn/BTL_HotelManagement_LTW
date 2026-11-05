@@ -68,7 +68,7 @@
                         <div class="col-sm-6">
                             <div class="ticket-info-item">
                                 <span class="label">Phòng nghỉ:</span>
-                                <strong>Phòng @Model.SoPhong (@Model.TenLoaiPhong)</strong>
+                                <strong>@string.Join(", ", Model.DanhSachPhong.Select(p => $"Phòng {p.SoPhong} ({p.TenLoaiPhong})"))</strong>
                             </div>
                         </div>
 
@@ -120,15 +120,18 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td>
-                                        <span class="fw-bold text-dark">Tiền phòng (@Model.TenLoaiPhong)</span>
-                                        <small class="d-block text-muted">Phòng @Model.SoPhong</small>
-                                    </td>
-                                    <td class="text-center">@Model.SoDem đêm</td>
-                                    <td class="text-end">@Model.GiaTheoDem.ToString("N0") đ</td>
-                                    <td class="text-end fw-bold">@Model.TienPhong.ToString("N0") đ</td>
-                                </tr>
+                                @foreach (var phongItem in Model.DanhSachPhong)
+                                {
+                                    <tr>
+                                        <td>
+                                            <span class="fw-bold text-dark">Tiền phòng (@phongItem.TenLoaiPhong)</span>
+                                            <small class="d-block text-muted">Phòng @phongItem.SoPhong</small>
+                                        </td>
+                                        <td class="text-center">@Model.SoDem đêm</td>
+                                        <td class="text-end">@phongItem.GiaTheoDem.ToString("N0") đ</td>
+                                        <td class="text-end fw-bold">@phongItem.ThanhTien.ToString("N0") đ</td>
+                                    </tr>
+                                }
 
                                 @if (Model.DanhSachDichVu != null && Model.DanhSachDichVu.Any())
                                 {
@@ -187,7 +190,7 @@
                     <i class="fa-solid fa-house me-1"></i> Về trang chủ
                 </a>
 
-                <a asp-controller="DatPhong" asp-action="History" class="btn-book-more">
+                <a asp-controller="DatPhong" asp-action="Index" class="btn-book-more">
                     <i class="fa-solid fa-calendar-plus me-1"></i> Danh sách đặt phòng
                 </a>
             </div>

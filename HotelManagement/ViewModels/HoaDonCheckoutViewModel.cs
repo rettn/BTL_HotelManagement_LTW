@@ -2,6 +2,7 @@
 {
     public class HoaDonCheckoutViewModel
     {
+        public List<PhongHoaDonItemViewModel> DanhSachPhong { get; set; } = new();
         public int MaDatPhong { get; set; }
         public string SoPhong { get; set; } = string.Empty;
         public string TenKhachHang { get; set; } = string.Empty;
@@ -33,6 +34,13 @@
         public string TenDichVu { get; set; } = string.Empty;
         public int SoLuong { get; set; }
         public decimal DonGia { get; set; }
+        public decimal ThanhTien { get; set; }
+    }
+    public class PhongHoaDonItemViewModel
+    {
+        public string SoPhong { get; set; } = string.Empty;
+        public string TenLoaiPhong { get; set; } = string.Empty;
+        public decimal GiaTheoDem { get; set; }
         public decimal ThanhTien { get; set; }
     }
 }
