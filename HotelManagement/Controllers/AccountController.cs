@@ -37,7 +37,7 @@ namespace HotelManagement.Controllers
         }
 
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> Login(string email, string password, string? returnUrl = null)
+        public async Task<IActionResult> Login(string email, string password, bool rememberMe = false, string? returnUrl = null)
         {
             ViewBag.ReturnUrl = returnUrl;
 
@@ -47,8 +47,9 @@ namespace HotelManagement.Controllers
                 return View();
             }
 
+            // SỬA isPersistent: false THÀNH isPersistent: rememberMe
             var result = await _signInManager.PasswordSignInAsync(
-                email, password, isPersistent: false, lockoutOnFailure: false);
+                email, password, isPersistent: rememberMe, lockoutOnFailure: false);
 
             if (result.Succeeded)
             {
@@ -60,23 +61,22 @@ namespace HotelManagement.Controllers
                     HttpContext.Session.SetString("LoginAtUtc", DateTimeOffset.UtcNow.ToString("O"));
                 }
 
-                // 1. Kiểm tra Role trước: Admin hoặc Nhân viên luôn bị ép về Dashboard
                 if (user != null && (await _userManager.IsInRoleAsync(user, "Admin") || await _userManager.IsInRoleAsync(user, "NhanVien")))
                 {
                     HttpContext.Session.SetString("UserRole", "Staff");
                     return RedirectToAction("Index", "Dashboard");
                 }
+
                 HttpContext.Session.SetString("UserRole", "Customer");
 
-                // 2. Đối với khách hàng bình thường: Ưu tiên trả về trang họ đang muốn truy cập (returnUrl)
                 if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                 {
                     return Redirect(returnUrl);
                 }
 
-                // 3. Nếu khách hàng vào thẳng trang Login mà không có returnUrl, cho về trang mặc định
                 return RedirectToAction("Index", "DatPhongKhachHang");
             }
+
             if (result.IsLockedOut)
             {
                 ViewBag.Error = "Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.";
@@ -86,7 +86,6 @@ namespace HotelManagement.Controllers
             ViewBag.Error = "Email hoặc mật khẩu không chính xác.";
             return View();
         }
-
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {

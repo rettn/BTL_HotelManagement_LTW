@@ -50,6 +50,11 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.LoginPath = "/Account/Login";
     options.AccessDeniedPath = "/Account/AccessDenied";
 });
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.ExpireTimeSpan = TimeSpan.FromDays(30); // Lưu cookie trong 30 ngày
+    options.SlidingExpiration = true; // Tự động gia hạn thời gian nếu người dùng có tương tác
+});
 
 //Quan ly dat phong
 builder.Services.AddScoped<DatPhongRepository>();

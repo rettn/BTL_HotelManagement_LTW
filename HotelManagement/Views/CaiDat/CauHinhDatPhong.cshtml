@@ -1,0 +1,30 @@
+﻿@model HotelManagement.Models.CaiDatHeThong
+@{
+    ViewData["Title"] = "Cấu hình đặt phòng";
+}
+
+<div class="container-fluid px-0 max-w-800">
+    <div class="d-flex align-items-center mb-4">
+        <a asp-action="Index" class="btn btn-outline-secondary me-3"><i class="bi bi-arrow-left"></i> Trở về</a>
+        <h3 class="mb-0">Cấu hình đặt phòng</h3>
+    </div>
+    <div class="card shadow-sm">
+        <div class="card-body p-4">
+            <form asp-action="CauHinhDatPhong" method="post">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Khoảng thời gian đặt trước tối đa (Ngày)</label>
+                    <input type="number" class="form-control" asp-for="MaxDatTruoc">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Số khách mặc định / 1 phòng</label>
+                    <input type="number" class="form-control" asp-for="SoKhachMacDinh">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Thời hạn giữ phòng chờ thanh toán (Phút)</label>
+                    <input type="number" class="form-control" asp-for="ThoiHanGiuPhong">
+                </div>
+                <div class="text-end mt-4"><button type="submit" class="btn btn-danger px-4"><i class="bi bi-save"></i> Lưu thay đổi</button></div>
+            </form>
+        </div>
+    </div>
+</div>

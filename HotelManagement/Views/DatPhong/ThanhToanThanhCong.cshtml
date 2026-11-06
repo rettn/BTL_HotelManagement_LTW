@@ -1,9 +1,16 @@
 ﻿@model HotelManagement.ViewModels.HoaDonCheckoutViewModel
-
+@inject HotelManagement.Data.ApplicationDbContext _context
+@{
+    var sysSetting = _context.CaiDatHeThongs.FirstOrDefault();
+    var tenKS = sysSetting?.TenKhachSan ?? "Tên khách sạn mặc định";
+    var diaChi = sysSetting?.DiaChi ?? "Địa chỉ chưa cập nhật";
+    var sdt = sysSetting?.SoDienThoai ?? "Hotline...";
+    var email = sysSetting?.Email ?? "Email...";
+    var thongTinThue = sysSetting?.ThongTinHoaDon ?? "";
+}
 @{
     ViewData["Title"] = "Thanh toán & Check-out thành công";
     Layout = "~/Views/Shared/_Layout.cshtml";
-
     var ngayThanhToan = DateTime.Now;
     var maHoaDon = ViewBag.MaHoaDon as string ?? $"HD{Model.MaDatPhong}{ngayThanhToan:yyyyMMdd}";
 }
@@ -11,14 +18,44 @@
 <div class="checkout-success-page">
     <div class="container-narrow">
 
+        <!-- ========== HEADER ========== -->
+        <div class="checkout-header">
+            <!-- Hàng trên: Nút quay lại + Badge -->
+            <div class="header-top d-flex justify-content-between align-items-center mb-3">
+                <a asp-controller="DatPhong" asp-action="Index" class="btn-back-link">
+                    <i class="fa-solid fa-arrow-left me-1"></i> Quay lại danh sách
+                </a>
+                <span class="checkout-badge">
+                    <i class="fa-solid fa-circle-check me-1"></i> THANH TOÁN THÀNH CÔNG
+                </span>
+            </div>
+
+            <!-- THÔNG TIN KHÁCH SẠN -->
+            <div class="hotel-brand-info text-center p-3 bg-white rounded-3 border mb-3">
+                <h4 class="fw-bold text-uppercase text-primary mb-1">@tenKS</h4>
+                <p class="mb-1 text-muted small">
+                    <i class="fa-solid fa-location-dot me-1"></i> @diaChi
+                </p>
+                <p class="mb-0 text-muted small">
+                    <i class="fa-solid fa-phone me-1"></i> SĐT: @sdt
+                    <span class="mx-1">|</span>
+                    <i class="fa-solid fa-envelope me-1"></i> Email: @email
+                </p>
+                @if (!string.IsNullOrEmpty(thongTinThue))
+                {
+                    <div class="mt-1 text-secondary">
+                        <small><i>@thongTinThue</i></small>
+                    </div>
+                }
+            </div>
+        </div>
+        <!-- ========== END HEADER ========== -->
         <!-- THẺ CHÍNH: KẾT QUẢ THANH TOÁN & CHECK-OUT -->
         <div class="success-card">
-
             <!-- ICON HOÀN TẤT VỚI HIỆU ỨNG POP-IN -->
             <div class="success-icon-box">
                 <i class="fa-solid fa-circle-check"></i>
             </div>
-
             <span class="success-badge">CHECK-OUT & THANH TOÁN HOÀN TẤT</span>
             <h2>Thanh toán thành công & Trả phòng hoàn tất!</h2>
             <p class="success-subtitle">
@@ -27,7 +64,6 @@
 
             <!-- HÓA ĐƠN / BIÊN NHẬN ĐIỆN TỬ (PRINTABLE TICKET) -->
             <div class="invoice-ticket" id="printableInvoice">
-
                 <!-- CON DẤU ĐÃ THANH TOÁN -->
                 <div class="receipt-stamp">
                     <div class="stamp-inner">
@@ -57,28 +93,24 @@
                                 <strong>@Model.TenKhachHang</strong>
                             </div>
                         </div>
-
                         <div class="col-sm-6">
                             <div class="ticket-info-item">
                                 <span class="label">Số điện thoại:</span>
                                 <strong>@(string.IsNullOrEmpty(Model.SoDienThoai) ? "Chưa cập nhật" : Model.SoDienThoai)</strong>
                             </div>
                         </div>
-
                         <div class="col-sm-6">
                             <div class="ticket-info-item">
                                 <span class="label">Phòng nghỉ:</span>
                                 <strong>@string.Join(", ", Model.DanhSachPhong.Select(p => $"Phòng {p.SoPhong} ({p.TenLoaiPhong})"))</strong>
                             </div>
                         </div>
-
                         <div class="col-sm-6">
                             <div class="ticket-info-item">
                                 <span class="label">Thời gian lưu trú:</span>
                                 <strong>@Model.SoDem đêm (@Model.NgayNhan.ToString("dd/MM/yyyy") &rarr; @Model.NgayTraThucTe.ToString("dd/MM/yyyy"))</strong>
                             </div>
                         </div>
-
                         <div class="col-sm-6">
                             <div class="ticket-info-item">
                                 <span class="label">Hình thức thanh toán:</span>
@@ -94,7 +126,6 @@
                                 </span>
                             </div>
                         </div>
-
                         <div class="col-sm-6">
                             <div class="ticket-info-item">
                                 <span class="label">Thời gian thanh toán:</span>
@@ -132,7 +163,6 @@
                                         <td class="text-end fw-bold">@phongItem.ThanhTien.ToString("N0") đ</td>
                                     </tr>
                                 }
-
                                 @if (Model.DanhSachDichVu != null && Model.DanhSachDichVu.Any())
                                 {
                                     @foreach (var item in Model.DanhSachDichVu)
@@ -170,7 +200,6 @@
                             <strong class="total-grand-amount">@Model.TongThanhToan.ToString("N0") đ</strong>
                         </div>
                     </div>
-
                 </div>
             </div>
 
@@ -185,18 +214,14 @@
                 <button type="button" class="btn-print" onclick="window.print()">
                     <i class="fa-solid fa-print me-1"></i> In hóa đơn / Tải PDF
                 </button>
-
                 <a asp-controller="Dashboard" asp-action="Index" class="btn-home">
                     <i class="fa-solid fa-house me-1"></i> Về trang chủ
                 </a>
-
                 <a asp-controller="DatPhong" asp-action="Index" class="btn-book-more">
                     <i class="fa-solid fa-calendar-plus me-1"></i> Danh sách đặt phòng
                 </a>
             </div>
-
         </div>
-
     </div>
 </div>
 
@@ -214,6 +239,45 @@
             margin: 0 auto;
         }
 
+        /* ========== HEADER ========== */
+        .checkout-header {
+            margin-bottom: 24px;
+        }
+
+        .header-top {
+            margin-bottom: 12px;
+        }
+
+        .btn-back-link {
+            display: inline-flex;
+            align-items: center;
+            color: #8c7764;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 14px;
+            transition: color 0.2s;
+        }
+
+            .btn-back-link:hover {
+                color: #4a3b2c;
+            }
+
+        .checkout-badge {
+            display: inline-block;
+            background: #e6f4ea;
+            color: #137333;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 5px 13px;
+            border-radius: 20px;
+            letter-spacing: 0.8px;
+        }
+
+        .hotel-brand-info {
+            /* Bootstrap classes đã xử lý hầu hết */
+        }
+
+        /* ========== SUCCESS CARD ========== */
         .success-card {
             background: #ffffff;
             border-radius: 16px;

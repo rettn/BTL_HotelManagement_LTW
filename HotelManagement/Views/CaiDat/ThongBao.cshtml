@@ -1,0 +1,52 @@
+﻿@model HotelManagement.Models.CaiDatHeThong
+@{
+    ViewData["Title"] = "Cấu hình Thông báo";
+    var kenhStr = Model.KenhThongBao ?? "";
+    var isSys = kenhStr.Contains("System");
+    var isMail = kenhStr.Contains("Email");
+}
+
+<div class="container-fluid px-0 max-w-800">
+    <div class="d-flex align-items-center mb-4">
+        <a asp-action="Index" class="btn btn-outline-secondary me-3"><i class="bi bi-arrow-left"></i> Trở về</a>
+        <h3 class="mb-0">Cấu hình Thông báo</h3>
+    </div>
+    <div class="card shadow-sm">
+        <div class="card-body p-4">
+            <form asp-action="ThongBao" method="post">
+                <h5 class="mb-3 border-bottom pb-2">Thông báo cho nhân viên</h5>
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" asp-for="ThongBaoDatMoi">
+                    <label class="form-check-label fw-bold">Nhận thông báo khi có đơn đặt phòng mới</label>
+                </div>
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" asp-for="ThongBaoSapNhanTra">
+                    <label class="form-check-label fw-bold">Nhắc nhở sắp đến giờ nhận/trả phòng</label>
+                </div>
+                <div class="form-check form-switch mb-4">
+                    <input class="form-check-input" type="checkbox" asp-for="ThongBaoKho">
+                    <label class="form-check-label fw-bold">Cảnh báo khi dịch vụ trong kho sắp hết</label>
+                </div>
+
+                <h5 class="mb-3 border-bottom pb-2">Phương thức nhận thông báo</h5>
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" name="KenhThongBao" value="System" @(isSys ? "checked" : "")>
+                    <label class="form-check-label">Hiển thị trực tiếp trên phần mềm</label>
+                </div>
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" name="KenhThongBao" value="Email" @(isMail ? "checked" : "")>
+                    <label class="form-check-label">Gửi cảnh báo qua Email</label>
+                </div>
+                <div class="text-end mt-4"><button type="submit" class="btn btn-secondary px-4"><i class="bi bi-save"></i> Lưu thay đổi</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-switch .form-check-input {
+        width: 2.5em;
+        height: 1.25em;
+        margin-right: 10px;
+    }
+</style>
