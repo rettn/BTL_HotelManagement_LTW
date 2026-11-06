@@ -6,11 +6,11 @@
     <h2 class="mb-4">Cài đặt hệ thống</h2>
 
     <div class="settings-list">
-        <!-- Cài đặt 1: Quản lý nhân sự (Giữ nguyên code của bạn) -->
+        <!-- Cài đặt 1: Quản lý nhân sự -->
         <a asp-controller="QuanTri" asp-action="Index" class="settings-item text-decoration-none">
             <span class="settings-icon"><i class="bi bi-person-gear text-primary"></i></span>
             <span class="settings-text">
-                <strong>Quản lý tài khoản nhân sự</strong>
+                <strong>1. Quản lý tài khoản nhân sự</strong>
                 <small>Tạo tài khoản, phân quyền, đặt lại mật khẩu, khóa và mở khóa</small>
             </span>
             <i class="bi bi-chevron-right settings-chevron"></i>
@@ -20,8 +20,48 @@
         <a asp-controller="ThanhToan" asp-action="Index" class="settings-item text-decoration-none">
             <span class="settings-icon"><i class="bi bi-qr-code-scan text-success"></i></span>
             <span class="settings-text">
-                <strong>Cấu hình thanh toán VietQR & SePay</strong>
+                <strong>2. Cấu hình thanh toán VietQR & SePay</strong>
                 <small>Thiết lập API Key, mã ngân hàng, số tài khoản nhận tiền</small>
+            </span>
+            <i class="bi bi-chevron-right settings-chevron"></i>
+        </a>
+
+        <!-- Thông tin khách sạn -->
+        <a asp-controller="CaiDat" asp-action="ThongTinKhachSan" class="settings-item text-decoration-none">
+            <span class="settings-icon"><i class="bi bi-building text-info"></i></span>
+            <span class="settings-text">
+                <strong>3. Thông tin khách sạn</strong>
+                <small>Tên khách sạn, địa chỉ, số điện thoại, email, logo và thông tin xuất hóa đơn.</small>
+            </span>
+            <i class="bi bi-chevron-right settings-chevron"></i>
+        </a>
+
+        <!-- Quy định lưu trú -->
+        <a asp-controller="CaiDat" asp-action="QuyDinhLuuTru" class="settings-item text-decoration-none">
+            <span class="settings-icon"><i class="bi bi-file-earmark-ruled text-warning"></i></span>
+            <span class="settings-text">
+                <strong>4. Quy định lưu trú</strong>
+                <small>Giờ nhận/trả phòng mặc định, thời gian trả muộn, tiền cọc mặc định và chính sách hủy. Những giá trị này giúp nhân viên không phải nhập lại ở mỗi lượt đặt.</small>
+            </span>
+            <i class="bi bi-chevron-right settings-chevron"></i>
+        </a>
+
+        <!-- Cấu hình đặt phòng -->
+        <a asp-controller="CaiDat" asp-action="CauHinhDatPhong" class="settings-item text-decoration-none">
+            <span class="settings-icon"><i class="bi bi-calendar-check text-danger"></i></span>
+            <span class="settings-text">
+                <strong>5. Cấu hình đặt phòng</strong>
+                <small>Khoảng thời gian đặt trước tối đa, số khách mặc định, quy tắc giữ phòng khi chờ xác nhận và thời hạn thanh toán tiền cọc.</small>
+            </span>
+            <i class="bi bi-chevron-right settings-chevron"></i>
+        </a>
+
+        <!-- Thông báo -->
+        <a asp-controller="CaiDat" asp-action="ThongBao" class="settings-item text-decoration-none">
+            <span class="settings-icon"><i class="bi bi-bell text-secondary"></i></span>
+            <span class="settings-text">
+                <strong>6. Thông báo</strong>
+                <small>Bật/tắt thông báo cho đặt phòng mới, sắp nhận phòng, sắp trả phòng, trả muộn và tồn kho thấp. Có thể chọn thông báo trong hệ thống hoặc qua email.</small>
             </span>
             <i class="bi bi-chevron-right settings-chevron"></i>
         </a>
@@ -67,12 +107,13 @@
 
         .settings-text strong {
             font-size: 16px;
-            margin-bottom: 2px;
+            margin-bottom: 4px;
         }
 
         .settings-text small {
             color: #6c757d;
             font-size: 14px;
+            line-height: 1.4;
         }
 
     .settings-chevron {

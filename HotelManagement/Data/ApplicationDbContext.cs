@@ -36,6 +36,7 @@ namespace HotelManagement.Data
         public DbSet<Thuong> Thuongs { get; set; }
         public DbSet<PhuCap> PhuCaps { get; set; }
         public DbSet<KhauTru> KhauTrus { get; set; }
+        public DbSet<CaiDatHeThong> CaiDatHeThongs { get; set; }
         protected override void OnModelCreating(
             Microsoft.EntityFrameworkCore.ModelBuilder builder)
         {

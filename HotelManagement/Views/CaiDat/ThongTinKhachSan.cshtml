@@ -1,0 +1,40 @@
+﻿@model HotelManagement.Models.CaiDatHeThong
+@{
+    ViewData["Title"] = "Thông tin khách sạn";
+}
+
+<div class="container-fluid px-0 max-w-800">
+    <div class="d-flex align-items-center mb-4">
+        <a asp-action="Index" class="btn btn-outline-secondary me-3"><i class="bi bi-arrow-left"></i> Trở về</a>
+        <h3 class="mb-0">Thông tin khách sạn</h3>
+    </div>
+    <div class="card shadow-sm">
+        <div class="card-body p-4">
+            <form asp-action="ThongTinKhachSan" method="post">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Tên khách sạn</label>
+                    <input type="text" class="form-control" asp-for="TenKhachSan">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Địa chỉ</label>
+                    <input type="text" class="form-control" asp-for="DiaChi">
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Số điện thoại</label>
+                        <input type="text" class="form-control" asp-for="SoDienThoai">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Email liên hệ</label>
+                        <input type="email" class="form-control" asp-for="Email">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Thông tin xuất hóa đơn (Tên công ty, MST...)</label>
+                    <textarea class="form-control" asp-for="ThongTinHoaDon" rows="3"></textarea>
+                </div>
+                <div class="text-end mt-4"><button type="submit" class="btn btn-primary px-4"><i class="bi bi-save"></i> Lưu thay đổi</button></div>
+            </form>
+        </div>
+    </div>
+</div>

@@ -82,6 +82,70 @@ namespace HotelManagement.Data.Migrations
                     b.ToTable("BangLuong");
                 });
 
+            modelBuilder.Entity("HotelManagement.Models.CaiDatHeThong", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ChinhSachHuy")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("DiaChi")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Email")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("GioNhanPhong")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("GioTraPhong")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("KenhThongBao")
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("MaxDatTruoc")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SoDienThoai")
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("SoKhachMacDinh")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TenKhachSan")
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("ThoiGianTraMuon")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ThoiHanGiuPhong")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("ThongBaoDatMoi")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("ThongBaoKho")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("ThongBaoSapNhanTra")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("ThongTinHoaDon")
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("TienCocMacDinh")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CaiDatHeThongs");
+                });
+
             modelBuilder.Entity("HotelManagement.Models.ChiTietDatPhong", b =>
                 {
                     b.Property<int>("MaChiTietDatPhong")

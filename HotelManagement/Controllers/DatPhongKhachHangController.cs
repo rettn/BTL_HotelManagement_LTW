@@ -84,6 +84,7 @@ namespace HotelManagement.Controllers
                 ModelState.AddModelError(nameof(model.NgayNhan), "Ngày nhận phòng không thể ở trong quá khứ.");
             }
 
+            // (Lưu ý: Nếu bạn đã đổi form sang chọn nhiều phòng, chỗ này cần kiểm tra model.DanhSachMaPhong thay vì model.MaPhong)
             if (model.MaPhong <= 0)
             {
                 ModelState.AddModelError(nameof(model.MaPhong), "Vui lòng chọn một phòng còn trống để đặt.");
@@ -181,13 +182,42 @@ namespace HotelManagement.Controllers
 
             var ghiChuDayDu = $"{ptttText} [Khách tự đặt trực tuyến] {model.GhiChu?.Trim()}".Trim();
 
+            // Lấy cấu hình từ DB
+            var caiDat = await _context.CaiDatHeThongs.FirstOrDefaultAsync();
+
+            // Xử lý giờ nhận/trả phòng từ cấu hình (mặc định 14:00 và 12:00 nếu lỗi)
+            TimeSpan gioNhan = TimeSpan.TryParse(caiDat?.GioNhanPhong, out var gn) ? gn : new TimeSpan(14, 0, 0);
+            TimeSpan gioTra = TimeSpan.TryParse(caiDat?.GioTraPhong, out var gt) ? gt : new TimeSpan(12, 0, 0);
+
+            // Gắn giờ vào ngày khách chọn
+            DateTime ngayNhanDuKien = model.NgayNhan.Date.Add(gioNhan);
+            DateTime ngayTraDuKien = model.NgayTra.Date.Add(gioTra);
+
+            // Tính tổng tiền phòng dự kiến để tính cọc
+            decimal tongTienDuKien = 0;
+            int soDem = (model.NgayTra.Date - model.NgayNhan.Date).Days;
+            if (soDem <= 0) soDem = 1;
+
+            var phongDcChon = await _context.Phongs
+                .Include(p => p.LoaiPhong)
+                .FirstOrDefaultAsync(p => p.MaPhong == model.MaPhong);
+
+            if (phongDcChon != null && phongDcChon.LoaiPhong != null)
+            {
+                tongTienDuKien = phongDcChon.LoaiPhong.GiaTheoDem * soDem;
+            }
+
+            // Lấy % cọc từ cấu hình
+            decimal phanTramCoc = caiDat?.TienCocMacDinh ?? 30; // Mặc định 30%
+            decimal tienCoc = tongTienDuKien * (phanTramCoc / 100m);
+
             // Tạo đặt phòng qua DatPhongService
             var datPhongVM = new DatPhongViewModel
             {
                 MaKH = khachHang.MaKH,
-                NgayNhan = model.NgayNhan.Date,
-                NgayTra = model.NgayTra.Date,
-                TienCoc = 0,
+                NgayNhan = ngayNhanDuKien, // Sử dụng ngày đã gắn giờ từ cấu hình
+                NgayTra = ngayTraDuKien,   // Sử dụng ngày đã gắn giờ từ cấu hình
+                TienCoc = tienCoc,         // Sử dụng tiền cọc đã tính toán từ cấu hình
                 GhiChu = ghiChuDayDu,
                 MaPhongs = new List<int> { model.MaPhong }
             };
@@ -212,7 +242,6 @@ namespace HotelManagement.Controllers
             TempData["Success"] = "Đặt phòng trực tuyến thành công! Vui lòng xem thông tin chi tiết.";
             return RedirectToAction(nameof(Success), new { id = maDatPhong });
         }
-
         // GET: /DatPhongKhachHang/Success/5
         // Cho phép khách vãng lai xem chi tiết phiếu đặt phòng và quét mã QR VietQR để thanh toán
         [HttpGet]
