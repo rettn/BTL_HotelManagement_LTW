@@ -1,0 +1,350 @@
+@model HotelManagement.ViewModels.ServiceRevenueViewModel
+@using System.Text.Json
+@using System.Globalization
+
+@{
+    ViewData["Title"] = "Báo cáo Doanh thu Dịch vụ";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    var totalRevenueAllServices = Model.DanhSachDichVu.Sum(x => x.DoanhThu);
+    var totalQuantityAllServices = Model.DanhSachDichVu.Sum(x => x.SoLuongSuDung);
+}
+
+<style>
+    @@media print {
+        .admin-sidebar, .admin-topbar, .sidebar-resize-handle, 
+        .sidebar-overlay, .sidebar-footer, .d-print-none, button, a.btn {
+            display: none !important;
+        }
+        body, .admin-shell, .admin-main, .container-fluid {
+            background-color: #ffffff !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            width: 100% !important;
+            box-shadow: none !important;
+        }
+        .card {
+            border: 1px solid #e2e8f0 !important;
+            box-shadow: none !important;
+            break-inside: avoid;
+            margin-bottom: 20px !important;
+        }
+    }
+</style>
+
+<div class="container-fluid px-4 py-4">
+    <!-- TIÊU ĐỀ & BỘ LỌC THỜI GIAN -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">
+        <div class="card-body p-4">
+            <div class="row align-items-center g-3">
+                <div class="col-xl-5 col-lg-12">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-circle bg-warning-subtle text-warning-emphasis p-3 d-flex align-items-center justify-content-center" style="width: 54px; height: 54px;">
+                            <i class="bi bi-cup-hot fs-3"></i>
+                        </div>
+                        <div>
+                            <h3 class="fw-bold text-dark mb-1">Báo cáo Doanh thu Dịch vụ</h3>
+                            <p class="text-muted small mb-0">Bóc tách nguồn thu dịch vụ gia tăng: F&B, giặt là, minibar, spa...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-7 col-lg-12">
+                    <form method="get" asp-action="ServiceRevenue" class="row g-2 justify-content-xl-end align-items-center d-print-none">
+                        <div class="col-sm-4 col-12">
+                            <label class="form-label small fw-semibold text-secondary mb-1">
+                                <i class="bi bi-calendar-event me-1"></i>Từ ngày
+                            </label>
+                            <input type="date" name="startDate" value="@(Model.StartDate?.ToString("yyyy-MM-dd"))" class="form-control form-control-sm" required />
+                        </div>
+
+                        <div class="col-sm-4 col-12">
+                            <label class="form-label small fw-semibold text-secondary mb-1">
+                                <i class="bi bi-calendar-check me-1"></i>Đến ngày
+                            </label>
+                            <input type="date" name="endDate" value="@(Model.EndDate?.ToString("yyyy-MM-dd"))" class="form-control form-control-sm" required />
+                        </div>
+
+                        <div class="col-sm-4 col-12 d-flex gap-2 pt-sm-4">
+                            <button type="submit" class="btn btn-primary btn-sm w-100 fw-semibold shadow-sm">
+                                <i class="bi bi-funnel-fill me-1"></i>Lọc
+                            </button>
+                            <a asp-action="ServiceRevenue" class="btn btn-outline-secondary btn-sm" title="Đặt lại">
+                                <i class="bi bi-arrow-counterclockwise"></i>
+                            </a>
+                            <button type="button" onclick="window.print()" class="btn btn-outline-dark btn-sm" title="In báo cáo">
+                                <i class="bi bi-printer"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4 THẺ CHỈ SỐ DOANH THU DỊCH VỤ -->
+    <div class="row g-3 mb-4">
+        <!-- Tổng doanh thu dịch vụ -->
+        <div class="col-xl-3 col-sm-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100 bg-white border-start border-4 border-warning">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <span class="text-muted small text-uppercase fw-semibold">Tổng doanh thu dịch vụ</span>
+                            <h4 class="fw-bold text-warning-emphasis mb-0 mt-1">@Model.TongDoanhThuDichVu.ToString("N0") đ</h4>
+                            <small class="text-muted">Tổng phát sinh trong kỳ</small>
+                        </div>
+                        <div class="rounded-3 bg-warning-subtle text-warning-emphasis p-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                            <i class="bi bi-cash-stack fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tổng lượt phục vụ -->
+        <div class="col-xl-3 col-sm-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100 bg-white">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <span class="text-muted small text-uppercase fw-semibold">Tổng lượt phục vụ</span>
+                            <h4 class="fw-bold text-info mb-0 mt-1">@Model.TongLuotSuDung lượt</h4>
+                            <small class="text-muted">Lần sử dụng sản phẩm / dịch vụ</small>
+                        </div>
+                        <div class="rounded-3 bg-info-subtle text-info p-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                            <i class="bi bi-cart-check fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Số lượng mặt hàng phát sinh -->
+        <div class="col-xl-3 col-sm-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100 bg-white">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <span class="text-muted small text-uppercase fw-semibold">Mặt hàng có phát sinh</span>
+                            <h4 class="fw-bold text-primary mb-0 mt-1">@Model.TongSoMatHang mặt hàng</h4>
+                            <small class="text-muted">Trong tổng danh mục dịch vụ</small>
+                        </div>
+                        <div class="rounded-3 bg-primary-subtle text-primary p-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                            <i class="bi bi-box-seam fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Nhóm dịch vụ chủ lực -->
+        <div class="col-xl-3 col-sm-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100 bg-white">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <span class="text-muted small text-uppercase fw-semibold">Nhóm dịch vụ chủ lực</span>
+                            <h4 class="fw-bold text-success mb-0 mt-1">@Model.NhomHangChuLuc</h4>
+                            <small class="text-muted">Đóng góp tỷ trọng lớn nhất</small>
+                        </div>
+                        <div class="rounded-3 bg-success-subtle text-success p-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                            <i class="bi bi-award fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- HÀNG 1: BIỂU ĐỒ TRÒN CƠ CẤU NHÓM DỊCH VỤ & DANH SÁCH NHÓM -->
+    <div class="row g-4 mb-4">
+        <div class="col-xl-5 col-lg-12">
+            <div class="card border-0 shadow-sm rounded-4 h-100 bg-white">
+                <div class="card-header bg-white border-0 pt-4 px-4 pb-2">
+                    <h5 class="fw-bold text-dark mb-1">
+                        <i class="bi bi-pie-chart-fill text-warning me-2"></i>Cơ cấu theo Nhóm Dịch vụ
+                    </h5>
+                    <p class="text-muted small mb-0">Tỷ lệ đóng góp doanh thu giữa F&B, Spa, Minibar, Giặt là...</p>
+                </div>
+                <div class="card-body px-4 py-3 d-flex align-items-center justify-content-center">
+                    <div style="height: 240px; width: 100%; position: relative;">
+                        <canvas id="serviceCategoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-7 col-lg-12">
+            <div class="card border-0 shadow-sm rounded-4 h-100 bg-white">
+                <div class="card-header bg-white border-0 pt-4 px-4 pb-2">
+                    <h5 class="fw-bold text-dark mb-1">
+                        <i class="bi bi-list-check text-primary me-2"></i>Tổng hợp Doanh thu theo Nhóm
+                    </h5>
+                    <p class="text-muted small mb-0">Thống kê tổng tiền và số lượt phục vụ của từng ngành hàng</p>
+                </div>
+                <div class="card-body px-4 py-3">
+                    <div class="row g-3">
+                        @foreach (var nhom in Model.CoCauNhomDichVu)
+                        {
+                            <div class="col-sm-6 col-12">
+                                <div class="p-3 rounded-3 bg-light border">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="d-inline-block rounded-circle" style="width: 12px; height: 12px; background-color: @nhom.MauSac;"></span>
+                                            <span class="fw-bold text-dark">@nhom.TenNhom</span>
+                                        </div>
+                                        <span class="badge bg-white text-dark border">@nhom.TiLePhanTram%</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center mt-2">
+                                        <small class="text-muted">@nhom.SoLuotSuDung lượt dùng</small>
+                                        <span class="fw-bold text-primary">@nhom.DoanhThu.ToString("N0") đ</span>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- HÀNG 2: BẢNG CHI TIẾT DOANH THU TỪNG MẶT HÀNG DỊCH VỤ -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm rounded-4 bg-white">
+                <div class="card-header bg-white border-0 pt-4 px-4 pb-2 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="fw-bold text-dark mb-1">
+                            <i class="bi bi-table text-primary me-2"></i>Bảng chi tiết doanh thu từng Dịch vụ / Mặt hàng
+                        </h5>
+                        <p class="text-muted small mb-0">Xếp hạng theo mặt hàng có tổng doanh thu cao nhất</p>
+                    </div>
+                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-3 py-2">
+                        @Model.DanhSachDichVu.Count mặt hàng
+                    </span>
+                </div>
+                <div class="card-body px-4 py-2">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light text-secondary text-uppercase fs-7 fw-bold">
+                                <tr>
+                                    <th>STT</th>
+                                    <th>Mã hàng</th>
+                                    <th>Tên dịch vụ</th>
+                                    <th>Nhóm hàng</th>
+                                    <th class="text-center">ĐVT</th>
+                                    <th class="text-center">Số lượng</th>
+                                    <th class="text-end">Đơn giá TB</th>
+                                    <th class="text-end">Tổng doanh thu</th>
+                                    <th style="width: 160px;">Tỷ lệ đóng góp</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (!Model.DanhSachDichVu.Any())
+                                {
+                                    <tr>
+                                        <td colspan="9" class="text-center py-4 text-muted">
+                                            <i class="bi bi-inbox fs-2 d-block mb-1 opacity-50"></i>
+                                            Chưa có dữ liệu sử dụng dịch vụ trong khoảng thời gian đã chọn.
+                                        </td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    int stt = 1;
+                                    @foreach (var item in Model.DanhSachDichVu)
+                                    {
+                                        <tr>
+                                            <td class="text-muted small fw-bold">@stt</td>
+                                            <td><span class="badge bg-light text-dark border">@item.MaHang</span></td>
+                                            <td class="fw-bold text-dark">@item.TenDichVu</td>
+                                            <td><span class="badge bg-secondary-subtle text-secondary">@item.NhomHang</span></td>
+                                            <td class="text-center small text-muted">@item.DonViTinh</td>
+                                            <td class="text-center fw-semibold">@item.SoLuongSuDung</td>
+                                            <td class="text-end text-muted small">@item.DonGia.ToString("N0") đ</td>
+                                            <td class="text-end fw-bold text-primary">@item.DoanhThu.ToString("N0") đ</td>
+                                            <td>
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <div class="progress flex-grow-1" style="height: 8px; background-color: #e9ecef; border-radius: 4px;">
+                                                        <div class="progress-bar" role="progressbar" 
+                                                             style="width: @(item.TiLePhanTram.ToString("0.0", CultureInfo.InvariantCulture))%; background-color: #ff9800; border-radius: 4px;" 
+                                                             aria-valuenow="@(item.TiLePhanTram.ToString("0.0", CultureInfo.InvariantCulture))" 
+                                                             aria-valuemin="0" 
+                                                             aria-valuemax="100">
+                                                        </div>
+                                                    </div>
+                                                    <span class="small fw-semibold text-secondary" style="min-width: 40px;">@item.TiLePhanTram%</span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        stt++;
+                                    }
+                                }
+                            </tbody>
+                            <tfoot class="table-light border-top border-2">
+                                <tr class="fw-bold text-dark">
+                                    <td colspan="5">TỔNG CỘNG:</td>
+                                    <td class="text-center">@totalQuantityAllServices</td>
+                                    <td class="text-end">---</td>
+                                    <td class="text-end text-danger fs-6">@totalRevenueAllServices.ToString("N0") đ</td>
+                                    <td><span class="badge bg-success">100%</span></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const formatVND = (val) => Number(val).toLocaleString('vi-VN') + ' đ';
+
+            const nhomLabels = @Html.Raw(JsonSerializer.Serialize(Model.CoCauNhomDichVu.Select(x => x.TenNhom)));
+            const nhomData = @Html.Raw(JsonSerializer.Serialize(Model.CoCauNhomDichVu.Select(x => x.DoanhThu)));
+            const nhomColors = @Html.Raw(JsonSerializer.Serialize(Model.CoCauNhomDichVu.Select(x => x.MauSac)));
+
+            const total = nhomData.reduce((a, b) => a + b, 0);
+
+            new Chart(document.getElementById('serviceCategoryChart').getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: total > 0 ? nhomLabels : ['Chưa có dữ liệu'],
+                    datasets: [{
+                        data: total > 0 ? nhomData : [1],
+                        backgroundColor: total > 0 ? nhomColors : ['#e9ecef'],
+                        borderWidth: 2,
+                        borderColor: '#ffffff',
+                        hoverOffset: 12
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { animateScale: true, animateRotate: true, duration: 1000, easing: 'easeOutQuart' },
+                    plugins: {
+                        legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, font: { size: 11 } } },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.92)',
+                            padding: 12,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: (ctx) => {
+                                    if (total === 0) return ' Chưa có doanh thu';
+                                    return ` ${ctx.label}: ${formatVND(ctx.parsed)} (${((ctx.parsed / total) * 100).toFixed(1)}%)`;
+                                }
+                            }
+                        }
+                    },
+                    cutout: '65%'
+                }
+            });
+        });
+    </script>
+}
+

@@ -11,6 +11,10 @@ namespace HotelManagement.ViewModels
         [DataType(DataType.Date)]
         public DateTime? EndDate { get; set; }
 
+        // Alias hỗ trợ cả FromDate / ToDate
+        public DateTime? FromDate => StartDate;
+        public DateTime? ToDate => EndDate;
+
         // 2. Thẻ số liệu tổng quan (KPI Cards)
         public decimal TongDoanhThuKyNay { get; set; }
         public decimal DoanhThuHomNay { get; set; }
@@ -20,13 +24,15 @@ namespace HotelManagement.ViewModels
         public int TongSoKhachHang { get; set; }
         public decimal DoanhThuTrungBinhDon { get; set; }
 
-        // 3. Cơ cấu doanh thu (Dùng cho Biểu đồ tròn Tiền phòng vs Tiền dịch vụ)
+        // 3. Cơ cấu doanh thu (Biểu đồ tròn - đã phân bổ VAT/phí phụ thu khớp 100% với thẻ tổng)
         public decimal DoanhThuPhong { get; set; }
         public decimal DoanhThuDichVu { get; set; }
         public double TiLeDoanhThuPhong { get; set; }
         public double TiLeDoanhThuDichVu { get; set; }
 
-        // 4. Biến động doanh thu 7 ngày gần nhất (Dùng cho Biểu đồ cột / đường)
+        // 4. Biến động doanh thu theo kỳ lọc (Gom nhóm linh hoạt: Ngày / Tuần / Tháng)
+        public string TieuDeBieuDoCot { get; set; } = "Biến động Doanh thu";
+        public string LoaiGomNhom { get; set; } = "Ngay"; // "Ngay", "Tuan", "Thang"
         public List<string> Labels7Ngay { get; set; } = new();
         public List<decimal> DoanhThuPhong7Ngay { get; set; } = new();
         public List<decimal> DoanhThuDichVu7Ngay { get; set; } = new();

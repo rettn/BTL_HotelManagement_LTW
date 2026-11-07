@@ -16,218 +16,201 @@ namespace HotelManagement.Controllers
             _context = context;
         }
 
-        // GET: /Report hoặc /Report/Index
-        [HttpGet]
-        public async Task<IActionResult> Index(DateTime? startDate, DateTime? endDate)
+        // Helper chuẩn hóa khoảng thời gian lọc dùng chung cho cả 4 trang
+        private (DateTime from, DateTime to, DateTime rawStart, DateTime rawEnd) NormalizeDateRange(
+            DateTime? startDate, DateTime? endDate, DateTime? fromDate, DateTime? toDate)
         {
-            return await Dashboard(startDate, endDate);
+            var today = DateTime.Today;
+            var start = startDate ?? fromDate ?? today.AddDays(-30);
+            var end = endDate ?? toDate ?? today;
+
+            if (start > end)
+            {
+                var temp = start;
+                start = end;
+                end = temp;
+            }
+
+            var filterFrom = start.Date;
+            var filterTo = end.Date.AddDays(1).AddTicks(-1);
+
+            return (filterFrom, filterTo, start, end);
         }
 
-        // GET: /Report/Dashboard
+        // =========================================================================
+        // 1. TRANG TỔNG QUAN CHUNG (/Report/Overview hoặc /Report)
+        // =========================================================================
         [HttpGet]
-        public async Task<IActionResult> Dashboard(DateTime? startDate, DateTime? endDate)
+        public async Task<IActionResult> Index(DateTime? startDate, DateTime? endDate, DateTime? fromDate, DateTime? toDate)
         {
-            var now = DateTime.Now;
+            return await Overview(startDate, endDate, fromDate, toDate);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Dashboard(DateTime? startDate, DateTime? endDate, DateTime? fromDate, DateTime? toDate)
+        {
+            return await Overview(startDate, endDate, fromDate, toDate);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Overview(DateTime? startDate, DateTime? endDate, DateTime? fromDate, DateTime? toDate)
+        {
+            var (filterFrom, filterTo, rawStart, rawEnd) = NormalizeDateRange(startDate, endDate, fromDate, toDate);
             var today = DateTime.Today;
 
-            // Mặc định lọc 30 ngày gần nhất nếu chưa chọn mốc thời gian
-            startDate ??= today.AddDays(-30);
-            endDate ??= today;
-
-            var fromDate = startDate.Value.Date;
-            var toDate = endDate.Value.Date.AddDays(1).AddTicks(-1);
-
-            var viewModel = new ReportDashboardViewModel
+            var viewModel = new ReportOverviewViewModel
             {
-                StartDate = startDate,
-                EndDate = endDate
+                StartDate = rawStart,
+                EndDate = rawEnd
             };
 
-            // Tập hóa đơn đã thanh toán
+            // Tập hóa đơn đã thanh toán hợp lệ
             var queryPaidInvoices = _context.HoaDons
                 .AsNoTracking()
                 .Where(h => h.TrangThai == "DaThanhToan");
 
-            // =========================================================================
-            // A. TÍNH TOÁN CÁC CHỈ SỐ DOANH THU & 7 NGÀY GẦN NHẤT (CHO BIỂU ĐỒ CỘT VÀ TRÒN)
-            // =========================================================================
-            // 1. Doanh thu hôm nay
+            var hoaDonTrongKy = await queryPaidInvoices
+                .Where(h => h.NgayLap >= filterFrom && h.NgayLap <= filterTo)
+                .Select(h => new { h.MaHD, h.TienPhong, h.TienDichVu, h.TongTien, h.NgayLap })
+                .ToListAsync();
+
+            decimal tongDoanhThuSauThue = hoaDonTrongKy.Sum(h => h.TongTien);
+            viewModel.TongDoanhThuKyNay = tongDoanhThuSauThue;
+
+            // Thống kê Doanh thu Hôm nay, Tuần này, Tháng này
             viewModel.DoanhThuHomNay = await queryPaidInvoices
                 .Where(h => h.NgayLap >= today)
                 .SumAsync(h => (decimal?)h.TongTien) ?? 0m;
 
-            // 2. Doanh thu tuần này (tính từ Thứ Hai)
             var dayOfWeek = (int)today.DayOfWeek;
             var startOfWeek = today.AddDays(-((dayOfWeek == 0 ? 7 : dayOfWeek) - 1));
             viewModel.DoanhThuTuanNay = await queryPaidInvoices
                 .Where(h => h.NgayLap >= startOfWeek)
                 .SumAsync(h => (decimal?)h.TongTien) ?? 0m;
 
-            // 3. Doanh thu tháng này
             var startOfMonth = new DateTime(today.Year, today.Month, 1);
             viewModel.DoanhThuThangNay = await queryPaidInvoices
                 .Where(h => h.NgayLap >= startOfMonth)
                 .SumAsync(h => (decimal?)h.TongTien) ?? 0m;
 
-            // 4. Cơ cấu doanh thu trong kỳ lọc (Tiền phòng vs Tiền dịch vụ cho Biểu đồ tròn)
-            var hoaDonTrongKy = await queryPaidInvoices
-                .Where(h => h.NgayLap >= fromDate && h.NgayLap <= toDate)
-                .Select(h => new { h.TienPhong, h.TienDichVu, h.TongTien, h.NgayLap })
-                .ToListAsync();
+            // Phân bổ VAT/phí phụ thu khớp 100%
+            decimal tongTienPhongChuaThue = hoaDonTrongKy.Sum(h => h.TienPhong);
+            decimal tongTienDichVuChuaThue = hoaDonTrongKy.Sum(h => h.TienDichVu);
+            decimal tongChuaThue = tongTienPhongChuaThue + tongTienDichVuChuaThue;
 
-            decimal dtPhongTrongKy = hoaDonTrongKy.Sum(h => h.TienPhong);
-            decimal dtDichVuTrongKy = hoaDonTrongKy.Sum(h => h.TienDichVu);
-            decimal tongDoanhThuTrongKy = dtPhongTrongKy + dtDichVuTrongKy;
+            decimal dtPhongPhanBo = 0m;
+            decimal dtDichVuPhanBo = 0m;
 
-            viewModel.DoanhThuPhong = dtPhongTrongKy;
-            viewModel.DoanhThuDichVu = dtDichVuTrongKy;
-            viewModel.TongDoanhThuKyNay = hoaDonTrongKy.Sum(h => h.TongTien);
-            viewModel.TiLeDoanhThuPhong = tongDoanhThuTrongKy > 0 ? Math.Round((double)(dtPhongTrongKy / tongDoanhThuTrongKy * 100), 1) : 0;
-            viewModel.TiLeDoanhThuDichVu = tongDoanhThuTrongKy > 0 ? Math.Round(100 - viewModel.TiLeDoanhThuPhong, 1) : 0;
-
-            // 5. Biến động doanh thu 7 ngày gần nhất (cho Biểu đồ cột / đường)
-            var sevenDaysAgo = today.AddDays(-6);
-            var hoaDon7Ngay = await queryPaidInvoices
-                .Where(h => h.NgayLap >= sevenDaysAgo)
-                .Select(h => new { h.NgayLap, h.TongTien, h.TienPhong, h.TienDichVu })
-                .ToListAsync();
-
-            for (int i = 0; i < 7; i++)
+            if (tongChuaThue > 0)
             {
-                var curDay = sevenDaysAgo.AddDays(i);
-                viewModel.Labels7Ngay.Add(curDay.ToString("dd/MM"));
-
-                var inDay = hoaDon7Ngay.Where(h => h.NgayLap.Date == curDay).ToList();
-                decimal pVal = inDay.Sum(h => h.TienPhong);
-                decimal dvVal = inDay.Sum(h => h.TienDichVu);
-
-                viewModel.DoanhThuPhong7Ngay.Add(pVal);
-                viewModel.DoanhThuDichVu7Ngay.Add(dvVal);
-                viewModel.DoanhThu7Ngay.Add(pVal + dvVal);
+                dtPhongPhanBo = Math.Round(tongDoanhThuSauThue * (tongTienPhongChuaThue / tongChuaThue), 0);
+                dtDichVuPhanBo = tongDoanhThuSauThue - dtPhongPhanBo;
             }
 
-            // =========================================================================
-            // BÁO CÁO 1: DOANH THU THEO HẠNG PHÒNG (LOẠI PHÒNG)
-            // =========================================================================
-            var danhSachLoaiPhong = await _context.LoaiPhongs.AsNoTracking().ToListAsync();
+            viewModel.DoanhThuPhong = dtPhongPhanBo;
+            viewModel.DoanhThuDichVu = dtDichVuPhanBo;
+            viewModel.TiLeDoanhThuPhong = tongDoanhThuSauThue > 0 ? Math.Round((double)(dtPhongPhanBo / tongDoanhThuSauThue * 100), 1) : 0;
+            viewModel.TiLeDoanhThuDichVu = tongDoanhThuSauThue > 0 ? Math.Round(100 - viewModel.TiLeDoanhThuPhong, 1) : 0;
 
-            var chiTietDatPhongsDaThu = await _context.ChiTietDatPhongs
-                .AsNoTracking()
-                .Include(ct => ct.Phong)
-                .Include(ct => ct.DatPhong)
-                    .ThenInclude(dp => dp!.HoaDons)
-                .Where(ct => ct.DatPhong != null &&
-                             ct.DatPhong.HoaDons.Any(h => h.TrangThai == "DaThanhToan"
-                                                       && h.NgayLap >= fromDate
-                                                       && h.NgayLap <= toDate))
-                .ToListAsync();
+            // Gom nhóm biểu đồ linh hoạt
+            int soNgayKhoangLoc = (int)(rawEnd.Date - rawStart.Date).TotalDays;
+            var labelsBieuDo = new List<string>();
+            var dtPhongBieuDo = new List<decimal>();
+            var dtDichVuBieuDo = new List<decimal>();
+            var dtTongBieuDo = new List<decimal>();
 
-            var listDoanhThuHangPhong = new List<RoomCategoryRevenueItem>();
-
-            foreach (var lp in danhSachLoaiPhong)
+            if (soNgayKhoangLoc <= 7)
             {
-                var dsChiTietCuaLoai = chiTietDatPhongsDaThu
-                    .Where(ct => ct.Phong != null && ct.Phong.MaLoaiPhong == lp.MaLoaiPhong)
-                    .ToList();
+                viewModel.LoaiGomNhom = "Ngay";
+                viewModel.TieuDeBieuDoCot = $"Doanh thu theo ngày ({rawStart:dd/MM} - {rawEnd:dd/MM})";
 
-                int soLuotDat = dsChiTietCuaLoai.Select(ct => ct.MaDatPhong).Distinct().Count();
-
-                int tongSoDem = dsChiTietCuaLoai.Sum(ct =>
+                for (var d = rawStart.Date; d <= rawEnd.Date; d = d.AddDays(1))
                 {
-                    var ngayTra = ct.NgayTra > ct.NgayNhan ? ct.NgayTra : ct.NgayNhan.AddDays(1);
-                    return Math.Max(1, (int)(ngayTra.Date - ct.NgayNhan.Date).TotalDays);
-                });
+                    labelsBieuDo.Add(d.ToString("dd/MM"));
+                    var inDay = hoaDonTrongKy.Where(h => h.NgayLap.Date == d).ToList();
+                    decimal tongTrongNgay = inDay.Sum(h => h.TongTien);
+                    decimal pChuaThue = inDay.Sum(h => h.TienPhong);
+                    decimal dvChuaThue = inDay.Sum(h => h.TienDichVu);
+                    decimal tongChuaThueNgay = pChuaThue + dvChuaThue;
 
-                decimal doanhThu = dsChiTietCuaLoai.Sum(ct =>
-                {
-                    var ngayTra = ct.NgayTra > ct.NgayNhan ? ct.NgayTra : ct.NgayNhan.AddDays(1);
-                    int soDem = Math.Max(1, (int)(ngayTra.Date - ct.NgayNhan.Date).TotalDays);
-                    decimal donGia = ct.DonGia > 0 ? ct.DonGia : lp.GiaTheoDem;
-                    return donGia * soDem;
-                });
+                    decimal pVal = tongChuaThueNgay > 0 ? Math.Round(tongTrongNgay * (pChuaThue / tongChuaThueNgay), 0) : 0m;
+                    decimal dvVal = tongTrongNgay - pVal;
 
-                listDoanhThuHangPhong.Add(new RoomCategoryRevenueItem
+                    dtPhongBieuDo.Add(pVal);
+                    dtDichVuBieuDo.Add(dvVal);
+                    dtTongBieuDo.Add(tongTrongNgay);
+                }
+            }
+            else if (soNgayKhoangLoc <= 30)
+            {
+                viewModel.LoaiGomNhom = "Tuan";
+                viewModel.TieuDeBieuDoCot = $"Doanh thu gom theo tuần ({rawStart:dd/MM} - {rawEnd:dd/MM})";
+
+                int tuanIndex = 1;
+                for (var d = rawStart.Date; d <= rawEnd.Date; d = d.AddDays(7))
                 {
-                    MaLoaiPhong = lp.MaLoaiPhong,
-                    TenLoaiPhong = lp.TenLoaiPhong,
-                    GiaTheoDemHienTai = lp.GiaTheoDem,
-                    SoLuotDat = soLuotDat,
-                    TongSoDemThue = tongSoDem,
-                    DoanhThu = doanhThu
-                });
+                    var weekEnd = d.AddDays(6) > rawEnd.Date ? rawEnd.Date : d.AddDays(6);
+                    labelsBieuDo.Add($"T{tuanIndex} ({d:dd/MM}-{weekEnd:dd/MM})");
+
+                    var inWeek = hoaDonTrongKy.Where(h => h.NgayLap.Date >= d && h.NgayLap.Date <= weekEnd).ToList();
+                    decimal tongTuan = inWeek.Sum(h => h.TongTien);
+                    decimal pChuaThue = inWeek.Sum(h => h.TienPhong);
+                    decimal dvChuaThue = inWeek.Sum(h => h.TienDichVu);
+                    decimal tongChuaThueTuan = pChuaThue + dvChuaThue;
+
+                    decimal pVal = tongChuaThueTuan > 0 ? Math.Round(tongTuan * (pChuaThue / tongChuaThueTuan), 0) : 0m;
+                    decimal dvVal = tongTuan - pVal;
+
+                    dtPhongBieuDo.Add(pVal);
+                    dtDichVuBieuDo.Add(dvVal);
+                    dtTongBieuDo.Add(tongTuan);
+                    tuanIndex++;
+                }
+            }
+            else
+            {
+                viewModel.LoaiGomNhom = "Thang";
+                viewModel.TieuDeBieuDoCot = $"Doanh thu gom theo tháng ({rawStart:MM/yyyy} - {rawEnd:MM/yyyy})";
+
+                var curMonth = new DateTime(rawStart.Year, rawStart.Month, 1);
+                var endMonth = new DateTime(rawEnd.Year, rawEnd.Month, 1);
+
+                while (curMonth <= endMonth)
+                {
+                    labelsBieuDo.Add(curMonth.ToString("MM/yyyy"));
+                    var nextMonth = curMonth.AddMonths(1);
+
+                    var inMonth = hoaDonTrongKy.Where(h => h.NgayLap >= curMonth && h.NgayLap < nextMonth).ToList();
+                    decimal tongThang = inMonth.Sum(h => h.TongTien);
+                    decimal pChuaThue = inMonth.Sum(h => h.TienPhong);
+                    decimal dvChuaThue = inMonth.Sum(h => h.TienDichVu);
+                    decimal tongChuaThueThang = pChuaThue + dvChuaThue;
+
+                    decimal pVal = tongChuaThueThang > 0 ? Math.Round(tongThang * (pChuaThue / tongChuaThueThang), 0) : 0m;
+                    decimal dvVal = tongThang - pVal;
+
+                    dtPhongBieuDo.Add(pVal);
+                    dtDichVuBieuDo.Add(dvVal);
+                    dtTongBieuDo.Add(tongThang);
+
+                    curMonth = nextMonth;
+                }
             }
 
-            decimal tongDoanhThuPhong = listDoanhThuHangPhong.Sum(x => x.DoanhThu);
-            foreach (var item in listDoanhThuHangPhong)
-            {
-                item.TiLePhanTram = tongDoanhThuPhong > 0
-                    ? Math.Round((double)(item.DoanhThu / tongDoanhThuPhong * 100), 1)
-                    : 0;
-            }
+            viewModel.LabelsThoiGian = labelsBieuDo;
+            viewModel.DoanhThuPhongThoiGian = dtPhongBieuDo;
+            viewModel.DoanhThuDichVuThoiGian = dtDichVuBieuDo;
+            viewModel.TongDoanhThuThoiGian = dtTongBieuDo;
 
-            viewModel.DoanhThuTheoHangPhong = listDoanhThuHangPhong
-                .OrderByDescending(x => x.DoanhThu)
-                .ToList();
-
-            // =========================================================================
-            // BÁO CÁO 2: TOP KHÁCH HÀNG THÂN THIẾT CHI TIÊU NHIỀU NHẤT
-            // =========================================================================
-            var topKhachHangsData = await _context.KhachHangs
-                .AsNoTracking()
-                .Include(kh => kh.DanhSachDatPhong)
-                    .ThenInclude(dp => dp.HoaDons)
-                .Select(kh => new
-                {
-                    kh.MaKH,
-                    kh.HoTen,
-                    kh.SoDienThoai,
-                    kh.Email,
-                    DonDatTrongKy = kh.DanhSachDatPhong
-                        .Where(dp => dp.NgayDat >= fromDate && dp.NgayDat <= toDate)
-                        .ToList(),
-                    TongChiTieu = kh.DanhSachDatPhong
-                        .SelectMany(dp => dp.HoaDons)
-                        .Where(h => h.TrangThai == "DaThanhToan"
-                                 && h.NgayLap >= fromDate
-                                 && h.NgayLap <= toDate)
-                        .Sum(h => (decimal?)h.TongTien) ?? 0m,
-                    NgayDatGanNhat = kh.DanhSachDatPhong
-                        .Where(dp => dp.NgayDat >= fromDate && dp.NgayDat <= toDate)
-                        .OrderByDescending(dp => dp.NgayDat)
-                        .Select(dp => (DateTime?)dp.NgayDat)
-                        .FirstOrDefault()
-                })
-                .Where(x => x.TongChiTieu > 0 || x.DonDatTrongKy.Any())
-                .OrderByDescending(x => x.TongChiTieu)
-                .ThenByDescending(x => x.DonDatTrongKy.Count)
-                .Take(10)
-                .ToListAsync();
-
-            viewModel.TopKhachHangThanThiet = topKhachHangsData.Select(kh => new TopCustomerReportItem
-            {
-                MaKH = kh.MaKH,
-                TenKhachHang = kh.HoTen,
-                SoDienThoai = kh.SoDienThoai ?? "N/A",
-                Email = kh.Email,
-                SoLanDatPhong = kh.DonDatTrongKy.Count,
-                TongChiTieu = kh.TongChiTieu,
-                NgayDatGanNhat = kh.NgayDatGanNhat,
-                HangThanhVien = kh.TongChiTieu >= 20000000 ? "VIP Kim Cương"
-                              : kh.TongChiTieu >= 10000000 ? "VIP Vàng"
-                              : kh.TongChiTieu >= 5000000 ? "VIP Bạc"
-                              : "Thân thiết"
-            }).ToList();
-
-            // =========================================================================
-            // BÁO CÁO 3: THỐNG KÊ TRẠNG THÁI ĐƠN ĐẶT PHÒNG (DÙNG ĐỂ VẼ BIỂU ĐỒ)
-            // =========================================================================
+            // Thống kê trạng thái đơn đặt phòng
             var donDatPhongsTrongKy = await _context.DatPhongs
                 .AsNoTracking()
-                .Where(dp => dp.NgayDat >= fromDate && dp.NgayDat <= toDate)
+                .Where(dp => dp.NgayDat >= filterFrom && dp.NgayDat <= filterTo)
                 .Select(dp => new { dp.MaDatPhong, dp.TrangThai })
                 .ToListAsync();
 
             int tongSoDonDat = donDatPhongsTrongKy.Count;
+            viewModel.TongLuotDatPhong = tongSoDonDat;
 
             var nhomTrangThai = donDatPhongsTrongKy
                 .GroupBy(dp => dp.TrangThai?.Trim() ?? "Khac")
@@ -282,34 +265,282 @@ namespace HotelManagement.Controllers
                 daXuLyGroup.Add(def.Key);
             }
 
-            foreach (var kvp in nhomTrangThai)
-            {
-                if (!daXuLyGroup.Contains(kvp.Key))
-                {
-                    listTrangThaiReport.Add(new BookingStatusReportItem
-                    {
-                        TrangThaiRaw = kvp.Key,
-                        TenHienThi = kvp.Key,
-                        SoLuong = kvp.Value,
-                        TiLePhanTram = tongSoDonDat > 0 ? Math.Round((double)kvp.Value / tongSoDonDat * 100, 1) : 0,
-                        MauSac = "#6c757d",
-                        BadgeClass = "bg-secondary"
-                    });
-                }
-            }
-
             viewModel.ThongKeTrangThaiDatPhong = listTrangThaiReport;
 
-            // =========================================================================
-            // TỔNG KẾT CÁC THẺ KPI
-            // =========================================================================
-            viewModel.TongLuotDatPhong = tongSoDonDat;
-            viewModel.TongSoKhachHang = await _context.KhachHangs.CountAsync();
-            viewModel.DoanhThuTrungBinhDon = tongSoDonDat > 0
-                ? Math.Round(viewModel.TongDoanhThuKyNay / tongSoDonDat, 0)
-                : 0m;
+            return View("Overview", viewModel);
+        }
 
-            return View("Dashboard", viewModel);
+        // =========================================================================
+        // 2. TRANG CÔNG SUẤT & HẠNG PHÒNG (/Report/RoomPerformance)
+        // =========================================================================
+        [HttpGet]
+        public async Task<IActionResult> CongSuatPhong(DateTime? startDate, DateTime? endDate, DateTime? fromDate, DateTime? toDate)
+        {
+            return await RoomPerformance(startDate, endDate, fromDate, toDate);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> RoomPerformance(DateTime? startDate, DateTime? endDate, DateTime? fromDate, DateTime? toDate)
+        {
+            var (filterFrom, filterTo, rawStart, rawEnd) = NormalizeDateRange(startDate, endDate, fromDate, toDate);
+
+            var viewModel = new RoomPerformanceViewModel
+            {
+                StartDate = rawStart,
+                EndDate = rawEnd
+            };
+
+            int tongSoPhong = await _context.Phongs.CountAsync();
+            viewModel.TongSoPhong = tongSoPhong;
+
+            int soNgayKhoangLoc = Math.Max(1, (int)(rawEnd.Date - rawStart.Date).TotalDays + 1);
+            int tongSoDemKhaDung = tongSoPhong * soNgayKhoangLoc;
+            viewModel.TongSoDemKhaDung = tongSoDemKhaDung;
+
+            // Lấy chi tiết đặt phòng
+            var chiTietDatPhongs = await _context.ChiTietDatPhongs
+                .AsNoTracking()
+                .Include(ct => ct.Phong)
+                    .ThenInclude(p => p.LoaiPhong)
+                .Include(ct => ct.DatPhong)
+                .Where(ct => ct.DatPhong != null 
+                          && ct.DatPhong.TrangThai != "DaHuy"
+                          && ct.NgayNhan <= filterTo 
+                          && ct.NgayTra >= filterFrom)
+                .ToListAsync();
+
+            // Tính số đêm phòng thực tế có khách lưu trú trong khoảng thời gian lọc
+            int tongSoDemThucTe = chiTietDatPhongs.Sum(ct =>
+            {
+                var checkIn = ct.NgayNhan > filterFrom ? ct.NgayNhan : filterFrom;
+                var checkOut = ct.NgayTra < filterTo ? ct.NgayTra : filterTo;
+                if (checkOut <= checkIn) return 1;
+                return Math.Max(1, (int)(checkOut.Date - checkIn.Date).TotalDays);
+            });
+
+            viewModel.TongSoDemThucTe = tongSoDemThucTe;
+            viewModel.OccupancyRate = tongSoDemKhaDung > 0 
+                ? Math.Min(100.0, Math.Round((double)tongSoDemThucTe / tongSoDemKhaDung * 100, 1)) 
+                : 0.0;
+
+            // Bảng Doanh thu theo từng hạng phòng
+            var allLoaiPhongs = await _context.LoaiPhongs
+                .AsNoTracking()
+                .OrderBy(lp => lp.MaLoaiPhong)
+                .ToListAsync();
+
+            var listDoanhThuHangPhong = new List<RoomCategoryRevenueItem>();
+            foreach (var lp in allLoaiPhongs)
+            {
+                var dsChiTietCuaLoai = chiTietDatPhongs
+                    .Where(ct => ct.Phong != null && ct.Phong.MaLoaiPhong == lp.MaLoaiPhong)
+                    .ToList();
+
+                int soLuotDat = dsChiTietCuaLoai.Select(ct => ct.MaDatPhong).Distinct().Count();
+
+                int tongSoDem = dsChiTietCuaLoai.Sum(ct =>
+                {
+                    var ngayTra = ct.NgayTra > ct.NgayNhan ? ct.NgayTra : ct.NgayNhan.AddDays(1);
+                    return Math.Max(1, (int)(ngayTra.Date - ct.NgayNhan.Date).TotalDays);
+                });
+
+                decimal doanhThu = dsChiTietCuaLoai.Sum(ct =>
+                {
+                    var ngayTra = ct.NgayTra > ct.NgayNhan ? ct.NgayTra : ct.NgayNhan.AddDays(1);
+                    int soDem = Math.Max(1, (int)(ngayTra.Date - ct.NgayNhan.Date).TotalDays);
+                    decimal donGia = ct.DonGia > 0 ? ct.DonGia : lp.GiaTheoDem;
+                    return donGia * soDem;
+                });
+
+                listDoanhThuHangPhong.Add(new RoomCategoryRevenueItem
+                {
+                    MaLoaiPhong = lp.MaLoaiPhong,
+                    TenLoaiPhong = lp.TenLoaiPhong,
+                    GiaTheoDemHienTai = lp.GiaTheoDem,
+                    SoLuotDat = soLuotDat,
+                    TongSoDemThue = tongSoDem,
+                    DoanhThu = doanhThu
+                });
+            }
+
+            decimal tongDoanhThuPhong = listDoanhThuHangPhong.Sum(x => x.DoanhThu);
+            viewModel.TongDoanhThuPhong = tongDoanhThuPhong;
+            viewModel.TongLuotDatPhong = listDoanhThuHangPhong.Sum(x => x.SoLuotDat);
+
+            foreach (var item in listDoanhThuHangPhong)
+            {
+                item.TiLePhanTram = tongDoanhThuPhong > 0
+                    ? Math.Round((double)(item.DoanhThu / tongDoanhThuPhong * 100), 1)
+                    : 0;
+            }
+
+            viewModel.DoanhThuTheoHangPhong = listDoanhThuHangPhong.OrderByDescending(x => x.DoanhThu).ToList();
+
+            return View("RoomPerformance", viewModel);
+        }
+
+        // =========================================================================
+        // 3. TRANG DOANH THU DỊCH VỤ (/Report/ServiceRevenue)
+        // =========================================================================
+        [HttpGet]
+        public async Task<IActionResult> DoanhThuDichVu(DateTime? startDate, DateTime? endDate, DateTime? fromDate, DateTime? toDate)
+        {
+            return await ServiceRevenue(startDate, endDate, fromDate, toDate);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ServiceRevenue(DateTime? startDate, DateTime? endDate, DateTime? fromDate, DateTime? toDate)
+        {
+            var (filterFrom, filterTo, rawStart, rawEnd) = NormalizeDateRange(startDate, endDate, fromDate, toDate);
+
+            var viewModel = new ServiceRevenueViewModel
+            {
+                StartDate = rawStart,
+                EndDate = rawEnd
+            };
+
+            // Truy vấn các lượt sử dụng dịch vụ trong kỳ
+            var chiTietDVs = await _context.ChiTietDichVus
+                .AsNoTracking()
+                .Include(ct => ct.DichVu)
+                .Where(ct => ct.ThoiGianSuDung >= filterFrom && ct.ThoiGianSuDung <= filterTo)
+                .ToListAsync();
+
+            decimal tongDoanhThuDichVu = chiTietDVs.Sum(ct => ct.SoLuong * ct.DonGia);
+            viewModel.TongDoanhThuDichVu = tongDoanhThuDichVu;
+            viewModel.TongLuotSuDung = chiTietDVs.Sum(ct => ct.SoLuong);
+
+            // Gom nhóm theo từng mặt hàng dịch vụ
+            var listDichVu = chiTietDVs
+                .GroupBy(ct => new
+                {
+                    ct.MaDichVu,
+                    Ten = ct.DichVu != null ? ct.DichVu.TenDichVu : "Dịch vụ khác",
+                    MaHang = ct.DichVu != null ? ct.DichVu.MaHang : $"DV{ct.MaDichVu:D3}",
+                    Nhom = ct.DichVu != null && !string.IsNullOrWhiteSpace(ct.DichVu.NhomHang) ? ct.DichVu.NhomHang : "Dịch vụ chung",
+                    DonVi = ct.DichVu != null ? ct.DichVu.DonViTinh : "Lần"
+                })
+                .Select(g =>
+                {
+                    decimal dtItem = g.Sum(x => x.SoLuong * x.DonGia);
+                    int slItem = g.Sum(x => x.SoLuong);
+                    decimal donGiaTrungBinh = slItem > 0 ? Math.Round(dtItem / slItem, 0) : 0m;
+
+                    return new ServiceRevenueItem
+                    {
+                        MaDichVu = g.Key.MaDichVu,
+                        MaHang = g.Key.MaHang,
+                        TenDichVu = g.Key.Ten,
+                        NhomHang = g.Key.Nhom,
+                        DonViTinh = g.Key.DonVi,
+                        DonGia = donGiaTrungBinh,
+                        SoLuongSuDung = slItem,
+                        DoanhThu = dtItem,
+                        TiLePhanTram = tongDoanhThuDichVu > 0 ? Math.Round((double)(dtItem / tongDoanhThuDichVu * 100), 1) : 0
+                    };
+                })
+                .OrderByDescending(x => x.DoanhThu)
+                .ToList();
+
+            viewModel.DanhSachDichVu = listDichVu;
+            viewModel.TongSoMatHang = listDichVu.Count;
+
+            // Gom nhóm cơ cấu theo Nhóm Hàng (F&B, Giặt là, Spa...)
+            var colors = new[] { "#ff9800", "#00bcd4", "#e91e63", "#0d6efd", "#4caf50", "#9c27b0" };
+            int colorIndex = 0;
+
+            var nhomDVs = listDichVu
+                .GroupBy(d => d.NhomHang)
+                .Select(g => new ServiceCategoryRevenueItem
+                {
+                    TenNhom = g.Key,
+                    DoanhThu = g.Sum(x => x.DoanhThu),
+                    SoLuotSuDung = g.Sum(x => x.SoLuongSuDung),
+                    TiLePhanTram = tongDoanhThuDichVu > 0 ? Math.Round((double)(g.Sum(x => x.DoanhThu) / tongDoanhThuDichVu * 100), 1) : 0,
+                    MauSac = colors[colorIndex++ % colors.Length]
+                })
+                .OrderByDescending(x => x.DoanhThu)
+                .ToList();
+
+            viewModel.CoCauNhomDichVu = nhomDVs;
+            viewModel.NhomHangChuLuc = nhomDVs.FirstOrDefault()?.TenNhom ?? "---";
+
+            return View("ServiceRevenue", viewModel);
+        }
+
+        // =========================================================================
+        // 4. TRANG TOP KHÁCH HÀNG VIP (/Report/TopCustomers)
+        // =========================================================================
+        [HttpGet]
+        public async Task<IActionResult> TopKhachHang(DateTime? startDate, DateTime? endDate, DateTime? fromDate, DateTime? toDate)
+        {
+            return await TopCustomers(startDate, endDate, fromDate, toDate);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> TopCustomers(DateTime? startDate, DateTime? endDate, DateTime? fromDate, DateTime? toDate)
+        {
+            var (filterFrom, filterTo, rawStart, rawEnd) = NormalizeDateRange(startDate, endDate, fromDate, toDate);
+
+            var viewModel = new TopCustomersViewModel
+            {
+                StartDate = rawStart,
+                EndDate = rawEnd
+            };
+
+            var topKhachHangsData = await _context.KhachHangs
+                .AsNoTracking()
+                .Include(kh => kh.DanhSachDatPhong)
+                    .ThenInclude(dp => dp.HoaDons)
+                .Select(kh => new
+                {
+                    kh.MaKH,
+                    kh.HoTen,
+                    kh.SoDienThoai,
+                    kh.Email,
+                    DonDatTrongKy = kh.DanhSachDatPhong
+                        .Where(dp => dp.NgayDat >= filterFrom && dp.NgayDat <= filterTo)
+                        .ToList(),
+                    TongChiTieu = kh.DanhSachDatPhong
+                        .SelectMany(dp => dp.HoaDons)
+                        .Where(h => h.TrangThai == "DaThanhToan"
+                                 && h.NgayLap >= filterFrom
+                                 && h.NgayLap <= filterTo)
+                        .Sum(h => (decimal?)h.TongTien) ?? 0m,
+                    NgayDatGanNhat = kh.DanhSachDatPhong
+                        .Where(dp => dp.NgayDat >= filterFrom && dp.NgayDat <= filterTo)
+                        .OrderByDescending(dp => dp.NgayDat)
+                        .Select(dp => (DateTime?)dp.NgayDat)
+                        .FirstOrDefault()
+                })
+                .Where(x => x.TongChiTieu > 0 || x.DonDatTrongKy.Any())
+                .OrderByDescending(x => x.TongChiTieu)
+                .ThenByDescending(x => x.DonDatTrongKy.Count)
+                .ToListAsync();
+
+            viewModel.TongKhachHangChiTieu = topKhachHangsData.Count;
+            viewModel.TongChiTieuTop10 = topKhachHangsData.Take(10).Sum(x => x.TongChiTieu);
+            viewModel.ChiTieuTrungBinh = topKhachHangsData.Count > 0 
+                ? Math.Round(topKhachHangsData.Sum(x => x.TongChiTieu) / topKhachHangsData.Count, 0) 
+                : 0m;
+            viewModel.KhachHangTieuBieu = topKhachHangsData.FirstOrDefault()?.HoTen ?? "---";
+
+            viewModel.TopKhachHangs = topKhachHangsData.Select(kh => new TopCustomerReportItem
+            {
+                MaKH = kh.MaKH,
+                TenKhachHang = kh.HoTen,
+                SoDienThoai = kh.SoDienThoai ?? "N/A",
+                Email = kh.Email,
+                SoLanDatPhong = kh.DonDatTrongKy.Count,
+                TongChiTieu = kh.TongChiTieu,
+                NgayDatGanNhat = kh.NgayDatGanNhat,
+                HangThanhVien = kh.TongChiTieu >= 20000000 ? "VIP Kim Cương"
+                              : kh.TongChiTieu >= 10000000 ? "VIP Vàng"
+                              : kh.TongChiTieu >= 5000000 ? "VIP Bạc"
+                              : "Thân thiết"
+            }).ToList();
+
+            return View("TopCustomers", viewModel);
         }
     }
 }

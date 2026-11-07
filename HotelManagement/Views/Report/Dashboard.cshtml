@@ -10,6 +10,49 @@
     var totalBookingsAllRooms = Model.DoanhThuTheoHangPhong.Sum(x => x.SoLuotDat);
 }
 
+<style>
+    @@media print {
+        /* Ẩn các thành phần giao diện không cần in: sidebar, topbar, form lọc, các nút bấm */
+        .admin-sidebar, 
+        .admin-topbar, 
+        .sidebar-resize-handle, 
+        .sidebar-overlay, 
+        .sidebar-footer,
+        .d-print-none,
+        button,
+        a.btn {
+            display: none !important;
+        }
+
+        /* Đưa bố cục về 100% không viền đen, nền trắng sạch sẽ */
+        body, .admin-shell, .admin-main, .container-fluid {
+            background-color: #ffffff !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            box-shadow: none !important;
+        }
+
+        .card {
+            border: 1px solid #e2e8f0 !important;
+            box-shadow: none !important;
+            break-inside: avoid;
+            page-break-inside: avoid;
+            margin-bottom: 20px !important;
+        }
+
+        canvas {
+            max-width: 100% !important;
+            height: auto !important;
+        }
+
+        .table-responsive {
+            overflow: visible !important;
+        }
+    }
+</style>
+
 <div class="container-fluid px-4 py-4">
     <!-- TIÊU ĐỀ & FORM LỌC KHOẢNG THỜI GIAN -->
     <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">
@@ -143,12 +186,12 @@
                 <div class="card-header bg-white border-0 pt-4 px-4 pb-2 d-flex justify-content-between align-items-center">
                     <div>
                         <h5 class="fw-bold text-dark mb-1">
-                            <i class="bi bi-bar-chart-line-fill text-primary me-2"></i>Biến động Doanh thu 7 ngày gần nhất
+                            <i class="bi bi-bar-chart-line-fill text-primary me-2"></i>@Model.TieuDeBieuDoCot
                         </h5>
-                        <p class="text-muted small mb-0">Biểu đồ cột phân rã chi tiết giữa tiền phòng và tiền dịch vụ theo từng ngày</p>
+                        <p class="text-muted small mb-0">Biểu đồ cột phân rã chi tiết tiền phòng và dịch vụ theo @(Model.LoaiGomNhom == "Ngay" ? "ngày" : Model.LoaiGomNhom == "Tuan" ? "tuần" : "tháng") trong kỳ lọc</p>
                     </div>
                     <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2">
-                        7 ngày qua
+                        @(Model.LoaiGomNhom == "Ngay" ? "Theo ngày" : Model.LoaiGomNhom == "Tuan" ? "Theo tuần" : "Theo tháng")
                     </span>
                 </div>
                 <div class="card-body px-4 py-3">
@@ -191,7 +234,7 @@
     <div class="row g-4 mb-4">
         <!-- PHẦN 1: BÁO CÁO DOANH THU THEO HẠNG PHÒNG -->
         <div class="col-xl-7 col-lg-12">
-            <div class="card border-0 shadow-sm rounded-4 h-100 bg-white">
+            <div class="card border-0 shadow-sm rounded-4 h-100 bg-white" id="sec-room-revenue">
                 <div class="card-header bg-white border-0 pt-4 px-4 pb-2 d-flex justify-content-between align-items-center">
                     <div>
                         <h5 class="fw-bold text-dark mb-1">
@@ -245,10 +288,15 @@
                                             </td>
                                             <td>
                                                 <div class="d-flex align-items-center gap-2">
-                                                    <div class="progress flex-grow-1" style="height: 6px;">
-                                                        <div class="progress-bar bg-primary" role="progressbar" style="width: @item.TiLePhanTram%;" aria-valuenow="@item.TiLePhanTram" aria-valuemin="0" aria-valuemax="100"></div>
+                                                    <div class="progress flex-grow-1" style="height: 8px; background-color: #e9ecef; border-radius: 4px;">
+                                                        <div class="progress-bar" role="progressbar" 
+                                                             style="width: @(item.TiLePhanTram.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture))%; background-color: #0d6efd; border-radius: 4px;" 
+                                                             aria-valuenow="@(item.TiLePhanTram.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture))" 
+                                                             aria-valuemin="0" 
+                                                             aria-valuemax="100">
+                                                        </div>
                                                     </div>
-                                                    <span class="small fw-semibold text-secondary" style="min-width: 42px;">@item.TiLePhanTram%</span>
+                                                    <span class="small fw-semibold text-secondary" style="min-width: 45px;">@item.TiLePhanTram%</span>
                                                 </div>
                                             </td>
                                         </tr>
@@ -311,7 +359,7 @@
     <!-- HÀNG 3: TOP KHÁCH HÀNG THÂN THIẾT CHI TIÊU NHIỀU NHẤT -->
     <div class="row">
         <div class="col-12">
-            <div class="card border-0 shadow-sm rounded-4 bg-white">
+            <div class="card border-0 shadow-sm rounded-4 bg-white" id="sec-top-customers">
                 <div class="card-header bg-white border-0 pt-4 px-4 pb-2 d-flex flex-wrap justify-content-between align-items-center gap-2">
                     <div>
                         <h5 class="fw-bold text-dark mb-1">
@@ -438,8 +486,11 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function () {
+            // Định dạng tiền tệ VND
+            const formatVND = (val) => Number(val).toLocaleString('vi-VN') + ' đ';
+
             // -------------------------------------------------------------
-            // 1. BIỂU ĐỒ CỘT: BIẾN ĐỘNG DOANH THU 7 NGÀY GẦN NHẤT
+            // 1. BIỂU ĐỒ CỘT: BIẾN ĐỘNG DOANH THU THEO KỲ
             // -------------------------------------------------------------
             const labels7Ngay = @Html.Raw(JsonSerializer.Serialize(Model.Labels7Ngay));
             const dataPhong7Ngay = @Html.Raw(JsonSerializer.Serialize(Model.DoanhThuPhong7Ngay));
@@ -455,12 +506,14 @@
                             label: 'Tiền phòng',
                             data: dataPhong7Ngay,
                             backgroundColor: '#0d6efd',
+                            hoverBackgroundColor: '#0b5ed7',
                             borderRadius: 6
                         },
                         {
                             label: 'Tiền dịch vụ',
                             data: dataDichVu7Ngay,
                             backgroundColor: '#ff9800',
+                            hoverBackgroundColor: '#f57c00',
                             borderRadius: 6
                         }
                     ]
@@ -468,23 +521,58 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    animation: {
+                        duration: 1000,
+                        easing: 'easeOutQuart'
+                    },
                     plugins: {
-                        legend: { position: 'top' },
+                        legend: { 
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                boxWidth: 8,
+                                padding: 15,
+                                font: { size: 12, weight: '600' }
+                            }
+                        },
                         tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.92)',
+                            titleFont: { size: 13, weight: 'bold' },
+                            bodyFont: { size: 12 },
+                            padding: 12,
+                            cornerRadius: 8,
+                            boxPadding: 4,
                             callbacks: {
                                 label: function(context) {
-                                    return ' ' + context.dataset.label + ': ' + Number(context.parsed.y).toLocaleString('vi-VN') + ' đ';
+                                    return ' ' + context.dataset.label + ': ' + formatVND(context.parsed.y);
+                                },
+                                footer: function(tooltipItems) {
+                                    let total = 0;
+                                    tooltipItems.forEach(item => {
+                                        total += item.parsed.y;
+                                    });
+                                    return '\n Tổng cộng: ' + formatVND(total);
                                 }
                             }
                         }
                     },
                     scales: {
+                        x: {
+                            grid: { display: false }
+                        },
                         y: {
                             beginAtZero: true,
                             ticks: {
                                 callback: function(value) {
                                     return (value / 1000000) + ' Tr';
                                 }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
                             }
                         }
                     }
@@ -506,20 +594,32 @@
                     datasets: [{
                         data: [valPhong, valDichVu],
                         backgroundColor: ['#0d6efd', '#ff9800'],
+                        hoverBackgroundColor: ['#0b5ed7', '#f57c00'],
                         borderWidth: 2,
                         borderColor: '#ffffff',
-                        hoverOffset: 6
+                        hoverOffset: 12
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    animation: {
+                        animateScale: true,
+                        animateRotate: true,
+                        duration: 1000,
+                        easing: 'easeOutQuart'
+                    },
                     plugins: {
                         legend: { display: false },
                         tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.92)',
+                            titleFont: { size: 13, weight: 'bold' },
+                            bodyFont: { size: 12 },
+                            padding: 12,
+                            cornerRadius: 8,
                             callbacks: {
                                 label: function(context) {
-                                    const val = Number(context.parsed).toLocaleString('vi-VN') + ' đ';
+                                    const val = formatVND(context.parsed);
                                     const pct = ((context.parsed / tongCoCau) * 100).toFixed(1);
                                     return ` ${context.label}: ${val} (${pct}%)`;
                                 }
@@ -552,15 +652,26 @@
                         backgroundColor: chartColors,
                         borderWidth: 2,
                         borderColor: '#ffffff',
-                        hoverOffset: 6
+                        hoverOffset: 10
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    animation: {
+                        animateScale: true,
+                        animateRotate: true,
+                        duration: 1000,
+                        easing: 'easeOutQuart'
+                    },
                     plugins: {
                         legend: { display: false },
                         tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.92)',
+                            titleFont: { size: 13, weight: 'bold' },
+                            bodyFont: { size: 12 },
+                            padding: 12,
+                            cornerRadius: 8,
                             callbacks: {
                                 label: function(context) {
                                     if (totalBookings === 0) return ' Chưa có đơn đặt phòng';
