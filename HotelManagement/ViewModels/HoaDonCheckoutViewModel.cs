@@ -4,6 +4,8 @@
     {
         public List<PhongHoaDonItemViewModel> DanhSachPhong { get; set; } = new();
         public int MaDatPhong { get; set; }
+        public int? MaPhong { get; set; }
+        public List<int> MaPhongs { get; set; } = new();
         public string SoPhong { get; set; } = string.Empty;
         public string TenKhachHang { get; set; } = string.Empty;
         public string SoDienThoai { get; set; } = string.Empty;

@@ -26,10 +26,19 @@
         </div>
     </div>
 
+    @if (TempData["Success"] is string successMessage)
+    {
+        <div class="alert alert-success" role="status">@successMessage</div>
+    }
+
     <!-- Thanh tìm kiếm & Bộ lọc -->
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-body p-3">
             <form method="get" asp-action="Index" class="row g-2 align-items-end">
+                @if (ViewBag.MaDatPhong is int maDatPhong)
+                {
+                    <input type="hidden" name="maDatPhong" value="@maDatPhong" />
+                }
                 <div class="col-lg-3 col-md-6">
                     <label class="form-label small fw-semibold text-secondary">Tìm kiếm</label>
                     <div class="input-group">
@@ -103,7 +112,7 @@
                         @foreach (var item in Model.DanhSachHoaDon)
                         {
                             <tr>
-                                <td class="ps-3 fw-bold text-primary">#HD@(item.MaDatPhong)@(item.NgayLap.ToString("yyyyMMdd"))</td>
+                                <td class="ps-3 fw-bold text-primary">#HD@(item.MaHD.ToString("D6"))</td>
                                 <td>
                                     <div class="fw-semibold text-dark">@item.TenKhachHang</div>
                                     <small class="text-muted"><i class="bi bi-telephone me-1"></i>@(string.IsNullOrEmpty(item.SoDienThoai) ? "N/A" : item.SoDienThoai)</small>
@@ -172,6 +181,7 @@
                         <li class="page-item @(!Model.HasPreviousPage ? "disabled" : "")">
                             <a class="page-link" asp-action="Index" 
                                asp-route-page="@(Model.PageIndex - 1)" 
+                               asp-route-maDatPhong="@ViewBag.MaDatPhong"
                                asp-route-tuKhoa="@Model.TuKhoa"
                                asp-route-trangThai="@Model.TrangThai"
                                asp-route-tuNgay="@(Model.TuNgay?.ToString("yyyy-MM-dd"))"
@@ -184,6 +194,7 @@
                             <li class="page-item @(i == Model.PageIndex ? "active" : "")">
                                 <a class="page-link" asp-action="Index" 
                                    asp-route-page="@i"
+                                   asp-route-maDatPhong="@ViewBag.MaDatPhong"
                                    asp-route-tuKhoa="@Model.TuKhoa"
                                    asp-route-trangThai="@Model.TrangThai"
                                    asp-route-tuNgay="@(Model.TuNgay?.ToString("yyyy-MM-dd"))"
@@ -193,6 +204,7 @@
                         <li class="page-item @(!Model.HasNextPage ? "disabled" : "")">
                             <a class="page-link" asp-action="Index" 
                                asp-route-page="@(Model.PageIndex + 1)" 
+                               asp-route-maDatPhong="@ViewBag.MaDatPhong"
                                asp-route-tuKhoa="@Model.TuKhoa"
                                asp-route-trangThai="@Model.TrangThai"
                                asp-route-tuNgay="@(Model.TuNgay?.ToString("yyyy-MM-dd"))"

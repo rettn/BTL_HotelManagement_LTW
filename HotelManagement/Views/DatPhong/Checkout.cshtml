@@ -56,6 +56,11 @@
         <form asp-action="XacNhanCheckout" method="post" id="checkoutForm">
             @Html.AntiForgeryToken()
             <input type="hidden" asp-for="MaDatPhong" />
+            <input type="hidden" asp-for="MaPhong" />
+            @foreach (var maPhong in Model.MaPhongs)
+            {
+                <input type="hidden" name="MaPhongs" value="@maPhong" />
+            }
             <input type="hidden" asp-for="SoPhong" />
             <input type="hidden" asp-for="TongThanhToan" />
 
@@ -908,12 +913,17 @@
 
         async function checkCheckoutPayment() {
             const maDatPhong = document.querySelector('input[name="MaDatPhong"]')?.value;
+            const paymentQuery = new URLSearchParams();
+            paymentQuery.set('maDatPhong', maDatPhong || '');
+            document.querySelectorAll('input[name="MaPhongs"]').forEach(input => paymentQuery.append('maPhongs', input.value));
+            const maPhong = document.querySelector('input[name="MaPhong"]')?.value;
+            if (maPhong) paymentQuery.set('maPhong', maPhong);
             const status = document.getElementById('checkoutPaymentStatus');
             const form = document.getElementById('checkoutForm');
             if (!maDatPhong || !status || checkoutPaymentConfirmed) return;
 
             try {
-                const response = await fetch(`/DatPhong/KiemTraThanhToanCheckout?maDatPhong=${maDatPhong}`);
+                const response = await fetch(`/DatPhong/KiemTraThanhToanCheckout?${paymentQuery.toString()}`);
                 if (!response.ok) return;
 
                 const result = await response.json();

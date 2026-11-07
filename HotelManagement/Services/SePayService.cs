@@ -65,7 +65,7 @@ namespace HotelManagement.Services
         /// <summary>
         /// Kiểm tra giao dịch từ SePay API xem khách hàng đã chuyển tiền cho đơn đặt phòng chưa
         /// </summary>
-        public async Task<SePayCheckResult> CheckPaymentAsync(int maDatPhong, decimal? requiredAmount = null)
+        public async Task<SePayCheckResult> CheckPaymentAsync(int maDatPhong, decimal? requiredAmount = null, bool ghiNhanTienCoc = true)
         {
             var datPhong = await _context.DatPhongs
                 .Include(d => d.ChiTietDatPhongs)
@@ -184,12 +184,15 @@ namespace HotelManagement.Services
                             var transDate = item.TryGetProperty("transaction_date", out var dProp) ? dProp.GetString() : DateTime.Now.ToString("dd/MM/yyyy HH:mm");
 
                             // Cập nhật trạng thái đặt phòng sang Đã Đặt Cọc / Đã Thanh Toán
-                            datPhong.TrangThai = "DaCoc";
-                            datPhong.TienCoc = amountIn;
-                            datPhong.GhiChu = $"{datPhong.GhiChu} [Đã nhận tiền cọc {amountIn:N0}đ qua SePay (Mã GD: {transId}) vào {transDate}]".Trim();
+                            if (ghiNhanTienCoc)
+                            {
+                                datPhong.TrangThai = "DaCoc";
+                                datPhong.TienCoc = amountIn;
+                                datPhong.GhiChu = $"{datPhong.GhiChu} [Đã nhận tiền cọc {amountIn:N0}đ qua SePay (Mã GD: {transId}) vào {transDate}]".Trim();
 
-                            _context.DatPhongs.Update(datPhong);
-                            await _context.SaveChangesAsync();
+                                _context.DatPhongs.Update(datPhong);
+                                await _context.SaveChangesAsync();
+                            }
 
                             return new SePayCheckResult
                             {

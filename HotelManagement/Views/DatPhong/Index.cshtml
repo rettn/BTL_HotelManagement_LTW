@@ -973,7 +973,7 @@
                                             <a asp-action="Details" asp-route-id="@booking.MaDatPhong"><i class="bi bi-eye me-1"></i>Chi tiết phiếu</a>
                                             @if (booking.TrangThai == "DaHoanThanh" || booking.TrangThai == "DaThanhToan")
                                             {
-                                                <a asp-action="XuatHoaDon" asp-route-id="@booking.MaDatPhong"><i class="bi bi-receipt me-1"></i>Xem hóa đơn</a>
+                                                <a asp-action="XuatHoaDon" asp-route-id="@booking.MaDatPhong" asp-route-theoDatPhong="true"><i class="bi bi-receipt me-1"></i>Xem hóa đơn</a>
                                             }
                                             @if (booking.TrangThai == "ChoXacNhan" || booking.TrangThai == "DaCoc")
                                             {
@@ -1259,71 +1259,14 @@
                 if (all) location.reload(); else button.disabled = false;
             }
         });
-            document.addEventListener('click', async e => {
-                const button = e.target.closest('.js-checkout-all');
+            document.addEventListener('click', e => {
+                const button = e.target.closest('.js-checkout-all, .js-checkout-room');
                 if (!button) return;
-
-                const count = Number(button.dataset.count || 1);
-                const code = button.dataset.code || '';
-                const rooms = (button.dataset.rooms || '').split('|').filter(Boolean);
-                const agreed = await askConfirm({
-                    title: 'Xác nhận trả phòng',
-                    message: count > 1
-                        ? `Bạn có muốn trả cả ${count} phòng của lượt đặt ${code} không?`
-                        : `Bạn có muốn trả phòng của lượt đặt ${code} không?`,
-                    items: rooms,
-                    note: 'Phòng sẽ chuyển sang trạng thái đang dọn dẹp. Hóa đơn sẽ được mở ngay sau khi trả phòng.',
-                    confirmText: count > 1 ? `Trả ${count} phòng & xuất hóa đơn` : 'Trả phòng & xuất hóa đơn'
-                });
-                if (!agreed) return;
-
-                button.disabled = true;
-                try {
-                    const res = await fetch('/DatPhong/CheckOutAll', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: new URLSearchParams({ id: button.dataset.booking, __RequestVerificationToken: bookingToken })
-                    });
-                    const data = await res.json();
-                    if (!res.ok || !data.success) throw new Error(data.message || 'Không thể trả phòng');
-                    location.href = data.redirectUrl || location.href;
-                } catch (err) {
-                    alert(err.message);
-                    location.reload();
-                }
+                const roomQuery = button.classList.contains('js-checkout-room')
+                    ? '?maPhong=' + encodeURIComponent(button.dataset.room)
+                    : '';
+                location.href = '/DatPhong/Checkout/' + button.dataset.booking + roomQuery;
             });
-
-            document.addEventListener('click', async e => {
-                const button = e.target.closest('.js-checkout-room');
-                if (!button) return;
-
-                const roomNumber = button.dataset.roomNumber || 'đã chọn';
-                const agreed = await askConfirm({
-                    title: 'Xác nhận trả phòng',
-                    message: `Bạn có muốn trả phòng ${roomNumber} không?`,
-                    items: [`Phòng ${roomNumber}`],
-                    note: 'Phòng sẽ chuyển sang trạng thái đang dọn dẹp.',
-                    confirmText: 'Trả phòng'
-                });
-                if (!agreed) return;
-
-                button.disabled = true;
-                try {
-                    const res = await fetch('/DatPhong/CheckOut', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: new URLSearchParams({ id: button.dataset.booking, maPhong: button.dataset.room, __RequestVerificationToken: bookingToken })
-                    });
-                    const data = await res.json();
-                    if (!res.ok || !data.success) throw new Error(data.message || 'Không thể trả phòng.');
-                    if (data.trangThaiDatPhong === 'DaHoanThanh') location.href = '/DatPhong/XuatHoaDon/' + button.dataset.booking;
-                    else location.reload();
-                } catch (err) {
-                    alert(err.message);
-                    button.disabled = false;
-                }
-            });
-
             applyFilters();
         });
     </script>

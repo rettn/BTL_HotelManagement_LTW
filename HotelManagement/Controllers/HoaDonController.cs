@@ -24,9 +24,11 @@ namespace HotelManagement.Controllers
             string? trangThai,
             DateTime? tuNgay,
             DateTime? denNgay,
+            int? maDatPhong,
             int page = 1,
             int pageSize = 10)
         {
+            ViewBag.MaDatPhong = maDatPhong;
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 10;
 
@@ -39,6 +41,9 @@ namespace HotelManagement.Controllers
                 .Include(h => h.ThanhToans)
                 .AsNoTracking()
                 .AsQueryable();
+
+            if (maDatPhong.HasValue)
+                query = query.Where(h => h.MaDatPhong == maDatPhong.Value);
 
             if (!string.IsNullOrWhiteSpace(tuKhoa))
             {
@@ -87,9 +92,11 @@ namespace HotelManagement.Controllers
                     SoDienThoai = h.DatPhong != null && h.DatPhong.KhachHang != null
                         ? (h.DatPhong.KhachHang.SoDienThoai ?? "")
                         : "",
-                    DanhSachPhong = h.DatPhong != null
-                        ? string.Join(", ", h.DatPhong.ChiTietDatPhongs.Select(c => c.Phong != null ? c.Phong.SoPhong : ""))
-                        : "",
+                    DanhSachPhong = h.ChiTietHoaDons.Any(c => c.LoaiKhoanThu == "Phong")
+                        ? string.Join(", ", h.ChiTietHoaDons.Where(c => c.LoaiKhoanThu == "Phong").Select(c => c.TenKhoanThu))
+                        : h.DatPhong != null
+                            ? string.Join(", ", h.DatPhong.ChiTietDatPhongs.Select(c => c.Phong != null ? c.Phong.SoPhong : ""))
+                            : "",
                     NgayLap = h.NgayLap,
                     TienPhong = h.TienPhong,
                     TienDichVu = h.TienDichVu,
@@ -124,6 +131,7 @@ namespace HotelManagement.Controllers
             var hoaDon = await _context.HoaDons
                 .Include(h => h.DatPhong)
                 .Include(h => h.ThanhToans)
+                .Include(h => h.ChiTietHoaDons)
                 .FirstOrDefaultAsync(h => h.MaHD == id);
 
             if (hoaDon == null)
@@ -136,6 +144,34 @@ namespace HotelManagement.Controllers
             if (viewModel == null)
             {
                 return NotFound();
+            }
+
+            var phongTrenHoaDon = hoaDon.ChiTietHoaDons.Where(c => c.LoaiKhoanThu == "Phong").ToList();
+            if (phongTrenHoaDon.Count > 0)
+            {
+                viewModel.DanhSachPhong = phongTrenHoaDon.Select(c => new PhongHoaDonItemViewModel
+                {
+                    SoPhong = c.TenKhoanThu.Replace("Tiền phòng", "").Trim(),
+                    TenLoaiPhong = viewModel.TenLoaiPhong,
+                    GiaTheoDem = c.DonGia,
+                    SoDem = c.SoLuong,
+                    ThanhTien = c.ThanhTien
+                }).ToList();
+                viewModel.SoPhong = string.Join(", ", viewModel.DanhSachPhong.Select(p => p.SoPhong));
+                viewModel.TienPhong = hoaDon.TienPhong;
+                viewModel.DanhSachDichVu = hoaDon.ChiTietHoaDons.Where(c => c.LoaiKhoanThu == "DichVu")
+                    .Select(c => new ChiTietDichVuItemViewModel
+                    {
+                        TenDichVu = c.TenKhoanThu,
+                        SoLuong = c.SoLuong,
+                        DonGia = c.DonGia,
+                        ThanhTien = c.ThanhTien
+                    }).ToList();
+                viewModel.TongTienDichVu = hoaDon.TienDichVu;
+                viewModel.TongThanhToan = hoaDon.TongTien;
+                viewModel.TienThue = hoaDon.TongTien - hoaDon.TienPhong - hoaDon.TienDichVu;
+                viewModel.TienCoc = 0;
+                viewModel.SoTienConLai = hoaDon.ThanhToans.Where(t => t.TrangThai == "ThanhCong").Sum(t => t.SoTien);
             }
 
             // Đồng bộ trạng thái thực tế từ DatPhong sang ViewBag để hiển thị đúng ở View
@@ -152,7 +188,7 @@ namespace HotelManagement.Controllers
                 }
             }
 
-            ViewBag.MaHoaDon = $"HD{hoaDon.MaDatPhong}{hoaDon.NgayLap:yyyyMMdd}";
+            ViewBag.MaHoaDon = $"HD{hoaDon.MaHD:D6}";
             ViewBag.TrangThai = trangThaiHienThi;
             ViewBag.NgayLap = hoaDon.NgayLap;
             ViewBag.PhuongThucThanhToan = hoaDon.ThanhToans.OrderByDescending(t => t.NgayThanhToan).Select(t => t.PhuongThuc).FirstOrDefault() ?? "TienMat";
