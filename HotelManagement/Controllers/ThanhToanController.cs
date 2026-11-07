@@ -28,6 +28,14 @@ namespace HotelManagement.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult LuuCaiDatThanhToan(PaymentSetting model)
         {
+            // Ô API Key thường được hiển thị dạng password và có thể không gửi
+            // lại giá trị khi người dùng chỉ sửa thông tin ngân hàng.
+            // Giữ lại key cũ nếu người dùng không nhập key mới.
+            if (string.IsNullOrWhiteSpace(model.SePayApiKey))
+            {
+                model.SePayApiKey = _settingService.GetSettings().SePayApiKey;
+            }
+
             if (!ModelState.IsValid)
             {
                 TempData["Error"] = "Vui lòng kiểm tra lại các trường thông tin cấu hình.";

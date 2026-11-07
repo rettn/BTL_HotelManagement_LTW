@@ -123,6 +123,7 @@ namespace HotelManagement.Repositories
                 .Include(k => k.DanhSachDatPhong)
                     .ThenInclude(dp => dp.ChiTietDatPhongs)
                         .ThenInclude(ct => ct.Phong)
+                            .ThenInclude(p => p!.LoaiPhong)
                 .FirstOrDefaultAsync(k => k.MaKH == id);
         }
     }

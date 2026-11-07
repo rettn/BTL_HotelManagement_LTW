@@ -181,6 +181,7 @@ namespace HotelManagement.Controllers
             try
             {
                 var datPhong = await _context.DatPhongs
+                                .Include(dp => dp.KhachHang)
                     .Include(dp => dp.ChiTietDatPhongs)
                     .FirstOrDefaultAsync(dp => dp.MaDatPhong == request.MaDatPhong);
 
@@ -729,6 +730,7 @@ namespace HotelManagement.Controllers
             }
 
             var datPhong = await _context.DatPhongs
+                                .Include(dp => dp.KhachHang)
                 .Include(dp => dp.ChiTietDatPhongs)
                 .FirstOrDefaultAsync(dp => dp.MaDatPhong == model.MaDatPhong);
 
@@ -737,7 +739,8 @@ namespace HotelManagement.Controllers
                 // Chặn thanh toán / trả phòng lặp lại
                 if (datPhong.TrangThai != "DangLuuTru"
                     && datPhong.TrangThai != "DaHoanThanh"
-                    && datPhong.TrangThai != "DaCoc")
+                    && datPhong.TrangThai != "DaCoc"
+                    && datPhong.TrangThai != "DaThanhToan")
                 {
                     TempData["Error"] = "Chỉ có thể trả phòng và thanh toán cho phiếu đang lưu trú.";
                     return RedirectToAction(nameof(Index));
@@ -842,6 +845,7 @@ namespace HotelManagement.Controllers
             // Tìm hóa đơn theo MaHD hoặc MaDatPhong
             var hoaDon = await _context.HoaDons
                 .Include(h => h.DatPhong)
+                .Include(h => h.ThanhToans)
                 .FirstOrDefaultAsync(h => h.MaHD == targetId || h.MaDatPhong == targetId);
 
             int realMaDatPhong = hoaDon?.MaDatPhong ?? targetId;
@@ -852,7 +856,14 @@ namespace HotelManagement.Controllers
                 return NotFound();
             }
 
-            ViewBag.MaHoaDon = $"HD{maDatPhong}{DateTime.Now:yyyyMMdd}";
+            viewModel.PhuongThucThanhToan = hoaDon?.ThanhToans
+                .OrderByDescending(t => t.NgayThanhToan)
+                .Select(t => t.PhuongThuc)
+                .FirstOrDefault() ?? "TienMat";
+
+            ViewBag.MaHoaDon = hoaDon != null
+                ? $"HD{hoaDon.MaHD}{hoaDon.NgayLap:yyyyMMdd}"
+                : $"HD{realMaDatPhong}{DateTime.Now:yyyyMMdd}";
             return View("ThanhToanThanhCong", viewModel);
         }
         
@@ -861,6 +872,7 @@ namespace HotelManagement.Controllers
         private async Task<HoaDonCheckoutViewModel?> GetHoaDonCheckoutViewModelAsync(int maDatPhong)
         {
             var datPhong = await _context.DatPhongs
+                                .Include(dp => dp.KhachHang)
                                 .Include(dp => dp.ChiTietDatPhongs)
                     .ThenInclude(ct => ct.Phong)
                         .ThenInclude(p => p.LoaiPhong)
