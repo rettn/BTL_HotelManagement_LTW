@@ -6,6 +6,10 @@
     --admin-sidebar-hover: #32394b;
     --admin-sidebar-muted: #a7afc1;
     --admin-accent: #3399ff;
+    --theme-primary: #209c60;
+    --theme-primary-hover: #16834f;
+    --theme-primary-rgb: 32, 156, 96;
+    --theme-on-primary: #fff;
     --admin-page-bg: #f5f7fa;
     --admin-border: #e4e8ef;
     --admin-text: #303849;
@@ -901,7 +905,7 @@ a {
 
         .topbar-search kbd,
         .topbar-divider,
-        .topbar-actions .topbar-icon:nth-child(2) {
+        .topbar-actions #themeToggle {
             display: none;
         }
 
@@ -1321,4 +1325,260 @@ html[data-theme="dark"] .bg-body-tertiary {
 
 html[data-theme="dark"] .text-dark {
     color: #e5eaf2 !important;
+}
+
+/* Accent color themes */
+html[data-accent="blue"] {
+    --admin-accent: #2878d0;
+    --theme-primary: #2878d0;
+    --theme-primary-hover: #1f62ad;
+    --theme-primary-rgb: 40, 120, 208;
+    --theme-on-primary: #fff;
+}
+
+html[data-accent="green"] {
+    --admin-accent: #209c60;
+    --theme-primary: #209c60;
+    --theme-primary-hover: #16834f;
+    --theme-primary-rgb: 32, 156, 96;
+    --theme-on-primary: #fff;
+}
+
+html[data-accent="purple"] {
+    --admin-accent: #7c3aed;
+    --theme-primary: #7c3aed;
+    --theme-primary-hover: #6d28d9;
+    --theme-primary-rgb: 124, 58, 237;
+    --theme-on-primary: #fff;
+}
+
+html[data-accent="rose"] {
+    --admin-accent: #e11d48;
+    --theme-primary: #e11d48;
+    --theme-primary-hover: #be123c;
+    --theme-primary-rgb: 225, 29, 72;
+    --theme-on-primary: #fff;
+}
+
+html[data-accent="amber"] {
+    --admin-accent: #d97706;
+    --theme-primary: #d97706;
+    --theme-primary-hover: #b45309;
+    --theme-primary-rgb: 217, 119, 6;
+    --theme-on-primary: #263449;
+}
+
+html[data-accent] {
+    --cui-primary: var(--theme-primary);
+    --cui-primary-rgb: var(--theme-primary-rgb);
+    --cui-link-color: var(--theme-primary);
+    --cui-link-color-rgb: var(--theme-primary-rgb);
+    --cui-link-hover-color: var(--theme-primary-hover);
+}
+
+html[data-accent] .btn-primary,
+html[data-accent] .btn-success,
+html[data-accent] .btn-warning,
+html[data-accent] .btn-info,
+html[data-accent] .btn-secondary {
+    --cui-btn-color: var(--theme-on-primary);
+    --cui-btn-bg: var(--theme-primary);
+    --cui-btn-border-color: var(--theme-primary);
+    --cui-btn-hover-bg: var(--theme-primary-hover);
+    --cui-btn-hover-border-color: var(--theme-primary-hover);
+    --cui-btn-focus-shadow-rgb: var(--theme-primary-rgb);
+    --cui-btn-active-bg: var(--theme-primary-hover);
+    --cui-btn-active-border-color: var(--theme-primary-hover);
+    --cui-btn-disabled-bg: var(--theme-primary);
+    --cui-btn-disabled-border-color: var(--theme-primary);
+}
+
+html[data-accent] .list-group {
+    --cui-list-group-active-bg: var(--theme-primary);
+    --cui-list-group-active-border-color: var(--theme-primary);
+}
+
+html[data-accent] .form-control:focus,
+html[data-accent] .form-select:focus {
+    border-color: var(--theme-primary);
+    box-shadow: 0 0 0 .25rem rgba(var(--theme-primary-rgb), .2);
+}
+
+html[data-accent] .form-check-input:checked {
+    background-color: var(--theme-primary);
+    border-color: var(--theme-primary);
+}
+
+html[data-accent] .password-toggle:hover,
+html[data-accent] .password-toggle:focus-visible {
+    color: var(--theme-primary);
+}
+
+html[data-accent] .settings-icon {
+    background-color: color-mix(in srgb, var(--theme-primary) 15%, white);
+    color: var(--theme-primary);
+}
+
+.theme-picker {
+    position: relative;
+    order: -1;
+}
+
+.theme-picker-menu {
+    position: absolute;
+    z-index: 1100;
+    top: calc(100% + 10px);
+    right: -8px;
+    width: 220px;
+    padding: 8px;
+    border: 1px solid var(--admin-border);
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 12px 32px rgba(24, 35, 54, .18);
+}
+
+.theme-picker-menu[hidden] {
+    display: none;
+}
+
+.theme-picker-title {
+    padding: 7px 9px 9px;
+    color: var(--admin-text);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.theme-color-option {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 9px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--admin-text);
+    text-align: left;
+    font: inherit;
+    cursor: pointer;
+}
+
+.theme-color-option:hover,
+.theme-color-option.is-selected {
+    background: color-mix(in srgb, var(--theme-primary) 10%, transparent);
+}
+
+.theme-color-option > span:nth-child(2) {
+    flex: 1;
+}
+
+.theme-color-option > i {
+    color: var(--theme-primary);
+    opacity: 0;
+}
+
+.theme-color-option.is-selected > i {
+    opacity: 1;
+}
+
+.theme-color-swatch {
+    width: 17px;
+    height: 17px;
+    flex: 0 0 17px;
+    border-radius: 50%;
+}
+
+.theme-swatch-blue { background: #2878d0; }
+.theme-swatch-green { background: #209c60; }
+.theme-swatch-purple { background: #7c3aed; }
+.theme-swatch-rose { background: #e11d48; }
+.theme-swatch-amber { background: #d97706; }
+
+html[data-theme="dark"] .theme-picker-menu {
+    background: #202733;
+    color: var(--admin-text);
+    border-color: var(--admin-border);
+}
+
+/* Accent color propagation for pages with local component styles */
+html[data-accent] .customer-btn-primary,
+html[data-accent] .booking-primary,
+html[data-accent] .booking-act:not(.neutral),
+html[data-accent] .room-map-page .room-add-button,
+html[data-accent] .room-map-page .room-manage-type-button {
+    background: var(--theme-primary) !important;
+    border-color: var(--theme-primary) !important;
+    color: var(--theme-on-primary) !important;
+}
+
+html[data-accent] .customer-btn-primary:hover,
+html[data-accent] .booking-primary:hover,
+html[data-accent] .booking-act:not(.neutral):hover,
+html[data-accent] .room-map-page .room-add-button:hover,
+html[data-accent] .room-map-page .room-manage-type-button:hover {
+    background: var(--theme-primary-hover) !important;
+    border-color: var(--theme-primary-hover) !important;
+    color: var(--theme-on-primary) !important;
+}
+
+html[data-accent] .customer-btn:hover,
+html[data-accent] .customer-stat i,
+html[data-accent] .customer-avatar,
+html[data-accent] .customer-code,
+html[data-accent] .customer-icon:hover,
+html[data-accent] .booking-code {
+    color: var(--theme-primary) !important;
+}
+
+html[data-accent] .customer-table th {
+    background: color-mix(in srgb, var(--theme-primary) 11%, white) !important;
+}
+
+html[data-accent] .customer-avatar,
+html[data-accent] .customer-icon:hover {
+    background: color-mix(in srgb, var(--theme-primary) 12%, white) !important;
+}
+
+html[data-accent] .customer-search input:focus,
+html[data-accent] .booking-search:focus,
+html[data-accent] .booking-date:focus,
+html[data-accent] .booking-chip.active {
+    border-color: var(--theme-primary) !important;
+    box-shadow: 0 0 0 3px rgba(var(--theme-primary-rgb), .14) !important;
+}
+
+html[data-accent] .booking-view-toggle button.active {
+    background: var(--theme-primary) !important;
+    color: var(--theme-on-primary) !important;
+}
+
+html[data-accent] .room-map-page .exact-search-btn {
+    background-color: var(--theme-primary) !important;
+    color: var(--theme-on-primary) !important;
+}
+
+html[data-accent] .room-map-page .exact-search-btn:hover {
+    background-color: var(--theme-primary-hover) !important;
+    color: var(--theme-on-primary) !important;
+}
+
+html[data-accent] .room-map-page .room-summary-card > i,
+html[data-accent] .room-map-page .room-empty-state > i {
+    color: var(--theme-primary) !important;
+}
+
+.theme-custom-option input[type="color"] {
+    width: 25px;
+    height: 25px;
+    flex: 0 0 25px;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    cursor: pointer;
+}
+
+html[data-theme="dark"] .theme-color-option:hover,
+html[data-theme="dark"] .theme-color-option.is-selected {
+    background: color-mix(in srgb, var(--theme-primary) 22%, #202733);
 }
