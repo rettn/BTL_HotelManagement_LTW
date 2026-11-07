@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HotelManagement.Controllers;
 
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = "Admin,NhanVien")]
 public class KhoController : Controller
 {
     private readonly ApplicationDbContext _context;

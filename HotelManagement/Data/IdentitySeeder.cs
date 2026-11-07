@@ -1,5 +1,7 @@
 
 using Microsoft.AspNetCore.Identity;
+using System.Security.Claims;
+using HotelManagement.Security;
 
 namespace HotelManagement.Data
 {
@@ -34,6 +36,18 @@ namespace HotelManagement.Data
                             string.Join("; ",
                                 roleResult.Errors.Select(e => e.Description)));
                     }
+                }
+            }
+
+            var staffRole = await roleManager.FindByNameAsync("NhanVien");
+            if (staffRole != null)
+            {
+                var roleClaims = await roleManager.GetClaimsAsync(staffRole);
+                if (!roleClaims.Any(c => c.Type == "hotel:permissions-initialized"))
+                {
+                    foreach (var module in new[] { "dashboard", "bookings", "rooms", "customers", "finance", "reports" })
+                        await roleManager.AddClaimAsync(staffRole, new Claim(ModulePermissionCatalog.ClaimType, module));
+                    await roleManager.AddClaimAsync(staffRole, new Claim("hotel:permissions-initialized", "true"));
                 }
             }
 

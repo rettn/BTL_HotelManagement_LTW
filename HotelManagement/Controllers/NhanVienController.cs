@@ -6,7 +6,7 @@ using HotelManagement.ViewModels;
 
 namespace HotelManagement.Controllers
 {
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,NhanVien")]
     public class NhanVienController : Controller
     {
         private readonly ChucVuService _chucVuService;

@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
+using HotelManagement.Security;
 
 namespace HotelManagement.Controllers
 {
@@ -11,10 +13,52 @@ namespace HotelManagement.Controllers
     {
         private static readonly string[] VaiTroHopLe = { "Admin", "NhanVien" };
         private readonly UserManager<IdentityUser> _userManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
 
-        public QuanTriController(UserManager<IdentityUser> userManager)
+        public QuanTriController(UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager)
         {
             _userManager = userManager;
+            _roleManager = roleManager;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Permissions()
+        {
+            var role = await _roleManager.FindByNameAsync("NhanVien");
+            if (role == null) return NotFound("Không tìm thấy vai trò Nhân viên.");
+            var claims = await _roleManager.GetClaimsAsync(role);
+            var selected = claims.Where(c => c.Type == ModulePermissionCatalog.ClaimType)
+                .Select(c => c.Value).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var vm = new QuanTriQuyenViewModel
+            {
+                QuyenDaChon = selected.ToList(),
+                ChucNangs = ModulePermissionCatalog.All.Select(p => new QuyenChucNangViewModel
+                {
+                    Ma = p.Key, Ten = p.Name, MoTa = p.Description, DuocCap = selected.Contains(p.Key)
+                }).ToList()
+            };
+            return View(vm);
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public async Task<IActionResult> Permissions(QuanTriQuyenViewModel vm)
+        {
+            var role = await _roleManager.FindByNameAsync("NhanVien");
+            if (role == null) return NotFound("Không tìm thấy vai trò Nhân viên.");
+
+            var allowedKeys = ModulePermissionCatalog.All.Select(p => p.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var selected = (vm.QuyenDaChon ?? []).Where(allowedKeys.Contains)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var existing = (await _roleManager.GetClaimsAsync(role))
+                .Where(c => c.Type == ModulePermissionCatalog.ClaimType).ToList();
+
+            foreach (var claim in existing)
+                await _roleManager.RemoveClaimAsync(role, claim);
+            foreach (var key in selected)
+                await _roleManager.AddClaimAsync(role, new Claim(ModulePermissionCatalog.ClaimType, key));
+
+            TempData["Success"] = "Đã lưu quyền truy cập chức năng cho vai trò Nhân viên.";
+            return RedirectToAction(nameof(Permissions));
         }
 
         // ---------- Tra cứu + danh sách ----------

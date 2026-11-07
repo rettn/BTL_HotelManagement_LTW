@@ -121,6 +121,7 @@ app.UseRouting();
 app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseMiddleware<HotelManagement.Security.ModulePermissionMiddleware>();
 
 app.MapStaticAssets();
 

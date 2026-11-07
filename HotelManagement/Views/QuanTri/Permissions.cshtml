@@ -1,0 +1,46 @@
+@model HotelManagement.ViewModels.QuanTriQuyenViewModel
+@{
+    ViewData["Title"] = "Phân quyền chức năng nhân viên";
+    Layout = "_AdminLayout";
+}
+
+<div class="settings-container">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+        <div>
+            <h2 class="fw-bold mb-1">Phân quyền chức năng nhân viên</h2>
+            <div class="text-muted">Chọn những khu vực mà tất cả tài khoản có vai trò Nhân viên được truy cập.</div>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Danh sách tài khoản</a>
+    </div>
+
+    @if (TempData["Success"] is string success)
+    {
+        <div class="alert alert-success">@success</div>
+    }
+
+    <form asp-action="Permissions" method="post" class="card border-0 shadow-sm rounded-4">
+        @Html.AntiForgeryToken()
+        <div class="card-body">
+            <div class="row g-3">
+                @for (var i = 0; i < Model.ChucNangs.Count; i++)
+                {
+                    <div class="col-md-6 col-xl-4">
+                        <label class="border rounded-3 p-3 d-flex gap-3 h-100 align-items-start" for="permission-@i">
+                            <input class="form-check-input mt-1" type="checkbox" id="permission-@i"
+                                   name="QuyenDaChon" value="@Model.ChucNangs[i].Ma"
+                                   checked="@(Model.ChucNangs[i].DuocCap ? "checked" : null)" />
+                            <span>
+                                <strong class="d-block">@Model.ChucNangs[i].Ten</strong>
+                                <small class="text-muted">@Model.ChucNangs[i].MoTa</small>
+                            </span>
+                        </label>
+                    </div>
+                }
+            </div>
+        </div>
+        <div class="card-footer bg-white border-0 d-flex justify-content-end gap-2 p-3">
+            <a asp-action="Index" class="btn btn-outline-secondary">Hủy</a>
+            <button type="submit" class="btn btn-success"><i class="bi bi-shield-check me-1"></i>Lưu phân quyền</button>
+        </div>
+    </form>
+</div>

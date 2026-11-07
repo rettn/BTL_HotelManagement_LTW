@@ -1,5 +1,6 @@
 @using Microsoft.AspNetCore.Identity
 @inject UserManager<IdentityUser> UserManager
+@inject RoleManager<IdentityRole> RoleManager
 @inject HotelManagement.Data.ApplicationDbContext DbContext
 @{
     var hotelSettings = DbContext.CaiDatHeThongs.FirstOrDefault();
@@ -17,8 +18,6 @@
     var isReservationSection = currentController.Equals("DatPhong", StringComparison.OrdinalIgnoreCase);
     var isFinanceSection = currentController.Equals("HoaDon", StringComparison.OrdinalIgnoreCase)
     || currentController.Equals("ThanhToan", StringComparison.OrdinalIgnoreCase);
-    var isNhanSuSection = currentController.Equals(
-    "NhanVien", StringComparison.OrdinalIgnoreCase);
     var isPayrollSection = new[] { "BangLuong", "Thuong", "PhuCap", "KhauTru" }.Contains(currentController, StringComparer.OrdinalIgnoreCase);
     var displayName = User.Identity?.IsAuthenticated == true
     ? (User.Identity?.Name ?? "Quản trị viên")
@@ -29,6 +28,21 @@
     var roles = currentUser is null
     ? Array.Empty<string>()
     : (await UserManager.GetRolesAsync(currentUser)).ToArray();
+    var permittedModules = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    if (roles.Contains("Admin"))
+    {
+        foreach (var module in HotelManagement.Security.ModulePermissionCatalog.All)
+            permittedModules.Add(module.Key);
+    }
+    else if (roles.Contains("NhanVien"))
+    {
+        var staffRole = await RoleManager.FindByNameAsync("NhanVien");
+        if (staffRole != null)
+            foreach (var claim in await RoleManager.GetClaimsAsync(staffRole))
+                if (claim.Type == HotelManagement.Security.ModulePermissionCatalog.ClaimType)
+                    permittedModules.Add(claim.Value);
+    }
+    bool CanAccess(string module) => permittedModules.Contains(module);
     var roleName = roles.FirstOrDefault() switch
     {
         "Admin" => "Quản trị viên",
@@ -89,19 +103,25 @@
 
                 <nav class="sidebar-nav" aria-label="Menu quản trị">
                     <div class="sidebar-section-label">TỔNG QUAN</div>
+                    @if (CanAccess("dashboard"))
+                    {
                     <a asp-controller="Dashboard" asp-action="Index"
                        class="sidebar-link @(isDashboardIndex ? "active" : "")">
                         <i class="bi bi-speedometer2"></i><span>Tổng quan</span>
                     </a>
+                    }
 
                     <div class="sidebar-section-label">QUẢN LÝ KHÁCH SẠN</div>
 
+                    @if (CanAccess("rooms"))
+                    {
                     <a asp-controller="Phong"
                        asp-action="Index"
                        class="sidebar-link @(currentController.Equals("Phong", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
                         <i class="bi bi-door-closed"></i>
                         <span>Sơ đồ phòng</span>
                     </a>
+                    }
 
                     @* <div class="sidebar-submenu @(currentController == "Phong" || currentController == "LoaiPhong" ? "show" : "")" id="roomMenu">
                 <a href="#" class="sidebar-sublink disabled-link" aria-disabled="true">
@@ -114,17 +134,25 @@
                 </a>
             </div> *@
 
+                    @if (CanAccess("bookings"))
+                    {
                     <a asp-controller="DatPhong" asp-action="Index"
                        class="sidebar-link @(currentController.Equals("DatPhong", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
                         <i class="bi bi-calendar2-check"></i><span>Danh sách đặt phòng</span>
                     </a>
+                    }
 
+                    @if (CanAccess("customers"))
+                    {
                     <a asp-controller="KhachHang" asp-action="Index"
                        class="sidebar-link @(currentController.Equals("KhachHang", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
                         <i class="bi bi-people"></i>
                         <span>Khách hàng</span>
                     </a>
+                    }
 
+                    @if (CanAccess("inventory"))
+                    {
                     <div class="sidebar-section-label">KHO</div>
                     <a asp-controller="Kho" asp-action="Index"
                        class="sidebar-link @(currentController.Equals("Kho", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
@@ -134,15 +162,19 @@
                        class="sidebar-link @(currentController.Equals("DichVu", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
                         <i class="bi bi-cup-hot"></i><span>Hàng hóa và dịch vụ</span>
                     </a>
+                    }
 
-                    @if (User.IsInRole("Admin"))
+                    @if (CanAccess("staff"))
                     {
                         <div class="sidebar-section-label">NHÂN SỰ</div>
                         <a asp-controller="NhanVien" asp-action="Index"
-                           class="sidebar-link @(isNhanSuSection ? "active" : "")">
+                           class="sidebar-link @(currentController.Equals("NhanVien", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
                             <i class="bi bi-person-badge"></i>
                             <span>Quản lý nhân sự</span>
                         </a>
+                    }
+                    @if (CanAccess("payroll"))
+                    {
                         <div class="sidebar-section-label">LƯƠNG & ĐIỀU CHỈNH</div>
                         <div class="sidebar-parent-row">
                             <a asp-controller="BangLuong" asp-action="Index"
@@ -163,6 +195,9 @@
                         </div>
                     }
 
+                    @if (CanAccess("finance"))
+                    {
+
                     <div class="sidebar-section-label">TÀI CHÍNH</div>
                     <a class="sidebar-link @(isFinanceSection ? "active" : "")"
                        asp-controller="HoaDon" asp-action="Index"
@@ -175,6 +210,10 @@
                 </a>
                 <a href="#" class="sidebar-sublink disabled-link" aria-disabled="true">Thanh toán</a>
             </div> *@
+                    }
+
+                    @if (CanAccess("reports"))
+                    {
 
                     <div class="sidebar-section-label">BÁO CÁO & HỆ THỐNG</div>
                     <a asp-controller="Report" asp-action="Dashboard" class="sidebar-link @(currentController.Equals("Report", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
@@ -183,6 +222,7 @@
                     <a asp-controller="Dashboard" asp-action="TaiChinh" class="sidebar-link @(currentController.Equals("Dashboard", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("TaiChinh", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
                         <i class="bi bi-bar-chart-line-fill"></i><span>Báo cáo tài chính</span>
                     </a>
+                    }
 
                     @if (User.IsInRole("Admin"))
                     {

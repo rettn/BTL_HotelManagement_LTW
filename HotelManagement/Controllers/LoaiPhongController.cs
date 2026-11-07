@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace HotelManagement.Controllers
 {
-    [Authorize(Roles = "Admin")]
+[Authorize(Roles = "Admin,NhanVien")]
     public class LoaiPhongController : Controller
     {
         private readonly LoaiPhongService _service;

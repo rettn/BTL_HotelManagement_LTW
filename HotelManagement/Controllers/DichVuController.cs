@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HotelManagement.Controllers;
 
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = "Admin,NhanVien")]
 public class DichVuController : Controller
 {
     private const long MaxImageBytes = 5 * 1024 * 1024;
