@@ -2,7 +2,7 @@
 @using System.Text.Json
 
 @{
-    ViewData["Title"] = "Quản lý Báo cáo & Thống kê Tổng quan";
+    ViewData["Title"] = "Quản lý báo cáo & Thống kê tổng quan";
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
 
     var totalRevenueAllRooms = Model.DoanhThuTheoHangPhong.Sum(x => x.DoanhThu);
@@ -21,8 +21,8 @@
                             <i class="bi bi-graph-up-arrow fs-3"></i>
                         </div>
                         <div>
-                            <h3 class="fw-bold text-dark mb-1">Báo cáo & Thống kê Tổng quan</h3>
-                            <p class="text-muted small mb-0">Biểu đồ doanh thu 7 ngày, cơ cấu phòng/dịch vụ, hạng phòng, top khách hàng & trạng thái đặt phòng</p>
+                            <h3 class="fw-bold text-dark mb-1">Báo cáo tổng quan</h3>
+                           
                         </div>
                     </div>
                 </div>

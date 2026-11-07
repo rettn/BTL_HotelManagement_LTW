@@ -1,4 +1,5 @@
-﻿@model List<HotelManagement.Models.Phong>
+﻿
+@model List<HotelManagement.Models.Phong>
 
 <!-- Giao dien thong bao dep -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
@@ -6,7 +7,7 @@
 
 @{
     ViewData["Title"] = "Sơ đồ phòng";
-
+    var thoiGianNhan = ViewBag.ThoiGianNhan as Dictionary<int, DateTime> ?? new Dictionary<int, DateTime>();
     int LayTang(string soPhong)
     {
         if (int.TryParse(soPhong, out int so)) return so / 100;
@@ -31,6 +32,15 @@
         if (cleanStatus.Contains("dangsudung") || cleanStatus.Contains("đang sử dụng")) return "Đang sử dụng";
         if (cleanStatus.Contains("dangdon") || cleanStatus.Contains("đang dọn dẹp")) return "Đang dọn dẹp";
         return trangThai ?? "Chưa xác định";
+    }
+    string IconTrangThai(string? trangThai)
+    {
+        var s = trangThai?.Trim().ToLowerInvariant() ?? "";
+        if (s.Contains("trong") || s.Contains("trống")) return "bi-stars";
+        if (s.Contains("dadat") || s.Contains("đã đặt")) return "bi-calendar-check";
+        if (s.Contains("dangsudung") || s.Contains("đang sử dụng")) return "bi-person-check";
+        if (s.Contains("dangdon") || s.Contains("đang dọn dẹp")) return "bi-brush";
+        return "bi-info-circle";
     }
 
     var cacTang = Model.GroupBy(p => LayTang(p.SoPhong)).OrderBy(g => g.Key).ToList();
@@ -75,7 +85,7 @@
             <i class="bi bi-building"></i>
         </div>
     </div>
-
+    
     <form method="get" asp-controller="Phong" asp-action="Index" class="room-filter-panel mb-4" id="filterForm">
         <div class="room-search" style="flex: 1.5; min-width: 180px;">
             <i class="bi bi-search"></i>
@@ -137,15 +147,21 @@
                     {
                         <div class="room-card @MauTrangThai(phong.TrangThai) room-card-trigger"
                              data-room-id="@phong.MaPhong"
-                             style="cursor: pointer; position: relative;"
                              title="Xem chi tiết phòng @phong.SoPhong">
                             <div class="room-card-top">
-                                <strong>@phong.SoPhong</strong>
-                                <i class="bi bi-arrow-up-right-circle text-muted"></i>
+                                <span class="room-status-label"><i class="bi @IconTrangThai(phong.TrangThai)"></i>@TenTrangThai(phong.TrangThai)</span>
+                                <i class="bi bi-three-dots-vertical room-card-more"></i>
                             </div>
+                            <strong class="room-card-number">@phong.SoPhong</strong>
                             <div class="room-card-type">@(phong.LoaiPhong?.TenLoaiPhong ?? "Chưa phân loại")</div>
-                            <div class="room-card-price">@(phong.LoaiPhong?.GiaTheoDem.ToString("N0") ?? "0") đ/đêm</div>
-                            <span class="room-status-label">@TenTrangThai(phong.TrangThai)</span>
+                            <div class="room-card-price"><i class="bi bi-brightness-high"></i>@(phong.LoaiPhong?.GiaTheoDem.ToString("N0") ?? "0")</div>
+                            @if (MauTrangThai(phong.TrangThai) == "room-occupied" && thoiGianNhan.TryGetValue(phong.MaPhong, out var tgNhan))
+                            {
+                                <div class="room-card-stay" data-checkin="@tgNhan.ToString("yyyy-MM-ddTHH:mm:ss")">
+                                    <span class="room-stay-pill"><i class="bi bi-clock"></i> <b class="room-stay-text">--</b></span>
+                                    <span class="room-stay-from">Nhận @tgNhan.ToString("HH:mm dd/MM")</span>
+                                </div>
+                            }
                         </div>
                     }
                 </div>
@@ -206,10 +222,10 @@
 </div>
 
 <style>
-    .exact-search-btn {
-        background-color: #198754 !important;
-        border: none !important;
-        transition: background-color 0.2s ease-in-out;
+    /* ===== Chung ===== */
+    .room-map-page {
+        font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+        -webkit-font-smoothing: antialiased;
     }
 
     .swal2-container {
@@ -217,52 +233,287 @@
         font-family: inherit !important;
     }
 
+    .exact-search-btn {
+        background-color: #198754 !important;
+        border: none !important;
+        transition: background-color .2s ease-in-out;
+    }
+
         .exact-search-btn:hover {
             background-color: #157347 !important;
             color: #fff !important;
         }
 
-    /* Popup chi tiết phòng */
-    .room-detail-modal .type-modal-dialog {
-        width: min(980px, calc(100% - 32px)) !important;
-        max-width: none !important;
-        margin: 24px auto !important;
-        min-height: 560px;
+    /* ===== Tầng ===== */
+    .room-map-page .room-floor {
+        margin: 0 0 22px;
     }
 
-    .room-detail-modal .type-modal-dialog {
+    .room-map-page .room-floor-heading {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border: 0 !important;
+        padding: 0 !important;
+        margin: 0 0 10px;
+        cursor: default;
+    }
+
+        .room-map-page .room-floor-heading > div {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+        }
+
+        .room-map-page .room-floor-heading h3 {
+            margin: 0;
+            font-size: 15px;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .room-map-page .room-floor-heading span {
+            font-size: 13px;
+            font-weight: 500;
+            color: #6b7280;
+        }
+
+        .room-map-page .room-floor-heading::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: #e5e7eb;
+        }
+
+        .room-map-page .room-floor-heading > i {
+            display: none;
+        }
+
+    /* ===== Lưới ===== */
+    .room-map-page .room-grid {
+        display: flex !important;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    /* ===== Thẻ phòng ===== */
+    .room-map-page .room-card {
+        position: relative;
+        cursor: pointer;
+        box-sizing: border-box;
+        width: 176px !important;
+        height: 132px;
+        min-height: 0;
+        padding: 11px 13px;
         display: flex;
         flex-direction: column;
+        color: #fff;
+        border: 0 !important;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,.12);
+        transition: transform .15s ease, box-shadow .15s ease;
     }
 
-    .room-detail-modal #roomModalContent {
+        .room-map-page .room-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 18px rgba(0,0,0,.18);
+        }
+
+    .room-map-page .room-card-top {
         display: flex;
-        flex-direction: column;
-        flex: 1;
+        align-items: center;
+        justify-content: space-between;
+        margin: 0 0 6px;
+        min-height: 22px;
     }
 
-    .room-detail-modal .rp-body {
-        flex: 1;
+    .room-map-page .room-card-more {
+        font-size: 15px;
+        color: #fff;
+        opacity: .9;
     }
 
-    .checkout-confirm-modal { z-index: 2200; }
-    .checkout-confirm-modal.show { display:flex; align-items:center; justify-content:center; padding:16px; }
-    .checkout-confirm-dialog { position:relative; z-index:1; width:min(100%,1100px); max-height:calc(100vh - 40px); overflow:auto; border-radius:18px; background:#fff; box-shadow:0 24px 70px rgba(0,0,0,.25); }
-    .checkout-confirm-header,.checkout-confirm-footer { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:18px 24px; }
-    .checkout-confirm-header { border-bottom:1px solid #e8edf2; }
-    .checkout-confirm-header h2 { margin:0; font-size:20px; font-weight:700; }
-    .checkout-confirm-header p { margin:5px 0 0; color:#718096; }
-    .checkout-confirm-table-wrap { padding:8px 24px; overflow:auto; }
-    .checkout-confirm-table { width:100%; min-width:760px; border-collapse:separate; border-spacing:0 4px; }
-    .checkout-confirm-table th { padding:12px; background:#e7f5ed; font-weight:650; }
-    .checkout-confirm-table td { padding:13px 12px; background:#f8fafc; }
-    .checkout-confirm-table tr.is-active td { background:#fff; }
-    .checkout-confirm-state { display:inline-block; padding:4px 9px; border-radius:99px; background:#e4f8ed; color:#16804a; font-size:12px; }
-    .checkout-confirm-state.inactive { background:#fff3d6; color:#986500; }
-    .checkout-confirm-footer { justify-content:flex-end; border-top:1px solid #e8edf2; }
-    .checkout-confirm-footer .btn-success { background:#209c60; border-color:#209c60; }
-    @@media(max-width:650px) { .checkout-confirm-footer { flex-wrap:wrap; } .checkout-confirm-footer button { flex:1 1 100%; } }
+    /* Nhãn trạng thái: pill trắng */
+    .room-map-page .room-status-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 9px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 600;
+        line-height: 17px;
+        white-space: nowrap;
+        background: #fff;
+        color: #374151;
+    }
 
+        .room-map-page .room-status-label i {
+            font-size: 11px;
+        }
+
+    .room-map-page .room-card-number {
+        display: block;
+        font-size: 22px;
+        line-height: 1.25;
+        font-weight: 700;
+        letter-spacing: -.2px;
+        color: #fff;
+    }
+
+    .room-map-page .room-card-type {
+        margin-top: 8px;
+        font-size: 12.5px;
+        font-weight: 600;
+        line-height: 1.3;
+        color: #fff;
+    }
+
+    .room-map-page .room-card-price {
+        margin-top: 3px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 12px;
+        font-weight: 400;
+        color: rgba(255,255,255,.88);
+    }
+
+        .room-map-page .room-card-price i {
+            font-size: 12px;
+        }
+
+    /* ===== MÀU CẢ THẺ THEO TRẠNG THÁI ===== */
+    .room-map-page .room-card.room-empty {
+        background: linear-gradient(160deg, #2fa66a, #228a55);
+    }
+
+    .room-map-page .room-card.room-booked {
+        background: linear-gradient(160deg, #f2a03d, #dd8a24);
+    }
+
+    .room-map-page .room-card.room-occupied {
+        background: linear-gradient(160deg, #e2574c, #c9433a);
+    }
+
+    .room-map-page .room-card.room-cleaning {
+        background: linear-gradient(160deg, #3f8fd9, #2f76bd);
+    }
+
+    .room-map-page .room-card.room-other {
+        background: linear-gradient(160deg, #7b8391, #5b6270);
+    }
+
+    /* Chữ trên nhãn trạng thái (pill trắng) */
+    .room-map-page .room-card.room-empty .room-status-label {
+        color: #228a55;
+    }
+
+    .room-map-page .room-card.room-booked .room-status-label {
+        color: #b86e12;
+    }
+
+    .room-map-page .room-card.room-occupied .room-status-label {
+        color: #c9433a;
+    }
+
+    .room-map-page .room-card.room-cleaning .room-status-label {
+        color: #2f76bd;
+    }
+
+    .room-map-page .room-card.room-other .room-status-label {
+        color: #374151;
+    }
+
+    /* ===== Chú thích ===== */
+    .room-map-page .room-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 4px 0 16px;
+    }
+
+        .room-map-page .room-legend span {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 999px;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            font-size: 12px;
+            font-weight: 600;
+            color: #374151;
+        }
+
+    .room-map-page .legend-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+        border: 0;
+    }
+
+        .room-map-page .legend-dot.room-empty {
+            background: #2fa66a;
+        }
+
+        .room-map-page .legend-dot.room-booked {
+            background: #f2a03d;
+        }
+
+        .room-map-page .legend-dot.room-occupied {
+            background: #e2574c;
+        }
+
+        .room-map-page .legend-dot.room-cleaning {
+            background: #3f8fd9;
+        }
+
+    @@media(max-width:650px) {
+        .checkout-confirm-footer {
+            flex-wrap: wrap;
+        }
+
+            .checkout-confirm-footer button {
+                flex: 1 1 100%;
+            }
+    }
+
+    .room-map-page .room-card {
+        height: 150px;
+    }
+
+    .room-map-page .room-card-stay {
+        margin-top: auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+    }
+
+    .room-map-page .room-stay-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: #fff;
+        color: #c9433a;
+        font-size: 11px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+        .room-map-page .room-stay-pill b {
+            font-weight: 600;
+        }
+
+    .room-map-page .room-stay-from {
+        font-size: 10.5px;
+        color: rgba(255,255,255,.9);
+        white-space: nowrap;
+    }
 </style>
 
 <script>
@@ -590,4 +841,28 @@
             document.querySelectorAll('.type-modal.show').forEach(hideModal);
         });
     });
+</script>
+<script>
+    (function () {
+        function dinhDang(ms) {
+            if (ms < 0) ms = 0;
+            const tongPhut = Math.floor(ms / 60000);
+            const ngay = Math.floor(tongPhut / 1440);
+            const gio = Math.floor((tongPhut % 1440) / 60);
+            const phut = tongPhut % 60;
+            if (ngay > 0) return ngay + ' ngày ' + gio + ' giờ';
+            if (gio > 0) return gio + ' giờ ' + String(phut).padStart(2, '0') + ' phút';
+            return phut + ' phút';
+        }
+        function capNhat() {
+            const now = Date.now();
+            document.querySelectorAll('.room-card-stay').forEach(el => {
+                const t = new Date(el.dataset.checkin).getTime();
+                if (isNaN(t)) return;
+                el.querySelector('.room-stay-text').textContent = dinhDang(now - t);
+            });
+        }
+        capNhat();
+        setInterval(capNhat, 30000); // cập nhật mỗi 30 giây
+    })();
 </script>

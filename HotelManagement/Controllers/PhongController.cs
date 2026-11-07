@@ -30,7 +30,18 @@ namespace HotelManagement.Controllers
             ViewBag.MaLoaiPhong = maLoaiPhong;
             ViewBag.TrangThai = trangThai;
             ViewBag.DanhSachLoaiPhong = await _service.GetLoaiPhongsAsync();
+            // Thời gian nhận phòng thực tế của các phòng đang có khách (chỉ đọc, không đổi nghiệp vụ)
+            var luuTruDangO = await _context.LuuTrus
+                .AsNoTracking()
+                .Where(l => l.ChiTietDatPhong != null
+                         && l.ThoiGianNhanPhong != null
+                         && l.ThoiGianTraPhong == null)
+                .Select(l => new { l.ChiTietDatPhong!.MaPhong, ThoiGian = l.ThoiGianNhanPhong!.Value })
+                .ToListAsync();
 
+            ViewBag.ThoiGianNhan = luuTruDangO
+                .GroupBy(x => x.MaPhong)
+                .ToDictionary(g => g.Key, g => g.Max(x => x.ThoiGian));
             return View(danhSachPhong);
         }
 

@@ -1,13 +1,13 @@
 ﻿@model HotelManagement.ViewModels.NhapKhoFormViewModel
 @{
-    ViewData["Title"] = "Nhập hàng vào kho";
+    ViewData["Title"] = "Quản lý kho";
     var products = ViewBag.Products as List<HotelManagement.Models.DichVu> ?? new();
 }
 <style>
 .receive-page{max-width:1120px;color:#263449}.receive-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}.receive-head h2{font-size:24px;font-weight:700;margin:0 0 4px}.receive-head p{margin:0;color:#748198}.receive-card{border:1px solid #e2e8f0;border-radius:14px;background:#fff;overflow:hidden;margin-bottom:16px}.receive-card-head{padding:15px 19px;border-bottom:1px solid #edf0f5;display:flex;align-items:center;justify-content:space-between}.receive-card-head h3{font-size:16px;font-weight:700;margin:0}.receive-card-body{padding:20px}.receive-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px}.receive-field label{display:block;margin-bottom:6px;font-size:13px;font-weight:650;color:#475569}.receive-field .form-control{min-height:42px;border-color:#dce3ed;border-radius:8px}.receive-lines{width:100%;border-collapse:collapse}.receive-lines th{background:#f5f8fb;color:#65748b;padding:11px 9px;text-align:left;font-size:12px}.receive-lines td{padding:9px;border-top:1px solid #edf0f5}.receive-lines select,.receive-lines input{height:40px;border:1px solid #dce3ed;border-radius:8px;padding:7px 9px;width:100%;background:#fff}.receive-lines .qty{min-width:90px}.receive-line-total{font-weight:650;white-space:nowrap}.receive-remove{width:34px;height:34px;border:1px solid #e4e8ed;border-radius:8px;background:#fff;color:#b54444}.receive-total{display:flex;justify-content:flex-end;align-items:center;gap:18px;padding:14px 10px 2px;font-weight:650}.receive-total strong{font-size:20px;color:#198754}.receive-actions{display:flex;justify-content:flex-end;gap:9px;padding:15px 20px;border-top:1px solid #edf0f5;background:#fbfcfd}.receive-empty{padding:18px;text-align:center;color:#8491a3}.receive-error{margin-bottom:13px}@@media(max-width:720px){.receive-grid{grid-template-columns:1fr}.receive-head{align-items:flex-start}.receive-card-body{padding:14px}.receive-lines{min-width:700px}.receive-lines-wrap{overflow:auto}}
 </style>
 <div class="receive-page">
-    <div class="receive-head"><div><h2>Nhập hàng vào kho</h2><p>Lập phiếu nhập và tăng tồn kho sản phẩm</p></div><a asp-action="Index" class="btn btn-light border"><i class="bi bi-arrow-left me-1"></i>Quay lại kho</a></div>
+    <div class="receive-head"><div><h2>Nhập hàng vào kho</h2></div><a asp-action="Index" class="btn btn-light border"><i class="bi bi-arrow-left me-1"></i>Quay lại kho</a></div>
     <form asp-action="NhapHang" method="post" id="receiveForm">
         @Html.AntiForgeryToken()
         <div asp-validation-summary="ModelOnly" class="alert alert-danger receive-error"></div>

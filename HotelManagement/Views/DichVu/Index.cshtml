@@ -1,7 +1,7 @@
 @model IEnumerable<HotelManagement.Models.DichVu>
 @using HotelManagement.Models
 @{
-    ViewData["Title"] = "Dịch vụ & hàng hóa";
+    ViewData["Title"] = "Dịch vụ & Hàng hóa";
     var items = Model.ToList();
     var groups = ViewBag.NhomHangs as List<string> ?? new();
 }
@@ -13,7 +13,7 @@
 
 <div class="goods-page">
     <div class="goods-head">
-        <div><h2>Dịch vụ &amp; hàng hóa</h2><p>Quản lý dịch vụ, sản phẩm, giá bán và tồn kho</p></div>
+        <div><h2>Danh mục & Bảng giá</h2></div>
         <div class="goods-actions">
             <a asp-action="Create" asp-route-loaiHang="DichVu" class="goods-add secondary"><i class="bi bi-plus-lg"></i> Thêm dịch vụ</a>
             <a asp-action="Create" asp-route-loaiHang="SanPham" class="goods-add"><i class="bi bi-plus-lg"></i> Thêm hàng hóa</a>

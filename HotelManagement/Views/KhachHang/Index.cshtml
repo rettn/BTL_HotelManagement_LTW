@@ -11,7 +11,7 @@
     .customer-table .customer-icon{display:inline-flex;align-items:center;justify-content:center;flex:0 0 32px;height:32px;box-sizing:border-box;text-decoration:none}
 </style>
 <div class="customer-page">
-    <div class="customer-head"><div><h2>Danh sách khách hàng</h2><p>Tra cứu hồ sơ và thông tin liên hệ của khách lưu trú</p></div><div class="customer-actions"><a asp-action="Create" class="customer-btn customer-btn-primary"><i class="bi bi-person-plus"></i>Thêm khách hàng</a></div></div>
+    <div class="customer-head"><div><h2>Danh sách khách hàng</h2></div><div class="customer-actions"><a asp-action="Create" class="customer-btn customer-btn-primary"><i class="bi bi-person-plus"></i>Thêm khách hàng</a></div></div>
     @if (TempData["Success"] is string success) { <div class="alert alert-success">@success</div> }
     @if (TempData["Error"] is string error) { <div class="alert alert-danger">@error</div> }
     <div class="customer-summary"><div class="customer-stat"><span>Khách hàng hiển thị</span><strong>@customers.Count</strong><i class="bi bi-people"></i></div><div class="customer-stat"><span>Có số điện thoại</span><strong>@customers.Count(x=>!string.IsNullOrWhiteSpace(x.SoDienThoai))</strong><i class="bi bi-telephone"></i></div><div class="customer-stat"><span>Có email</span><strong>@customers.Count(x=>!string.IsNullOrWhiteSpace(x.Email))</strong><i class="bi bi-envelope"></i></div><div class="customer-stat"><span>Tạo trong tháng này</span><strong>@customers.Count(x=>x.NgayTao.Year==now.Year&&x.NgayTao.Month==now.Month)</strong><i class="bi bi-person-add"></i></div></div>
