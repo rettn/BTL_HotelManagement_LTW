@@ -1,6 +1,11 @@
+@inject HotelManagement.Data.ApplicationDbContext DbContext
 @{
     ViewData["Title"] = "Trang chủ khách sạn";
     Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var caiDat = DbContext.CaiDatHeThongs.FirstOrDefault();
+    var hotelName = !string.IsNullOrWhiteSpace(caiDat?.TenKhachSan) ? caiDat.TenKhachSan : "HOTEL MANAGEMENT";
+    var hotelLogo = !string.IsNullOrWhiteSpace(caiDat?.HinhAnh) ? caiDat.HinhAnh : Url.Content("~/images/logo2.webp");
 }
 <main class="hotel-home">
 
@@ -12,8 +17,8 @@
         <!-- Thanh đầu banner -->
         <div class="hero-top">
             <a class="hotel-logo" asp-controller="Home" asp-action="Index">
-                <img src="~/images/logo2.webp" alt="Logo" style="width: 43px; height: 43px; object-fit: contain;" />
-                <span class="hotel-name">HOTEL MANAGEMENT</span>
+                <img src="@hotelLogo" alt="@hotelName" style="width: 43px; height: 43px; object-fit: contain; border-radius: 8px;" />
+                <span class="hotel-name">@hotelName.ToUpperInvariant()</span>
             </a>
 
             <div class="hero-actions">

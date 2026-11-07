@@ -105,7 +105,7 @@ namespace HotelManagement.Controllers
                     Directory.CreateDirectory(uploadDir);
                 }
 
-                var fileName = $"hotel_logo_{DateTime.Now:yyyyMMddHHmmss}_{Guid.NewGuid():N[..6]}{ext}";
+                var fileName = $"hotel_logo_{DateTime.Now:yyyyMMddHHmmss}_{Guid.NewGuid().ToString("N").Substring(0, 6)}{ext}";
                 var filePath = Path.Combine(uploadDir, fileName);
 
                 using (var stream = new FileStream(filePath, FileMode.Create))
