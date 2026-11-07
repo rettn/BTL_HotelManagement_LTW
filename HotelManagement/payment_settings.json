@@ -1,10 +1,10 @@
 {
   "NganHangMa": "MB",
-  "TenNganHang": "MBBank - Ng\u00E2n h\u00E0ng TMCP Qu\u00E2n \u0110\u1ED9i",
+  "TenNganHang": "MBBank - Ngân hàng TMCP Quân Đội",
   "SoTaiKhoan": "0379111973",
   "TenChuTaiKhoan": "DANG THE TOAN",
   "SePayApiKey": "HXOD7WIX2OK1T7YX0PK8BILV6PCYVQMUMWCRAPMAVQERQZOJBIGTOR0FKXPS5NLF",
-  "SePayApiUrl": "https://my.sepay.vn/transactions",
+  "SePayApiUrl": "https://my.sepay.vn/userapi/transactions/list",
   "NoiDungPrefix": "DP",
   "TiLeThanhToanPercent": 10
 }

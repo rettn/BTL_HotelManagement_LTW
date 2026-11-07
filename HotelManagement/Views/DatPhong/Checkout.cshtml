@@ -232,11 +232,20 @@
                             <div class="row align-items-center g-4 mt-1">
                                 <div class="col-md-5 text-center">
                                     <div class="qr-image-wrapper">
-                                        <img src="@Model.VietQrImageUrl" alt="Mã VietQR Thanh Toán" class="vietqr-img" />
+                                        <img src="@Model.VietQrImageUrl" alt="Mã VietQR Thanh Toán" id="checkoutQrImage" class="vietqr-img" />
+                                        <div id="checkoutQrStampPaid" class="qr-stamp-paid" style="display: none;">
+                                            <div class="stamp-inner">
+                                                <i class="fa-solid fa-check"></i>
+                                                <span>ĐÃ THANH TOÁN</span>
+                                            </div>
+                                        </div>
                                     </div>
                                     <small class="text-muted d-block mt-2">
                                         <i class="fa-solid fa-camera me-1"></i> Sử dụng App Ngân hàng để quét
                                     </small>
+                                    <div id="checkoutPaymentStatus" class="alert alert-info mt-3 mb-0 py-2 small">
+                                        Đang chờ xác nhận chuyển khoản...
+                                    </div>
                                 </div>
 
                                 <div class="col-md-7">
@@ -266,8 +275,8 @@
                                         <div class="bank-detail-row">
                                             <span class="detail-label">Số tiền:</span>
                                             <div class="detail-val-copy">
-                                                <strong class="text-danger fs-6">@Model.TongThanhToan.ToString("N0") đ</strong>
-                                                <button type="button" class="btn-copy" onclick="copyToClipboard('@((long)Model.TongThanhToan)', this)" title="Sao chép">
+                                                <strong class="text-danger fs-6">@Model.SoTienConLai.ToString("N0") đ</strong>
+                                                <button type="button" class="btn-copy" onclick="copyToClipboard('@((long)Model.SoTienConLai)', this)" title="Sao chép">
                                                     <i class="fa-regular fa-copy"></i> Copy
                                                 </button>
                                             </div>
@@ -330,6 +339,18 @@
                                 </div>
                                 <div class="total-amount">@Model.TongThanhToan.ToString("N0") đ</div>
                             </div>
+
+                            @if (Model.TienCoc > 0)
+                            {
+                                <div class="summary-item text-success">
+                                    <span class="label">Đã trừ tiền cọc:</span>
+                                    <span class="val">-@Model.TienCoc.ToString("N0") đ</span>
+                                </div>
+                                <div class="summary-total mt-2">
+                                    <div class="total-label"><span>CÒN PHẢI THANH TOÁN</span></div>
+                                    <div class="total-amount">@Model.SoTienConLai.ToString("N0") đ</div>
+                                </div>
+                            }
 
                             <div class="checkout-policy-box">
                                 <h6><i class="fa-solid fa-shield-halved text-success me-1"></i> Lưu ý khi Check-out:</h6>
@@ -812,11 +833,107 @@
             color: #928476;
             margin: 0;
         }
+
+        .payment-status-banner {
+            border-radius: 10px;
+            padding: 12px;
+            background: #fff8e1;
+            border: 1px solid #ffe082;
+        }
+
+        .payment-status-banner.status-paid {
+            background: #e8f7ee;
+            border-color: #9bd5ae;
+        }
+
+        .qr-image-wrapper {
+            position: relative;
+        }
+
+        .qr-stamp-paid {
+            position: absolute;
+            inset: 0;
+            align-items: center;
+            justify-content: center;
+            background: rgba(25, 135, 84, 0.18);
+            border-radius: 12px;
+        }
+
+        .qr-stamp-paid .stamp-inner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 10px 14px;
+            color: #146c43;
+            background: rgba(255, 255, 255, 0.94);
+            border: 2px solid #198754;
+            border-radius: 10px;
+            font-weight: 800;
+            transform: rotate(-8deg);
+        }
+
+        .payment-done {
+            filter: grayscale(0.35) opacity(0.65);
+        }
     </style>
 }
 
 @section Scripts {
     <script>
+        let checkoutPaymentTimer = null;
+        let checkoutPaymentConfirmed = false;
+
+        function showCheckoutPaymentSuccess(data) {
+            checkoutPaymentConfirmed = true;
+            if (checkoutPaymentTimer) clearInterval(checkoutPaymentTimer);
+
+            const status = document.getElementById('checkoutPaymentStatus');
+            if (status) {
+                status.className = 'payment-status-banner status-paid mt-3 mb-0 py-2';
+                status.innerHTML = `
+                    <div class="d-flex align-items-center justify-content-center gap-2">
+                        <i class="fa-solid fa-circle-check fs-4 text-success"></i>
+                        <div>
+                            <strong class="d-block text-success">THANH TOÁN THÀNH CÔNG QUA SEPAY!</strong>
+                            <small class="text-muted">Đã nhận ${Number(data.amount || 0).toLocaleString()} đ${data.transactionId ? ' (Mã GD: ' + data.transactionId + ')' : ''}</small>
+                        </div>
+                    </div>`;
+            }
+
+            const stamp = document.getElementById('checkoutQrStampPaid');
+            if (stamp) stamp.style.display = 'flex';
+            document.getElementById('checkoutQrImage')?.classList.add('payment-done');
+        }
+
+        async function checkCheckoutPayment() {
+            const maDatPhong = document.querySelector('input[name="MaDatPhong"]')?.value;
+            const status = document.getElementById('checkoutPaymentStatus');
+            const form = document.getElementById('checkoutForm');
+            if (!maDatPhong || !status || checkoutPaymentConfirmed) return;
+
+            try {
+                const response = await fetch(`/DatPhong/KiemTraThanhToanCheckout?maDatPhong=${maDatPhong}`);
+                if (!response.ok) return;
+
+                const result = await response.json();
+                if (result?.isPaid) {
+                    showCheckoutPaymentSuccess(result);
+                    setTimeout(() => form?.requestSubmit(), 500);
+                } else if (result?.message) {
+                    status.textContent = result.message;
+                }
+            } catch (error) {
+                console.warn('Lỗi kiểm tra thanh toán checkout:', error);
+            }
+        }
+
+        function startCheckoutPaymentPolling() {
+            if (checkoutPaymentTimer) clearInterval(checkoutPaymentTimer);
+            checkCheckoutPayment();
+            checkoutPaymentTimer = setInterval(checkCheckoutPayment, 3000);
+        }
+
         // Tắt/Mở khối VietQR khi đổi phương thức thanh toán
         function togglePaymentMethod() {
             var isTransfer = document.getElementById("paymentTransfer").checked;
@@ -825,8 +942,10 @@
             // Toggle hiển thị khối VietQR
             if (isTransfer) {
                 qrBlock.style.display = "block";
+                startCheckoutPaymentPolling();
             } else {
                 qrBlock.style.display = "none";
+                if (checkoutPaymentTimer) clearInterval(checkoutPaymentTimer);
             }
 
             // Cập nhật viền Active cho các Card
@@ -858,6 +977,18 @@
 
         document.addEventListener('DOMContentLoaded', function () {
             togglePaymentMethod();
+
+            document.getElementById('checkoutForm')?.addEventListener('submit', function (event) {
+                const isTransfer = document.getElementById('paymentTransfer').checked;
+                if (isTransfer && !checkoutPaymentConfirmed) {
+                    event.preventDefault();
+                    const status = document.getElementById('checkoutPaymentStatus');
+                    if (status) {
+                        status.className = 'alert alert-warning mt-3 mb-0 py-2 small';
+                        status.textContent = 'Vui lòng chuyển khoản và chờ hệ thống xác nhận trước khi checkout.';
+                    }
+                }
+            });
         });
     </script>
 }

@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using HotelManagement.Data;
 using HotelManagement.Models;
 using Microsoft.EntityFrameworkCore;
@@ -17,6 +18,7 @@ namespace HotelManagement.Services
 
     public class SePayService
     {
+        private const string DefaultSePayApiUrl = "https://my.sepay.vn/userapi/transactions/list";
         private readonly PaymentSettingService _settingService;
         private readonly ApplicationDbContext _context;
         private readonly IHttpClientFactory _httpClientFactory;
@@ -63,7 +65,7 @@ namespace HotelManagement.Services
         /// <summary>
         /// Kiểm tra giao dịch từ SePay API xem khách hàng đã chuyển tiền cho đơn đặt phòng chưa
         /// </summary>
-        public async Task<SePayCheckResult> CheckPaymentAsync(int maDatPhong)
+        public async Task<SePayCheckResult> CheckPaymentAsync(int maDatPhong, decimal? requiredAmount = null)
         {
             var datPhong = await _context.DatPhongs
                 .Include(d => d.ChiTietDatPhongs)
@@ -79,7 +81,9 @@ namespace HotelManagement.Services
             }
 
             // Nếu đơn đã được xác nhận thanh toán/đặt cọc trước đó
-            if (datPhong.TrangThai == "DaCoc" || datPhong.TrangThai == "DaThanhToan")
+            if (datPhong.TrangThai == "DaThanhToan"
+                || (datPhong.TrangThai == "DaCoc"
+                    && (!requiredAmount.HasValue || datPhong.TienCoc >= requiredAmount.Value)))
             {
                 return new SePayCheckResult
                 {
@@ -97,7 +101,7 @@ namespace HotelManagement.Services
             var donGia = datPhong.ChiTietDatPhongs.FirstOrDefault()?.DonGia ?? 0;
             var tongTien = donGia * soDem;
             var tiLe = settings.TiLeThanhToanPercent > 0 ? settings.TiLeThanhToanPercent : 100;
-            var soTienCanThanhToan = tongTien * tiLe / 100m;
+            var soTienCanThanhToan = requiredAmount ?? (tongTien * tiLe / 100m);
 
             // Nếu chưa nhập SePay API Key
             if (string.IsNullOrWhiteSpace(settings.SePayApiKey))
@@ -115,9 +119,7 @@ namespace HotelManagement.Services
                 client.Timeout = TimeSpan.FromSeconds(10);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", settings.SePayApiKey.Trim());
 
-                var apiUrl = string.IsNullOrWhiteSpace(settings.SePayApiUrl)
-                    ? "https://my.sepay.vn/userapi/transactions/list"
-                    : settings.SePayApiUrl.Trim();
+                var apiUrl = GetSePayApiUrl(settings);
 
                 // Gọi SePay API lấy danh sách giao dịch gần nhất
                 var response = await client.GetAsync(apiUrl);
@@ -146,7 +148,6 @@ namespace HotelManagement.Services
 
                 var expectedPrefixCode = $"{settings.NoiDungPrefix}{maDatPhong}".ToUpperInvariant();
                 var expectedCodeWithSpace = $"{settings.NoiDungPrefix} {maDatPhong}".ToUpperInvariant();
-                var plainCode = $"{maDatPhong}";
 
                 foreach (var item in transElement.EnumerateArray())
                 {
@@ -154,9 +155,12 @@ namespace HotelManagement.Services
                     var contentUpper = content.ToUpperInvariant();
 
                     // Kiểm tra nội dung chuyển khoản có chứa mã đặt phòng hay không
-                    bool isMatchedCode = contentUpper.Contains(expectedPrefixCode)
-                                      || contentUpper.Contains(expectedCodeWithSpace)
-                                      || (contentUpper.Contains(plainCode) && (contentUpper.Contains("DP") || contentUpper.Contains("DATPHONG")));
+                    bool isMatchedCode = Regex.IsMatch(
+                                             contentUpper,
+                                             $"(?<![A-Z0-9]){Regex.Escape(expectedPrefixCode)}(?![A-Z0-9])")
+                                      || Regex.IsMatch(
+                                             contentUpper,
+                                             $"(?<![A-Z0-9]){Regex.Escape(expectedCodeWithSpace).Replace(" ", @"\s+")}(?![A-Z0-9])");
 
                     if (isMatchedCode)
                     {
@@ -174,7 +178,7 @@ namespace HotelManagement.Services
                         }
 
                         // Nếu có số tiền nộp vào hợp lệ
-                        if (amountIn > 0)
+                        if (amountIn >= soTienCanThanhToan && soTienCanThanhToan > 0)
                         {
                             var transId = item.TryGetProperty("id", out var idProp) ? idProp.ToString() : "";
                             var transDate = item.TryGetProperty("transaction_date", out var dProp) ? dProp.GetString() : DateTime.Now.ToString("dd/MM/yyyy HH:mm");
@@ -261,9 +265,7 @@ namespace HotelManagement.Services
                 client.Timeout = TimeSpan.FromSeconds(10);
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", settings.SePayApiKey.Trim());
 
-                var apiUrl = string.IsNullOrWhiteSpace(settings.SePayApiUrl)
-                    ? "https://my.sepay.vn/userapi/transactions/list?limit=1"
-                    : settings.SePayApiUrl.Trim();
+                var apiUrl = GetSePayApiUrl(settings);
 
                 var response = await client.GetAsync(apiUrl);
                 if (response.IsSuccessStatusCode)
@@ -282,6 +284,20 @@ namespace HotelManagement.Services
             {
                 return $"Không thể kết nối đến máy chủ SePay: {ex.Message}";
             }
+        }
+
+        private static string GetSePayApiUrl(PaymentSetting settings)
+        {
+            var configuredUrl = settings.SePayApiUrl?.Trim() ?? string.Empty;
+
+            // Tương thích với cấu hình cũ đã lưu nhầm endpoint giao diện /transactions.
+            if (string.IsNullOrWhiteSpace(configuredUrl)
+                || string.Equals(configuredUrl.TrimEnd('/'), "https://my.sepay.vn/transactions", StringComparison.OrdinalIgnoreCase))
+            {
+                return DefaultSePayApiUrl;
+            }
+
+            return configuredUrl;
         }
     }
 }

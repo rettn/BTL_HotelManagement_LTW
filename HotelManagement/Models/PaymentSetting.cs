@@ -13,11 +13,11 @@ namespace HotelManagement.Models
 
         [Required(ErrorMessage = "Vui lòng nhập số tài khoản ngân hàng.")]
         [Display(Name = "Số tài khoản ngân hàng")]
-        public string SoTaiKhoan { get; set; } = "0379868686";
+        public string SoTaiKhoan { get; set; } = "0379111973";
 
         [Required(ErrorMessage = "Vui lòng nhập tên chủ tài khoản.")]
         [Display(Name = "Tên chủ tài khoản (viết hoa không dấu)")]
-        public string TenChuTaiKhoan { get; set; } = "NGUYEN THE TOAN";
+        public string TenChuTaiKhoan { get; set; } = "DANG THE TOAN";
 
         [Display(Name = "SePay API Key / Token")]
         public string SePayApiKey { get; set; } = "";

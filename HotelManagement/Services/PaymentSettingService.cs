@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Encodings.Web;
 using HotelManagement.Models;
 
 namespace HotelManagement.Services
@@ -61,7 +62,11 @@ namespace HotelManagement.Services
                         settings.TenNganHang = bank.Ten;
                     }
 
-                    var options = new JsonSerializerOptions { WriteIndented = true };
+                    var options = new JsonSerializerOptions
+                    {
+                        WriteIndented = true,
+                        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                    };
                     var json = JsonSerializer.Serialize(settings, options);
                     File.WriteAllText(_filePath, json);
                     _cachedSettings = settings;

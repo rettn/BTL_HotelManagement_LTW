@@ -14,15 +14,18 @@ namespace HotelManagement.Controllers
         private readonly DatPhongService _service;
         private readonly ApplicationDbContext _context;
         private readonly PaymentSettingService _paymentSettingService;
+        private readonly SePayService _sePayService;
 
         public DatPhongController(
             DatPhongService service,
             ApplicationDbContext context,
-            PaymentSettingService paymentSettingService)
+            PaymentSettingService paymentSettingService,
+            SePayService sePayService)
         {
             _service = service;
             _context = context;
             _paymentSettingService = paymentSettingService;
+            _sePayService = sePayService;
         }
 
         // GET: /DatPhong
@@ -700,6 +703,20 @@ namespace HotelManagement.Controllers
             return View(model);
         }
 
+        // GET: /DatPhong/KiemTraThanhToanCheckout?maDatPhong=5
+        [HttpGet]
+        public async Task<IActionResult> KiemTraThanhToanCheckout(int maDatPhong)
+        {
+            var checkoutInfo = await GetHoaDonCheckoutViewModelAsync(maDatPhong);
+            if (checkoutInfo == null)
+            {
+                return Json(new { isPaid = false, message = "Không tìm thấy thông tin checkout." });
+            }
+
+            var result = await _sePayService.CheckPaymentAsync(maDatPhong, checkoutInfo.SoTienConLai);
+            return Json(result);
+        }
+
         // POST: /DatPhong/XacNhanCheckout
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -718,10 +735,26 @@ namespace HotelManagement.Controllers
             if (datPhong != null)
             {
                 // Chặn thanh toán / trả phòng lặp lại
-                if (datPhong.TrangThai != "DangLuuTru" && datPhong.TrangThai != "DaHoanThanh")
+                if (datPhong.TrangThai != "DangLuuTru"
+                    && datPhong.TrangThai != "DaHoanThanh"
+                    && datPhong.TrangThai != "DaCoc")
                 {
                     TempData["Error"] = "Chỉ có thể trả phòng và thanh toán cho phiếu đang lưu trú.";
                     return RedirectToAction(nameof(Index));
+                }
+
+                if (string.Equals(model.PhuongThucThanhToan, "ChuyenKhoan", StringComparison.OrdinalIgnoreCase))
+                {
+                    var checkoutInfo = await GetHoaDonCheckoutViewModelAsync(datPhong.MaDatPhong);
+                    var paymentResult = await _sePayService.CheckPaymentAsync(
+                        datPhong.MaDatPhong,
+                        checkoutInfo?.SoTienConLai ?? model.TongThanhToan);
+
+                    if (!paymentResult.IsPaid)
+                    {
+                        TempData["Error"] = $"Chưa xác nhận được chuyển khoản: {paymentResult.Message}";
+                        return RedirectToAction(nameof(Checkout), new { id = datPhong.MaDatPhong });
+                    }
                 }
 
                 var thoiGianTra = DateTime.Now;
@@ -779,7 +812,7 @@ namespace HotelManagement.Controllers
                     var thanhToan = new ThanhToan
                     {
                         MaHD = hoaDon.MaHD,
-                        SoTien = tongTien,
+                        SoTien = Math.Max(0, tongTien - datPhong.TienCoc),
                         PhuongThuc = model.PhuongThucThanhToan ?? "TienMat",
                         TrangThai = "ThanhCong",
                         NgayThanhToan = thoiGianTra,
@@ -906,6 +939,7 @@ namespace HotelManagement.Controllers
             decimal tiLeThuePercent = 10;
             decimal tienThue = (tienPhong + tongTienDichVu) * (tiLeThuePercent / 100m);
             decimal tongThanhToan = tienPhong + tongTienDichVu + tienThue;
+            decimal soTienConLai = Math.Max(0, tongThanhToan - datPhong.TienCoc);
 
             var paymentSetting = _paymentSettingService.GetSettings();
             string nganHangMa = paymentSetting?.NganHangMa ?? "";
@@ -915,7 +949,7 @@ namespace HotelManagement.Controllers
 
             string noiDungMaHoa = Uri.EscapeDataString(noiDungCK);
             string tenTaiKhoanMaHoa = Uri.EscapeDataString(tenChuTaiKhoan);
-            string vietQrUrl = $"https://img.vietqr.io/image/{nganHangMa}-{soTaiKhoan}-compact2.png?amount={(long)tongThanhToan}&addInfo={noiDungMaHoa}&accountName={tenTaiKhoanMaHoa}";
+            string vietQrUrl = $"https://img.vietqr.io/image/{nganHangMa}-{soTaiKhoan}-compact2.png?amount={(long)soTienConLai}&addInfo={noiDungMaHoa}&accountName={tenTaiKhoanMaHoa}";
 
             return new HoaDonCheckoutViewModel
             {
@@ -935,6 +969,8 @@ namespace HotelManagement.Controllers
                 TiLeThuePercent = tiLeThuePercent,
                 TienThue = tienThue,
                 TongThanhToan = tongThanhToan,
+                TienCoc = datPhong.TienCoc,
+                SoTienConLai = soTienConLai,
                 PhuongThucThanhToan = "TienMat",
 
                 NganHangMa = nganHangMa,
