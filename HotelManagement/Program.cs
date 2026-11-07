@@ -60,6 +60,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 //Quan ly dat phong
 builder.Services.AddScoped<DatPhongRepository>();
 builder.Services.AddScoped<DatPhongService>();
+builder.Services.AddScoped<ThongBaoService>();
 
 // Quan ly loai phong
 builder.Services.AddScoped<LoaiPhongRepository>();

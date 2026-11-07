@@ -276,10 +276,24 @@
                     </div>
 
                     <div class="topbar-actions">
-                        <button type="button" class="topbar-icon" title="Thông báo">
-                            <i class="bi bi-bell"></i><span class="notification-dot"></span>
-                        </button>
-                        <div class="theme-picker">
+                                                <div class="notification-menu" id="notificationMenuRoot">
+                            <button type="button" class="topbar-icon notification-toggle" id="notificationToggle"
+                                    title="Thông báo" aria-label="Thông báo" aria-expanded="false" aria-controls="notificationPopover">
+                                <i class="bi bi-bell" aria-hidden="true"></i>
+                                <span class="notification-count" id="notificationCount" hidden></span>
+                            </button>
+                            <section class="notification-popover" id="notificationPopover" aria-label="Thông báo" hidden>
+                                <header class="notification-popover-header">
+                                    <strong>Thông báo</strong>
+                                    <button type="button" id="markAllNotificationsRead">Đánh dấu đã đọc</button>
+                                </header>
+                                <div class="notification-items" id="notificationItems">
+                                    <div class="notification-loading">Đang tải thông báo...</div>
+                                </div>
+                                <a class="notification-view-all" asp-controller="ThongBao" asp-action="Index">Xem tất cả thông báo</a>
+                            </section>
+                            <form id="notificationTokenForm" hidden>@Html.AntiForgeryToken()</form>
+                        </div><div class="theme-picker">
                             <button type="button" class="topbar-icon theme-picker-toggle" id="themePickerToggle"
                                     aria-label="Chọn màu giao diện" title="Chọn màu giao diện"
                                     aria-expanded="false" aria-controls="themePickerMenu">
@@ -382,6 +396,12 @@
                 const profileMenuButton = document.getElementById('profileMenuButton');
                 const resizeHandle = document.getElementById('sidebarResizeHandle');
                 const themeToggle = document.getElementById('themeToggle');
+                const notificationRoot = document.getElementById('notificationMenuRoot');
+                const notificationToggle = document.getElementById('notificationToggle');
+                const notificationPopover = document.getElementById('notificationPopover');
+                const notificationItems = document.getElementById('notificationItems');
+                const notificationCount = document.getElementById('notificationCount');
+                const markAllNotificationsRead = document.getElementById('markAllNotificationsRead');
                 const themePicker = document.querySelector('.theme-picker');
                 const themePickerToggle = document.getElementById('themePickerToggle');
                 const themePickerMenu = document.getElementById('themePickerMenu');
@@ -454,6 +474,105 @@
                         themePickerToggle?.focus();
                     }
                 });
+
+                const notificationRecentUrl = '@Url.Action("Recent", "ThongBao")';
+                const notificationToken = () => document.querySelector('#notificationTokenForm input[name="__RequestVerificationToken"]')?.value;
+                const notificationDate = value => {
+                    const date = new Date(value);
+                    return Number.isNaN(date.getTime()) ? '' : new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).format(date);
+                };
+                const renderNotifications = items => {
+                    notificationItems.replaceChildren();
+                    if (!items.length) {
+                        const empty = document.createElement('div');
+                        empty.className = 'notification-empty';
+                        empty.textContent = 'Chưa có thông báo.';
+                        notificationItems.appendChild(empty);
+                        return;
+                    }
+                    items.forEach(item => {
+                        const link = document.createElement('a');
+                        link.className = `notification-item${item.daDoc ? '' : ' is-unread'}`;
+                        link.href = item.url || '@Url.Action("Index", "ThongBao")';
+                        link.dataset.notificationId = item.id;
+                        const icon = document.createElement('span');
+                        icon.className = 'notification-item-icon';
+                        const iconElement = document.createElement('i');
+                        iconElement.className = item.loaiThongBao?.startsWith('SapHetKho') ? 'bi bi-box-seam' : 'bi bi-calendar-check';
+                        icon.appendChild(iconElement);
+                        const content = document.createElement('span');
+                        content.className = 'notification-item-content';
+                        const title = document.createElement('strong');
+                        title.textContent = item.tieuDe;
+                        const body = document.createElement('span');
+                        body.textContent = item.noiDung;
+                        const date = document.createElement('small');
+                        date.textContent = notificationDate(item.ngayTao);
+                        content.append(title, body, date);
+                        link.append(icon, content);
+                        if (!item.daDoc) {
+                            const unread = document.createElement('span');
+                            unread.className = 'notification-item-unread';
+                            unread.setAttribute('aria-label', 'Chưa đọc');
+                            link.appendChild(unread);
+                        }
+                        link.addEventListener('click', async event => {
+                            event.preventDefault();
+                            if (!item.daDoc) await postNotificationAction('MarkRead', { id: item.id });
+                            window.location.assign(link.href);
+                        });
+                        notificationItems.appendChild(link);
+                    });
+                };
+                const loadNotifications = async () => {
+                    if (!notificationItems) return;
+                    try {
+                        const response = await fetch(notificationRecentUrl, { headers: { 'Accept': 'application/json' }, cache: 'no-store' });
+                        if (!response.ok) return;
+                        const data = await response.json();
+                        const unread = Number(data.unreadCount || 0);
+                        notificationCount.hidden = unread === 0;
+                        notificationCount.textContent = unread > 99 ? '99+' : String(unread);
+                        notificationToggle?.setAttribute('aria-label', unread ? `Thông báo, ${unread} chưa đọc` : 'Thông báo');
+                        markAllNotificationsRead.disabled = unread === 0;
+                        renderNotifications(data.items || []);
+                    } catch { }
+                };
+                async function postNotificationAction(action, values = {}) {
+                    const body = new URLSearchParams(values);
+                    const token = notificationToken();
+                    if (token) body.set('__RequestVerificationToken', token);
+                    const response = await fetch(`/ThongBao/${action}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8', 'RequestVerificationToken': token || '', 'Accept': 'application/json' },
+                        body
+                    });
+                    return response.ok;
+                }
+                notificationToggle?.addEventListener('click', async () => {
+                    const open = notificationPopover.hidden;
+                    notificationPopover.hidden = !open;
+                    notificationToggle.setAttribute('aria-expanded', String(open));
+                    if (open) await loadNotifications();
+                });
+                markAllNotificationsRead?.addEventListener('click', async () => {
+                    if (await postNotificationAction('MarkAllRead')) await loadNotifications();
+                });
+                document.addEventListener('click', event => {
+                    if (notificationRoot && !notificationRoot.contains(event.target)) {
+                        notificationPopover.hidden = true;
+                        notificationToggle?.setAttribute('aria-expanded', 'false');
+                    }
+                });
+                document.addEventListener('keydown', event => {
+                    if (event.key === 'Escape' && notificationPopover && !notificationPopover.hidden) {
+                        notificationPopover.hidden = true;
+                        notificationToggle?.setAttribute('aria-expanded', 'false');
+                        notificationToggle?.focus();
+                    }
+                });
+                loadNotifications();
+                window.setInterval(loadNotifications, 60000);
 
                 try {
                     const savedWidth = Number(localStorage.getItem('hotel-admin-sidebar-width'));

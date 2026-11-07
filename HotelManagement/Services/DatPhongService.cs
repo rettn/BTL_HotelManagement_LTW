@@ -10,13 +10,16 @@ namespace HotelManagement.Services
     {
         private readonly DatPhongRepository _repository;
         private readonly ApplicationDbContext _context;
+        private readonly ThongBaoService _thongBaoService;
 
         public DatPhongService(
             DatPhongRepository repository,
-            ApplicationDbContext context)
+            ApplicationDbContext context,
+            ThongBaoService thongBaoService)
         {
             _repository = repository;
             _context = context;
+            _thongBaoService = thongBaoService;
         }
 
         public Task<List<DatPhong>> GetAllAsync()
@@ -73,6 +76,15 @@ namespace HotelManagement.Services
                 _context.DatPhongs.Add(datPhong);
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
+
+                try
+                {
+                    await _thongBaoService.TaoDatPhongMoiChoNhanVienAsync(datPhong);
+                }
+                catch
+                {
+                    // Notification failures must not undo a completed reservation.
+                }
 
                 return (true, "Tạo phiếu đặt phòng thành công.", datPhong.MaDatPhong);
             }
