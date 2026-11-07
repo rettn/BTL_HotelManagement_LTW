@@ -388,7 +388,12 @@ namespace HotelManagement.Services
                     .Where(l => l.ChiTietDatPhong != null && l.ChiTietDatPhong.MaDatPhong == maDatPhong)
                     .AnyAsync(l => l.ThoiGianNhanPhong != null && l.ThoiGianTraPhong == null);
 
-                if (!conPhongDangO)
+                // Còn phòng của phiếu chưa từng được nhận thì chưa được đóng phiếu
+                var conPhongChuaNhan = await _context.ChiTietDatPhongs
+                    .Where(c => c.MaDatPhong == maDatPhong)
+                    .AnyAsync(c => !c.DanhSachLuuTru.Any(l => l.ThoiGianNhanPhong != null));
+
+                if (!conPhongDangO && !conPhongChuaNhan)
                 {
                     chiTiet.DatPhong.TrangThai = "DaHoanThanh";
                     chiTiet.DatPhong.NgayTraThucTe = DateTime.Now;

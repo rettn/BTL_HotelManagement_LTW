@@ -903,7 +903,16 @@
                         var roomSubtotal = nightly * nights;
                         var total = booking.HoaDons?.Any() == true ? booking.HoaDons.Sum(h => h.TongTien) : roomSubtotal;
                         var recordedPayments = booking.HoaDons?.SelectMany(h => h.ThanhToans ?? new List<HotelManagement.Models.ThanhToan>()).Where(t => t.TrangThai == "DaThanhToan" || t.TrangThai == "DaCoc" || t.TrangThai == "ThanhCong").Sum(t => t.SoTien) ?? 0;
-                        var paid = Math.Max(booking.TienCoc, recordedPayments);
+                        // Phòng đã trả riêng (phiếu chưa đóng) coi như đã thanh toán, trừ phần cọc đã tính cho phòng đó
+                        var phieuDong = booking.TrangThai == "DaHoanThanh" || booking.TrangThai == "DaThanhToan";
+                        var tongDuKien = rooms.Sum(r => r.DonGia * Math.Max(1, (r.NgayTra.Date - r.NgayNhan.Date).Days));
+                        var daTraRieng = phieuDong ? 0m : rooms
+                        .Where(r => r.DanhSachLuuTru?.Any(l => l.ThoiGianNhanPhong != null) == true
+                        && r.DanhSachLuuTru?.Any(l => l.ThoiGianNhanPhong != null && l.ThoiGianTraPhong == null) != true)
+                        .Sum(r => r.DonGia * Math.Max(1, (r.NgayTra.Date - r.NgayNhan.Date).Days));
+                        var cocCuaPhongDaTra = tongDuKien > 0 ? Math.Round(booking.TienCoc * daTraRieng / tongDuKien, 0) : 0m;
+                        var daThanhToanRieng = Math.Max(0m, daTraRieng - cocCuaPhongDaTra);
+                        var paid = Math.Max(booking.TienCoc, recordedPayments) + daThanhToanRieng;
                         var balance = Math.Max(0, total - paid);
                         var hasInvoice = booking.HoaDons?.Any() == true;
                         var hasActiveStay = rooms.Any(r => r.DanhSachLuuTru?.Any(l => l.ThoiGianNhanPhong != null && l.ThoiGianTraPhong == null) == true);
@@ -936,8 +945,27 @@
                                     }
                                     @if (nextRoom != null)
                                     {
-                                        var soPhongChuaNhan = rooms.Count(r => r.DanhSachLuuTru?.Any(l => l.ThoiGianNhanPhong != null) != true);
-                                        <button type="button" class="booking-act js-checkin-all" data-booking="@booking.MaDatPhong" data-count="@soPhongChuaNhan" title="Nhận tất cả phòng chưa nhận">Nhận phòng</button>
+                                        var phongChuaNhan = rooms.Where(r => r.DanhSachLuuTru?.Any(l => l.ThoiGianNhanPhong != null) != true).ToList();
+                                        <button type="button" class="booking-act js-checkin-all"
+                                                data-booking="@booking.MaDatPhong"
+                                                data-count="@phongChuaNhan.Count"
+                                                data-code="@("DP" + booking.MaDatPhong.ToString("D6"))"
+                                                data-rooms="@string.Join("|", phongChuaNhan.Select(r => "Phòng " + r.Phong?.SoPhong))"
+                                                title="Nhận tất cả phòng chưa nhận">
+                                            Nhận phòng
+                                        </button>
+                                    }
+                                    @if (booking.TrangThai == "DangLuuTru" && hasActiveStay)
+                                    {
+                                        var phongDangO = rooms.Where(r => r.DanhSachLuuTru?.Any(l => l.ThoiGianNhanPhong != null && l.ThoiGianTraPhong == null) == true).ToList();
+                                        <button type="button" class="booking-act checkout js-checkout-all"
+                                                data-booking="@booking.MaDatPhong"
+                                                data-count="@phongDangO.Count"
+                                                data-code="@("DP" + booking.MaDatPhong.ToString("D6"))"
+                                                data-rooms="@string.Join("|", phongDangO.Select(r => "Phòng " + r.Phong?.SoPhong))"
+                                                title="Trả tất cả phòng đang ở">
+                                            Trả phòng
+                                        </button>
                                     }
                                    
                                     <details class="booking-more">
@@ -982,9 +1010,13 @@
                                         <span>@room.DonGia.ToString("N0") đ</span>
                                         <span><span class="booking-room-status @(activeStay != null ? "room-status-occupied" : alreadyReturned ? "room-status-cleaning" : "room-status-reserved")">@(activeStay != null ? "Đang lưu trú" : alreadyReturned ? "Đã trả · đang dọn" : "Chưa nhận phòng")</span></span>
                                         <span class="room-details-action">
-                                            @if (choPhepNhan)
+                                            @if (activeStay != null)
                                             {
-                                                <button type="button" class="booking-act js-checkin" data-booking="@booking.MaDatPhong" data-room="@room.MaPhong">Nhận phòng</button>
+                                                <button type="button" class="booking-act checkout js-checkout-room" data-booking="@booking.MaDatPhong" data-room="@room.MaPhong" data-room-number="@room.Phong?.SoPhong">Trả phòng</button>
+                                            }
+                                            else if (choPhepNhan)
+                                            {
+                                                <button type="button" class="booking-act js-checkin" data-booking="@booking.MaDatPhong" data-room="@room.MaPhong" data-room-number="@room.Phong?.SoPhong">Nhận phòng</button>
                                             }
                                         </span>
                                     </div>
@@ -1053,6 +1085,7 @@
                     note.textContent = opts.note || '';
                     note.classList.toggle('booking-hidden', !opts.note);
                     ok.textContent = opts.confirmText || 'Xác nhận';
+                    document.querySelector('#confirmDialog .confirm-icon i').className = 'bi ' + (opts.icon || 'bi-box-arrow-right');
 
                     const close = result => {
                         box.classList.add('booking-hidden');
@@ -1174,32 +1207,123 @@
             });
             document.getElementById('txtPhanTramHoan')?.addEventListener('input',function(){let n=Math.min(100,Math.max(0,Number(this.value)||0));document.getElementById('txtSoTienHoan').value=currentTienCoc*n/100;});
             document.getElementById('btnSubmitHuyPhong')?.addEventListener('click',async function(){const request={maDatPhong:Number(document.getElementById('modalMaDatPhong').value),lyDoHuy:document.getElementById('txtLyDoHuy').value.trim(),phanTramHoan:Number(document.getElementById('txtPhanTramHoan').value)||0,soTienHoan:Number(document.getElementById('txtSoTienHoan').value)||0,hinhThucHoan:document.getElementById('ddlHinhThucHoan').value};if(!request.lyDoHuy){alert('Vui lòng nhập lý do hủy phòng.');return;}this.disabled=true;try{const res=await fetch('/DatPhong/XacNhanHuyPhong',{method:'POST',headers:{'Content-Type':'application/json','RequestVerificationToken':bookingToken},body:JSON.stringify(request)});const data=await res.json();if(!res.ok||!data.success)throw new Error(data.message||'Hủy phòng thất bại');location.reload();}catch(e){alert(e.message);this.disabled=false;}});
-                    document.addEventListener('click', async e => {
-                const button = e.target.closest('.js-checkin, .js-checkin-all');
+                                        document.addEventListener('click', async e => {
+            const button = e.target.closest('.js-checkin, .js-checkin-all');
+            if (!button) return;
+
+            const all = button.classList.contains('js-checkin-all');
+            const count = Number(button.dataset.count || 1);
+            const code = button.dataset.code || '';
+            let agreed;
+
+            if (all) {
+                const rooms = (button.dataset.rooms || '').split('|').filter(Boolean);
+                agreed = await askConfirm({
+                    icon: 'bi-box-arrow-in-right',
+                    title: 'Xác nhận nhận phòng',
+                    message: count > 1
+                        ? `Bạn có muốn nhận cả ${count} phòng của lượt đặt ${code} không?`
+                        : `Bạn có muốn nhận phòng của lượt đặt ${code} không?`,
+                    items: rooms,
+                    note: 'Phòng sẽ chuyển sang trạng thái đang sử dụng và bắt đầu tính thời gian lưu trú.',
+                    confirmText: count > 1 ? `Nhận ${count} phòng` : 'Nhận phòng'
+                });
+            } else {
+                const roomNumber = button.dataset.roomNumber || 'đã chọn';
+                agreed = await askConfirm({
+                    icon: 'bi-box-arrow-in-right',
+                    title: 'Xác nhận nhận phòng',
+                    message: `Bạn có muốn nhận phòng ${roomNumber} không?`,
+                    items: [`Phòng ${roomNumber}`],
+                    note: 'Phòng sẽ chuyển sang trạng thái đang sử dụng và bắt đầu tính thời gian lưu trú.',
+                    confirmText: 'Nhận phòng'
+                });
+            }
+            if (!agreed) return;
+
+            button.disabled = true;
+            const params = { id: button.dataset.booking, __RequestVerificationToken: bookingToken };
+            if (!all) params.maPhong = button.dataset.room;
+
+            try {
+                const res = await fetch(all ? '/DatPhong/CheckInAll' : '/DatPhong/CheckIn', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams(params)
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) throw new Error(data.message || 'Không thể nhận phòng');
+                location.reload();
+            } catch (err) {
+                alert(err.message);
+                if (all) location.reload(); else button.disabled = false;
+            }
+        });
+            document.addEventListener('click', async e => {
+                const button = e.target.closest('.js-checkout-all');
                 if (!button) return;
 
-                const all = button.classList.contains('js-checkin-all');
                 const count = Number(button.dataset.count || 1);
-                if (all && count > 1 && !confirm(`Nhận tất cả ${count} phòng chưa nhận của lượt đặt này?`)) return;
+                const code = button.dataset.code || '';
+                const rooms = (button.dataset.rooms || '').split('|').filter(Boolean);
+                const agreed = await askConfirm({
+                    title: 'Xác nhận trả phòng',
+                    message: count > 1
+                        ? `Bạn có muốn trả cả ${count} phòng của lượt đặt ${code} không?`
+                        : `Bạn có muốn trả phòng của lượt đặt ${code} không?`,
+                    items: rooms,
+                    note: 'Phòng sẽ chuyển sang trạng thái đang dọn dẹp. Hóa đơn sẽ được mở ngay sau khi trả phòng.',
+                    confirmText: count > 1 ? `Trả ${count} phòng & xuất hóa đơn` : 'Trả phòng & xuất hóa đơn'
+                });
+                if (!agreed) return;
 
                 button.disabled = true;
-                const params = { id: button.dataset.booking, __RequestVerificationToken: bookingToken };
-                if (!all) params.maPhong = button.dataset.room;
-
                 try {
-                    const res = await fetch(all ? '/DatPhong/CheckInAll' : '/DatPhong/CheckIn', {
+                    const res = await fetch('/DatPhong/CheckOutAll', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: new URLSearchParams(params)
+                        body: new URLSearchParams({ id: button.dataset.booking, __RequestVerificationToken: bookingToken })
                     });
                     const data = await res.json();
-                    if (!res.ok || !data.success) throw new Error(data.message || 'Không thể nhận phòng');
-                    location.reload();
+                    if (!res.ok || !data.success) throw new Error(data.message || 'Không thể trả phòng');
+                    location.href = data.redirectUrl || location.href;
                 } catch (err) {
                     alert(err.message);
-                    if (all) location.reload(); else button.disabled = false;
+                    location.reload();
                 }
             });
+
+            document.addEventListener('click', async e => {
+                const button = e.target.closest('.js-checkout-room');
+                if (!button) return;
+
+                const roomNumber = button.dataset.roomNumber || 'đã chọn';
+                const agreed = await askConfirm({
+                    title: 'Xác nhận trả phòng',
+                    message: `Bạn có muốn trả phòng ${roomNumber} không?`,
+                    items: [`Phòng ${roomNumber}`],
+                    note: 'Phòng sẽ chuyển sang trạng thái đang dọn dẹp.',
+                    confirmText: 'Trả phòng'
+                });
+                if (!agreed) return;
+
+                button.disabled = true;
+                try {
+                    const res = await fetch('/DatPhong/CheckOut', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: new URLSearchParams({ id: button.dataset.booking, maPhong: button.dataset.room, __RequestVerificationToken: bookingToken })
+                    });
+                    const data = await res.json();
+                    if (!res.ok || !data.success) throw new Error(data.message || 'Không thể trả phòng.');
+                    if (data.trangThaiDatPhong === 'DaHoanThanh') location.href = '/DatPhong/XuatHoaDon/' + button.dataset.booking;
+                    else location.reload();
+                } catch (err) {
+                    alert(err.message);
+                    button.disabled = false;
+                }
+            });
+
             applyFilters();
         });
     </script>

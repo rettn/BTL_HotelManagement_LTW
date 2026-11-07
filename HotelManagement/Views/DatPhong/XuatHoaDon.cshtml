@@ -207,6 +207,12 @@
         gap: 12px;
         margin-top: 25px;
     }
+
+    @@media print {
+        .no-print {
+            display: none !important;
+        }
+    }
 </style>
 
 <div class="success-container">
@@ -227,8 +233,14 @@
                 <div>
                     <h5 class="fw-bold mb-1 text-dark" style="font-size: 17px;">@hotelName</h5>
                     <div class="text-muted" style="font-size: 12px; line-height: 1.4;">
-                        @if (!string.IsNullOrEmpty(hotelInfo?.DiaChi)) { <div><i class="bi bi-geo-alt me-1"></i>@hotelInfo.DiaChi</div> }
-                        @if (!string.IsNullOrEmpty(hotelInfo?.SoDienThoai) || !string.IsNullOrEmpty(hotelInfo?.Email)) { <div><i class="bi bi-telephone me-1"></i>@(hotelInfo?.SoDienThoai ?? "") · <i class="bi bi-envelope me-1"></i>@(hotelInfo?.Email ?? "")</div> }
+                        @if (!string.IsNullOrEmpty(hotelInfo?.DiaChi))
+                        {
+                            <div><i class="bi bi-geo-alt me-1"></i>@hotelInfo.DiaChi</div>
+                        }
+                        @if (!string.IsNullOrEmpty(hotelInfo?.SoDienThoai) || !string.IsNullOrEmpty(hotelInfo?.Email))
+                        {
+                            <div><i class="bi bi-telephone me-1"></i>@(hotelInfo?.SoDienThoai ?? "") · <i class="bi bi-envelope me-1"></i>@(hotelInfo?.Email ?? "")</div>
+                        }
                     </div>
                 </div>
             </div>
@@ -291,12 +303,27 @@
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td><strong>Tiền phòng (@Model.TenLoaiPhong)</strong><br /><small class="text-muted">Phòng @Model.SoPhong</small></td>
-                    <td class="text-center">@Model.SoDem đêm</td>
-                    <td class="text-end">@Model.GiaTheoDem.ToString("N0") đ</td>
-                    <td class="text-end">@Model.TienPhong.ToString("N0") đ</td>
-                </tr>
+                @if (Model.DanhSachPhong != null && Model.DanhSachPhong.Any())
+                {
+                    foreach (var p in Model.DanhSachPhong)
+                    {
+                        <tr>
+                            <td><strong>Phòng @p.SoPhong</strong><br /><small class="text-muted">@p.TenLoaiPhong</small></td>
+                            <td class="text-center">@p.SoDem đêm</td>
+                            <td class="text-end">@p.GiaTheoDem.ToString("N0") đ</td>
+                            <td class="text-end">@p.ThanhTien.ToString("N0") đ</td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td><strong>Tiền phòng (@Model.TenLoaiPhong)</strong><br /><small class="text-muted">Phòng @Model.SoPhong</small></td>
+                        <td class="text-center">@Model.SoDem đêm</td>
+                        <td class="text-end">@Model.GiaTheoDem.ToString("N0") đ</td>
+                        <td class="text-end">@Model.TienPhong.ToString("N0") đ</td>
+                    </tr>
+                }
                 @if (Model.DanhSachDichVu != null && Model.DanhSachDichVu.Any())
                 {
                     foreach (var dv in Model.DanhSachDichVu)
@@ -326,9 +353,27 @@
                 <span>Thuế VAT (@Model.TiLeThuePercent%):</span>
                 <span>+@Model.TienThue.ToString("N0") đ</span>
             </div>
+            <div class="calc-row" style="color:#263449;font-weight:600">
+                <span>Tổng cộng (đã gồm VAT):</span>
+                <span>@Model.TongThanhToan.ToString("N0") đ</span>
+            </div>
+            @if (Model.DaThanhToanTruoc > 0)
+            {
+                <div class="calc-row" style="color:#16804a">
+                    <span>Đã thanh toán trước (phòng @Model.PhongDaThanhToanTruoc):</span>
+                    <span>-@Model.DaThanhToanTruoc.ToString("N0") đ</span>
+                </div>
+            }
+            @if (Model.TienCoc > 0)
+            {
+                <div class="calc-row" style="color:#16804a">
+                    <span>Đã đặt cọc@(Model.DaThanhToanTruoc > 0 ? " (phần còn lại)" : ""):</span>
+                    <span>-@Model.TienCoc.ToString("N0") đ</span>
+                </div>
+            }
             <div class="calc-total-row">
-                <span>TỔNG TIỀN ĐÃ THANH TOÁN:</span>
-                <span class="text-danger">@Model.TongThanhToan.ToString("N0") đ</span>
+                <span>CÒN PHẢI THANH TOÁN:</span>
+                <span class="text-danger">@Model.SoTienConLai.ToString("N0") đ</span>
             </div>
         </div>
     </div>
@@ -336,10 +381,10 @@
     <!-- Nút thao tác dưới cùng -->
     <div class="action-buttons no-print">
         <button onclick="window.print()" class="btn btn-success px-4 py-2 fw-semibold">
-            <i class="bi bi-printer"></i> In lại hóa đơn
+            <i class="bi bi-printer"></i> In hóa đơn
         </button>
-        <a href="/DatPhong/Index" class="btn btn-secondary px-4 py-2 fw-semibold">
-            Đóng trang
+        <a asp-controller="DatPhong" asp-action="Index" class="btn btn-secondary px-4 py-2 fw-semibold">
+            <i class="bi bi-arrow-left"></i> Quay lại danh sách đặt phòng
         </a>
     </div>
 </div>

@@ -731,20 +731,29 @@
         if (event.target.closest('[data-close-checkout]')) closeCheckoutConfirm();
     });
 
-    document.getElementById('confirmRoomCheckout').addEventListener('click', async function () {
+        document.getElementById('confirmRoomCheckout').addEventListener('click', async function () {
         const roomIds = [...document.querySelectorAll('.checkout-room-checkbox:checked')].map(input => Number(input.value));
         if (!roomIds.length) { alert('Chọn ít nhất một phòng đang lưu trú để trả.'); return; }
         const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
         this.disabled = true;
         try {
+            let lastData = null;
             for (const maPhong of roomIds) {
                 const body = new URLSearchParams({ id: checkoutBookingId, maPhong, __RequestVerificationToken: token });
                 const response = await fetch('/DatPhong/CheckOut', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body });
                 const data = await response.json();
                 if (!response.ok || !data.success) throw new Error(data.message || 'Không thể trả phòng.');
+                lastData = data;
             }
-            location.reload();
-        } catch (error) { alert(error.message); this.disabled = false; }
+            if (lastData?.trangThaiDatPhong === 'DaHoanThanh') {
+                location.href = '/DatPhong/XuatHoaDon/' + checkoutBookingId;
+            } else {
+                location.reload();
+            }
+        } catch (error) {
+            alert(error.message);
+            this.disabled = false;
+        }
     });
 
     document.getElementById('confirmRoomCheckoutPay').addEventListener('click', () => {

@@ -27,6 +27,8 @@
         public string TenChuTaiKhoan { get; set; } = string.Empty;
         public string NoiDungChuyenKhoan { get; set; } = string.Empty;
         public string VietQrImageUrl { get; set; } = string.Empty;
+        public decimal DaThanhToanTruoc { get; set; }
+        public string PhongDaThanhToanTruoc { get; set; } = "";
 
         public List<ChiTietDichVuItemViewModel> DanhSachDichVu { get; set; } = new();
     }
@@ -43,6 +45,8 @@
         public string SoPhong { get; set; } = string.Empty;
         public string TenLoaiPhong { get; set; } = string.Empty;
         public decimal GiaTheoDem { get; set; }
+        public int SoDem { get; set; }
         public decimal ThanhTien { get; set; }
     }
+
 }

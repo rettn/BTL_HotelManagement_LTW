@@ -866,14 +866,14 @@ namespace HotelManagement.Controllers
                 : $"HD{realMaDatPhong}{DateTime.Now:yyyyMMdd}";
             return View("ThanhToanThanhCong", viewModel);
         }
-        
+
 
         // HÀM BỔ TRỢ LẤY DỮ LIỆU BẢNG KÊ CHECKOUT & HÓA ĐƠN
-        private async Task<HoaDonCheckoutViewModel?> GetHoaDonCheckoutViewModelAsync(int maDatPhong)
+        private async Task<HoaDonCheckoutViewModel?> GetHoaDonCheckoutViewModelAsync(int maDatPhong, bool cheDoXuatHoaDon = false)
         {
             var datPhong = await _context.DatPhongs
-                                .Include(dp => dp.KhachHang)
-                                .Include(dp => dp.ChiTietDatPhongs)
+                .Include(dp => dp.KhachHang)
+                .Include(dp => dp.ChiTietDatPhongs)
                     .ThenInclude(ct => ct.Phong)
                         .ThenInclude(p => p.LoaiPhong)
                 .Include(dp => dp.ChiTietDatPhongs)
@@ -882,11 +882,10 @@ namespace HotelManagement.Controllers
 
             if (datPhong == null) return null;
 
-
             var cacLuuTru = datPhong.ChiTietDatPhongs
-                                    .SelectMany(ct => ct.DanhSachLuuTru)
-                                    .Where(l => l.ThoiGianNhanPhong != null)
-                                    .ToList();
+                .SelectMany(ct => ct.DanhSachLuuTru)
+                .Where(l => l.ThoiGianNhanPhong != null)
+                .ToList();
 
             DateTime ngayNhan = cacLuuTru.Count > 0
                 ? cacLuuTru.Min(l => l.ThoiGianNhanPhong.GetValueOrDefault())
@@ -897,26 +896,61 @@ namespace HotelManagement.Controllers
                 : (cacLuuTru.Count > 0 && cacLuuTru.All(l => l.ThoiGianTraPhong != null)
                     ? cacLuuTru.Max(l => l.ThoiGianTraPhong.GetValueOrDefault())
                     : DateTime.Now);
+
             int soDem = (int)(ngayTra.Date - ngayNhan.Date).TotalDays;
             if (soDem <= 0) soDem = 1;
 
-            // Mỗi phòng trong phiếu là một dòng trên hóa đơn
-            var danhSachPhong = datPhong.ChiTietDatPhongs
+            // ---- Hàm hỗ trợ ----
+            static bool DaTraHet(ChiTietDatPhong ct) =>
+                ct.DanhSachLuuTru.Any(l => l.ThoiGianNhanPhong != null)
+                && !ct.DanhSachLuuTru.Any(l => l.ThoiGianNhanPhong != null && l.ThoiGianTraPhong == null);
+
+            DateTime? TraCuoiCua(ChiTietDatPhong ct) =>
+                ct.DanhSachLuuTru.Where(l => l.ThoiGianTraPhong != null).Select(l => l.ThoiGianTraPhong).Max();
+
+            int SoDemCua(ChiTietDatPhong ct)
+            {
+                var luuTru = ct.DanhSachLuuTru.Where(l => l.ThoiGianNhanPhong != null).ToList();
+                if (luuTru.Count == 0) return soDem;
+                var nhan = luuTru.Min(l => l.ThoiGianNhanPhong!.Value);
+                var tra = luuTru.All(l => l.ThoiGianTraPhong != null)
+                    ? luuTru.Max(l => l.ThoiGianTraPhong!.Value)
+                    : DateTime.Now;
+                return Math.Max(1, (tra.Date - nhan.Date).Days);
+            }
+
+            decimal GiaMotDem(ChiTietDatPhong ct) =>
+                ct.DonGia > 0 ? ct.DonGia : (ct.Phong?.LoaiPhong?.GiaTheoDem ?? 0);
+
+            decimal GiaDuKien(ChiTietDatPhong ct) =>
+                GiaMotDem(ct) * Math.Max(1, (ct.NgayTra.Date - ct.NgayNhan.Date).Days);
+
+            // ---- Các phòng nằm trong hóa đơn ----
+            var chiTietTrongHoaDon = datPhong.ChiTietDatPhongs
                 .Where(ct => ct.Phong != null)
                 .Where(ct => cacLuuTru.Count == 0 || ct.DanhSachLuuTru.Any(l => l.ThoiGianNhanPhong != null))
+                .ToList();
+
+            // Xuất hóa đơn: chỉ tính các phòng đã trả (nếu có)
+            if (cheDoXuatHoaDon)
+            {
+                var daTraHet = chiTietTrongHoaDon.Where(DaTraHet).ToList();
+                if (daTraHet.Count > 0) chiTietTrongHoaDon = daTraHet;
+            }
+
+            var danhSachPhong = chiTietTrongHoaDon
                 .Select(ct =>
                 {
                     var phongDat = ct.Phong!;
-                    var giaMotDem = ct.DonGia > 0
-                        ? ct.DonGia
-                        : (phongDat.LoaiPhong?.GiaTheoDem ?? 0);
-
+                    var gia = GiaMotDem(ct);
+                    var dem = SoDemCua(ct);
                     return new PhongHoaDonItemViewModel
                     {
                         SoPhong = phongDat.SoPhong,
                         TenLoaiPhong = phongDat.LoaiPhong?.TenLoaiPhong ?? "Tiêu chuẩn",
-                        GiaTheoDem = giaMotDem,
-                        ThanhTien = giaMotDem * soDem
+                        GiaTheoDem = gia,
+                        SoDem = dem,
+                        ThanhTien = gia * dem
                     };
                 })
                 .OrderBy(p => p.SoPhong)
@@ -931,13 +965,43 @@ namespace HotelManagement.Controllers
                 ? string.Join(", ", danhSachPhong.Select(p => p.TenLoaiPhong).Distinct())
                 : "Tiêu chuẩn";
 
-            // Tải chi tiết dịch vụ đã sử dụng
-            var dsDichVu = await _context.ChiTietDichVus
+            // ---- Phòng đã thanh toán ở lần trả trước ----
+            var phongTraTruoc = new List<ChiTietDatPhong>();
+            if (cheDoXuatHoaDon)
+            {
+                var daTra = chiTietTrongHoaDon
+                    .Where(DaTraHet)
+                    .Select(ct => new { ct, tra = TraCuoiCua(ct) })
+                    .Where(x => x.tra != null)
+                    .ToList();
+
+                if (daTra.Count > 1)
+                {
+                    var lanTraCuoi = daTra.Max(x => x.tra!.Value);
+                    phongTraTruoc = daTra
+                        .Where(x => (lanTraCuoi - x.tra!.Value).TotalSeconds > 5)
+                        .Select(x => x.ct)
+                        .ToList();
+                }
+            }
+
+            // ---- Dịch vụ ----
+            var maLuuTruTrongHoaDon = chiTietTrongHoaDon
+                .SelectMany(ct => ct.DanhSachLuuTru).Select(l => l.MaLuuTru).ToList();
+            var maLuuTruTruoc = phongTraTruoc
+                .SelectMany(ct => ct.DanhSachLuuTru).Select(l => l.MaLuuTru).ToList();
+
+            IQueryable<ChiTietDichVu> truyVanDichVu = _context.ChiTietDichVus
                 .AsNoTracking()
                 .Include(cdv => cdv.DichVu)
                 .Where(cdv => _context.LuuTrus.Any(l => l.MaLuuTru == cdv.MaLuuTru
                                                      && l.ChiTietDatPhong != null
-                                                     && l.ChiTietDatPhong.MaDatPhong == maDatPhong))
+                                                     && l.ChiTietDatPhong.MaDatPhong == maDatPhong));
+
+            if (cheDoXuatHoaDon && maLuuTruTrongHoaDon.Count > 0)
+                truyVanDichVu = truyVanDichVu.Where(cdv => maLuuTruTrongHoaDon.Contains(cdv.MaLuuTru));
+
+            var dsDichVu = await truyVanDichVu
                 .Select(cdv => new ChiTietDichVuItemViewModel
                 {
                     TenDichVu = cdv.DichVu != null ? cdv.DichVu.TenDichVu : "Dịch vụ",
@@ -947,11 +1011,38 @@ namespace HotelManagement.Controllers
                 })
                 .ToListAsync();
 
+            decimal dichVuTruoc = 0;
+            if (maLuuTruTruoc.Count > 0)
+            {
+                dichVuTruoc = await _context.ChiTietDichVus.AsNoTracking()
+                    .Where(cdv => maLuuTruTruoc.Contains(cdv.MaLuuTru))
+                    .SumAsync(cdv => (decimal?)(cdv.SoLuong * cdv.DonGia)) ?? 0;
+            }
+
+            // ---- Tiền ----
             decimal tongTienDichVu = dsDichVu.Sum(x => x.ThanhTien);
             decimal tiLeThuePercent = 10;
             decimal tienThue = (tienPhong + tongTienDichVu) * (tiLeThuePercent / 100m);
             decimal tongThanhToan = tienPhong + tongTienDichVu + tienThue;
-            decimal soTienConLai = Math.Max(0, tongThanhToan - datPhong.TienCoc);
+
+            decimal tongDuKienCaPhieu = datPhong.ChiTietDatPhongs.Sum(ct => GiaDuKien(ct));
+            decimal ChiaCoc(IEnumerable<ChiTietDatPhong> nhom) =>
+                tongDuKienCaPhieu > 0
+                    ? Math.Round(datPhong.TienCoc * nhom.Sum(ct => GiaDuKien(ct)) / tongDuKienCaPhieu, 0)
+                    : 0;
+
+            bool phieuDaDong = datPhong.TrangThai == "DaHoanThanh" || datPhong.TrangThai == "DaThanhToan";
+            decimal tienCocApDung = phieuDaDong ? datPhong.TienCoc : ChiaCoc(chiTietTrongHoaDon);
+
+            decimal daThanhToanTruoc = 0;
+            if (phongTraTruoc.Count > 0)
+            {
+                daThanhToanTruoc = Math.Round(
+                    (phongTraTruoc.Sum(ct => GiaMotDem(ct) * SoDemCua(ct)) + dichVuTruoc) * (1 + tiLeThuePercent / 100m), 0);
+                tienCocApDung = Math.Max(0, tienCocApDung - ChiaCoc(phongTraTruoc));
+            }
+
+            decimal soTienConLai = Math.Max(0, tongThanhToan - daThanhToanTruoc - tienCocApDung);
 
             var paymentSetting = _paymentSettingService.GetSettings();
             string nganHangMa = paymentSetting?.NganHangMa ?? "";
@@ -981,7 +1072,9 @@ namespace HotelManagement.Controllers
                 TiLeThuePercent = tiLeThuePercent,
                 TienThue = tienThue,
                 TongThanhToan = tongThanhToan,
-                TienCoc = datPhong.TienCoc,
+                DaThanhToanTruoc = daThanhToanTruoc,
+                PhongDaThanhToanTruoc = string.Join(", ", phongTraTruoc.Select(ct => ct.Phong!.SoPhong)),
+                TienCoc = tienCocApDung,
                 SoTienConLai = soTienConLai,
                 PhuongThucThanhToan = "TienMat",
 
@@ -1078,7 +1171,7 @@ namespace HotelManagement.Controllers
             var hoaDon = await _context.HoaDons.FirstOrDefaultAsync(h => h.MaHD == id || h.MaDatPhong == id);
             int maDatPhong = hoaDon?.MaDatPhong ?? id;
 
-            var viewModel = await GetHoaDonCheckoutViewModelAsync(maDatPhong);
+            var viewModel = await GetHoaDonCheckoutViewModelAsync(maDatPhong, cheDoXuatHoaDon: true);
             if (viewModel == null)
             {
                 return NotFound("Không tìm thấy thông tin hóa đơn.");
