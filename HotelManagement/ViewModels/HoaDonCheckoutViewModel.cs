@@ -18,6 +18,8 @@
         public decimal TiLeThuePercent { get; set; } = 10;
         public decimal TienThue { get; set; }
         public decimal TongThanhToan { get; set; }
+        public decimal TienCoc { get; set; }
+        public decimal SoTienConLai { get; set; }
         public string PhuongThucThanhToan { get; set; } = "TienMat";
 
         public string NganHangMa { get; set; } = string.Empty;

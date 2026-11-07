@@ -35,7 +35,7 @@ namespace HotelManagement.Controllers
             }
 
             _settingService.SaveSettings(model);
-            TempData["Success"] = "Đã lưu thông tin tài khoản ngân hàng và cấu hình SePay API thành công!";
+            TempData["SuccessMessage"] = "Đã lưu thông tin tài khoản ngân hàng và cấu hình SePay API thành công!";
             return RedirectToAction(nameof(Index));
         }
 
