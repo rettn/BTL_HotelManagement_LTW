@@ -40,6 +40,9 @@ namespace HotelManagement.Controllers
                     .ThenInclude(ct => ct.DanhSachLuuTru)
                 .Include(dp => dp.HoaDons)
                     .ThenInclude(h => h.ThanhToans)
+                        .ThenInclude(t => t.HoanTiens)
+                .Include(dp => dp.HoaDons)
+                    .ThenInclude(h => h.ChiTietHoaDons)
                 .Where(dp => dp.TrangThai != "DaHuy")
                 .OrderByDescending(dp => dp.MaDatPhong)
                 .ToListAsync();
@@ -1273,7 +1276,9 @@ namespace HotelManagement.Controllers
             var maPhongDaDat = await _context.ChiTietDatPhongs.AsNoTracking()
                 .Where(c => c.NgayNhan < ngayTra.Date && c.NgayTra > ngayNhan.Date &&
                             c.DatPhong != null && c.DatPhong.TrangThai != "DaHuy" &&
-                            c.DatPhong.TrangThai != "DaThanhToan" && c.DatPhong.TrangThai != "DaHoanThanh")
+                            c.DatPhong.TrangThai != "DaThanhToan" && c.DatPhong.TrangThai != "DaHoanThanh" &&
+                            (!c.DanhSachLuuTru.Any(l => l.ThoiGianNhanPhong != null) ||
+                             c.DanhSachLuuTru.Any(l => l.ThoiGianNhanPhong != null && l.ThoiGianTraPhong == null)))
                 .Select(c => c.MaPhong)
                 .Distinct()
                 .ToListAsync();

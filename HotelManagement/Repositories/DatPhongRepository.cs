@@ -75,6 +75,8 @@ namespace HotelManagement.Repositories
                     ct.DatPhong.TrangThai != "DaHuy" &&
                     ct.DatPhong.TrangThai != "DaThanhToan" &&
                     ct.DatPhong.TrangThai != "DaHoanThanh" &&
+                    (!ct.DanhSachLuuTru.Any(l => l.ThoiGianNhanPhong != null) ||
+                     ct.DanhSachLuuTru.Any(l => l.ThoiGianNhanPhong != null && l.ThoiGianTraPhong == null)) &&
                     (boQuaMaDatPhong == null ||
                      ct.MaDatPhong != boQuaMaDatPhong.Value));
         }

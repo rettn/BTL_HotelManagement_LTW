@@ -94,6 +94,12 @@ builder.Services.AddScoped<PhuCapService>();
 builder.Services.AddScoped<KhauTruService>();
 
 var app = builder.Build();
+await using (var scope = app.Services.CreateAsyncScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    await dbContext.Database.MigrateAsync();
+}
+
 await IdentitySeeder.SeedAsync(
     app.Services,
     app.Configuration);

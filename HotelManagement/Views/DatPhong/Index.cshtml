@@ -610,6 +610,11 @@
         color: #2563b7
     }
 
+    .room-status-cleaned {
+        background: #dcfce7;
+        color: #15803d
+    }
+
     .room-details-row td {
         padding: 0 !important;
         background: #fff !important;
@@ -902,18 +907,27 @@
                         var nightly = rooms.Sum(r => r.DonGia);
                         var roomSubtotal = nightly * nights;
                         var total = booking.HoaDons?.Any() == true ? booking.HoaDons.Sum(h => h.TongTien) : roomSubtotal;
-                        var recordedPayments = booking.HoaDons?.SelectMany(h => h.ThanhToans ?? new List<HotelManagement.Models.ThanhToan>()).Where(t => t.TrangThai == "DaThanhToan" || t.TrangThai == "DaCoc" || t.TrangThai == "ThanhCong").Sum(t => t.SoTien) ?? 0;
-                        // Phòng đã trả riêng (phiếu chưa đóng) coi như đã thanh toán, trừ phần cọc đã tính cho phòng đó
-                        var phieuDong = booking.TrangThai == "DaHoanThanh" || booking.TrangThai == "DaThanhToan";
+                        var recordedPayments = booking.HoaDons?.SelectMany(h => h.ThanhToans ?? new List<HotelManagement.Models.ThanhToan>())
+                            .Where(t => t.PhuongThuc != "TienCoc" && (t.TrangThai == "DaThanhToan" || t.TrangThai == "DaCoc" || t.TrangThai == "ThanhCong"))
+                            .Sum(t => t.SoTien) ?? 0;
+                        var refundedPayments = booking.HoaDons?.SelectMany(h => h.ThanhToans ?? new List<HotelManagement.Models.ThanhToan>())
+                            .SelectMany(t => t.HoanTiens ?? new List<HotelManagement.Models.HoanTien>())
+                            .Where(r => r.TrangThai == "DaHoanTien").Sum(r => r.SoTienHoan) ?? 0;
                         var tongDuKien = rooms.Sum(r => r.DonGia * Math.Max(1, (r.NgayTra.Date - r.NgayNhan.Date).Days));
-                        var daTraRieng = phieuDong ? 0m : rooms
-                        .Where(r => r.DanhSachLuuTru?.Any(l => l.ThoiGianNhanPhong != null) == true
-                        && r.DanhSachLuuTru?.Any(l => l.ThoiGianNhanPhong != null && l.ThoiGianTraPhong == null) != true)
-                        .Sum(r => r.DonGia * Math.Max(1, (r.NgayTra.Date - r.NgayNhan.Date).Days));
+                        var chiTietPhongDaLapHoaDon = booking.HoaDons?.SelectMany(h => h.ChiTietHoaDons ?? new List<HotelManagement.Models.ChiTietHoaDon>())
+                            .Where(c => c.LoaiKhoanThu == "Phong" && c.MaThamChieu.HasValue)
+                            .Select(c => c.MaThamChieu!.Value).ToHashSet() ?? new HashSet<int>();
+                        var phongTraRiengChuaLapHoaDon = rooms
+                            .Where(r => !chiTietPhongDaLapHoaDon.Contains(r.MaChiTietDatPhong)
+                                && r.DanhSachLuuTru?.Any(l => l.ThoiGianNhanPhong != null) == true
+                                && r.DanhSachLuuTru?.Any(l => l.ThoiGianNhanPhong != null && l.ThoiGianTraPhong == null) != true)
+                            .ToList();
+                        var daTraRieng = phongTraRiengChuaLapHoaDon.Sum(r => r.DonGia * Math.Max(1, (r.NgayTra.Date - r.NgayNhan.Date).Days));
                         var cocCuaPhongDaTra = tongDuKien > 0 ? Math.Round(booking.TienCoc * daTraRieng / tongDuKien, 0) : 0m;
                         var daThanhToanRieng = Math.Max(0m, daTraRieng - cocCuaPhongDaTra);
-                        var paid = Math.Max(booking.TienCoc, recordedPayments) + daThanhToanRieng;
+                        var paid = Math.Min(total, Math.Max(0m, booking.TienCoc + recordedPayments - refundedPayments + daThanhToanRieng));
                         var balance = Math.Max(0, total - paid);
+                        var daThanhToanDu = total > 0 && balance == 0;
                         var hasInvoice = booking.HoaDons?.Any() == true;
                         var hasActiveStay = rooms.Any(r => r.DanhSachLuuTru?.Any(l => l.ThoiGianNhanPhong != null && l.ThoiGianTraPhong == null) == true);
                         var roomTypes = string.Join("|", rooms.Select(r => r.Phong?.LoaiPhong?.TenLoaiPhong).Where(s => !string.IsNullOrWhiteSpace(s)).Distinct());
@@ -923,8 +937,9 @@
                             <td class="row-number"></td>
                             <td>
                                 <a asp-action="Details" asp-route-id="@booking.MaDatPhong" class="booking-code">@("DP" + booking.MaDatPhong.ToString("D6"))</a><span class="booking-muted">@booking.NgayDat.ToString("dd/MM/yyyy HH:mm")</span>
-                                <div class="booking-roomline"><button type="button" class="booking-expand-toggle" data-booking-expand="@booking.MaDatPhong" aria-expanded="false"><i class="bi bi-chevron-right"></i><span>@rooms.Count phòng</span></button>@foreach (var room in rooms) { var active = room.DanhSachLuuTru?.Any(l => l.ThoiGianNhanPhong != null && l.ThoiGianTraPhong == null) == true; var returned = room.DanhSachLuuTru?.Any(l => l.ThoiGianTraPhong != null) == true;
-                                <span title="@(active ? "Đang lưu trú" : returned ? "Đã trả · đang dọn" : "Chưa nhận phòng")" class="booking-room-status @(active ? "room-status-occupied" : returned ? "room-status-cleaning" : "room-status-reserved")">@room.Phong?.SoPhong</span>
+                                <div class="booking-roomline"><button type="button" class="booking-expand-toggle" data-booking-expand="@booking.MaDatPhong" aria-expanded="false"><i class="bi bi-chevron-right"></i><span>@rooms.Count phòng</span></button>@foreach (var room in rooms) { var active = room.DanhSachLuuTru?.Any(l => l.ThoiGianNhanPhong != null && l.ThoiGianTraPhong == null) == true; var returned = room.DanhSachLuuTru?.Any(l => l.ThoiGianTraPhong != null) == true; var phongTrong = room.Phong?.TrangThai == "Trong" || room.Phong?.TrangThai == "Trống"; var phongDangDon = room.Phong?.TrangThai == "DangDon" || room.Phong?.TrangThai == "Đang dọn dẹp";
+                                var tinhTrangPhong = active ? "Đang lưu trú" : !returned ? "Chưa nhận phòng" : phongDangDon ? "Đã trả · đang dọn" : phongTrong ? "Đã dọn · phòng trống" : "Đã trả phòng";
+                                <span title="@tinhTrangPhong" class="booking-room-status @(active ? "room-status-occupied" : phongDangDon ? "room-status-cleaning" : phongTrong && returned ? "room-status-cleaned" : "room-status-reserved")">@room.Phong?.SoPhong</span>
                             }
 </div>
                         </td>
@@ -983,7 +998,7 @@
                                         </div>
                                     </details>
                                 </div>
-                                <span class="booking-state @StatusClass(booking.TrangThai) status-label">@StatusLabel(booking.TrangThai)</span>
+                                <span class="booking-state @(daThanhToanDu ? "booking-state-returned" : StatusClass(booking.TrangThai)) status-label">@(daThanhToanDu ? "Đã thanh toán" : StatusLabel(booking.TrangThai))</span>
                             </div>
                         </td>
                     </tr>
@@ -996,6 +1011,10 @@
                                     var activeStay = room.DanhSachLuuTru?.Where(l => l.ThoiGianNhanPhong != null && l.ThoiGianTraPhong == null).OrderByDescending(l => l.ThoiGianNhanPhong).FirstOrDefault();
                                     var lastStay = room.DanhSachLuuTru?.OrderByDescending(l => l.ThoiGianNhanPhong).FirstOrDefault();
                                     var alreadyReturned = room.DanhSachLuuTru?.Any(l => l.ThoiGianTraPhong != null) == true;
+                                    var phongTrong = room.Phong?.TrangThai == "Trong" || room.Phong?.TrangThai == "Trống";
+                                    var phongDangDon = room.Phong?.TrangThai == "DangDon" || room.Phong?.TrangThai == "Đang dọn dẹp";
+                                    var tinhTrangPhong = activeStay != null ? "Đang lưu trú" : !alreadyReturned ? "Chưa nhận phòng" : phongDangDon ? "Đã trả · đang dọn" : phongTrong ? "Đã dọn · phòng trống" : "Đã trả phòng";
+                                    var lopTinhTrangPhong = activeStay != null ? "room-status-occupied" : phongDangDon ? "room-status-cleaning" : phongTrong && alreadyReturned ? "room-status-cleaned" : alreadyReturned ? "room-status-reserved" : "room-status-reserved";
                                     var roomNights = Math.Max(1, (room.NgayTra.Date - room.NgayNhan.Date).Days);
                                     var roomTotal = room.DonGia * roomNights;
                                     var roomArrival = activeStay?.ThoiGianNhanPhong ?? lastStay?.ThoiGianNhanPhong ?? room.NgayNhan;
@@ -1008,7 +1027,7 @@
                                         <span>@roomDeparture.ToString("dd/MM HH:mm")</span>
                                         <span>@roomNights đêm</span>
                                         <span>@room.DonGia.ToString("N0") đ</span>
-                                        <span><span class="booking-room-status @(activeStay != null ? "room-status-occupied" : alreadyReturned ? "room-status-cleaning" : "room-status-reserved")">@(activeStay != null ? "Đang lưu trú" : alreadyReturned ? "Đã trả · đang dọn" : "Chưa nhận phòng")</span></span>
+                                        <span><span class="booking-room-status @lopTinhTrangPhong">@tinhTrangPhong</span></span>
                                         <span class="room-details-action">
                                             @if (activeStay != null)
                                             {
