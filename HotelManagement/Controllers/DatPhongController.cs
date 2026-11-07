@@ -455,7 +455,12 @@ namespace HotelManagement.Controllers
                 daTra++;
             }
 
-            return Json(new { success = true, message = $"Đã trả {daTra} phòng." });
+            return Json(new
+            {
+                success = true,
+                message = $"Đã trả {daTra} phòng.",
+                redirectUrl = Url.Action(nameof(XuatHoaDon), new { id })
+            });
         }
 
         private async Task<object> BuildTrangThaiResponseAsync(int maDatPhong, int maPhong, string message)

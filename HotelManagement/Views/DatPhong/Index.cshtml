@@ -951,13 +951,14 @@
                                             Trả phòng
                                         </button>
                                     }
-                                    else if (booking.TrangThai == "DaHoanThanh" && !hasInvoice)
-                                    {
-                                        <a asp-action="Checkout" asp-route-id="@booking.MaDatPhong" class="booking-act">Xuất hóa đơn</a>
-                                    }
+                                   
                                     <details class="booking-more">
                                         <summary><i class="bi bi-three-dots"></i></summary><div class="booking-menu">
                                             <a asp-action="Details" asp-route-id="@booking.MaDatPhong"><i class="bi bi-eye me-1"></i>Chi tiết phiếu</a>
+                                            @if (booking.TrangThai == "DaHoanThanh" || booking.TrangThai == "DaThanhToan")
+                                            {
+                                                <a asp-action="XuatHoaDon" asp-route-id="@booking.MaDatPhong"><i class="bi bi-receipt me-1"></i>Xem hóa đơn</a>
+                                            }
                                             @if (booking.TrangThai == "ChoXacNhan" || booking.TrangThai == "DaCoc")
                                             {
                                                 <button type="button" class="danger" onclick="moModalHuyPhong(@booking.MaDatPhong)"><i class="bi bi-x-circle me-1"></i>Hủy đặt phòng</button>
@@ -1204,7 +1205,8 @@
                     const response = await fetch('/DatPhong/CheckOut', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body });
                     const data = await response.json();
                     if (!response.ok || !data.success) throw new Error(data.message || 'Không thể trả phòng.');
-                    location.reload();
+                    if (data.trangThaiDatPhong === 'DaHoanThanh') location.href = '/DatPhong/XuatHoaDon/' + checkoutButton.dataset.booking;
+                    else location.reload();
                 } catch (error) { alert(error.message); checkoutButton.disabled = false; }
             });
             document.getElementById('txtPhanTramHoan')?.addEventListener('input',function(){let n=Math.min(100,Math.max(0,Number(this.value)||0));document.getElementById('txtSoTienHoan').value=currentTienCoc*n/100;});
@@ -1248,8 +1250,8 @@
                     ? `Bạn có muốn trả cả ${count} phòng của lượt đặt ${code} không?`
                     : `Bạn có muốn trả phòng của lượt đặt ${code} không?`,
                 items: rooms,
-                note: 'Phòng sẽ chuyển sang trạng thái đang dọn dẹp. Sau khi trả, bạn có thể xuất hóa đơn cho lượt đặt này.',
-                confirmText: count > 1 ? `Trả ${count} phòng` : 'Trả phòng'
+                note: 'Phòng sẽ chuyển sang trạng thái đang dọn dẹp. Hóa đơn sẽ được mở ngay sau khi trả phòng.',
+                confirmText: count > 1 ? `Trả ${count} phòng` : 'Trả phòng & Xuất hóa đơn'
             });
             if (!agreed) return;
 
@@ -1261,8 +1263,8 @@
                         body: new URLSearchParams({ id: button.dataset.booking, __RequestVerificationToken: bookingToken })
                     });
                     const data = await res.json();
-                    if (!res.ok || !data.success) throw new Error(data.message || 'Không thể trả phòng');
-                    location.reload();
+                            if (!res.ok || !data.success) throw new Error(data.message || 'Không thể trả phòng');
+                            location.href = data.redirectUrl || location.href;
                 } catch (err) {
                     alert(err.message);
                     location.reload();
