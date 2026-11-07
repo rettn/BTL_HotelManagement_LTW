@@ -1,7 +1,6 @@
 ﻿
 @model List<HotelManagement.Models.Phong>
 
-<!-- Giao dien thong bao dep -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
@@ -86,39 +85,40 @@
         </div>
     </div>
     
-    <form method="get" asp-controller="Phong" asp-action="Index" class="room-filter-panel mb-4" id="filterForm">
-        <div class="room-search" style="flex: 1.5; min-width: 180px;">
-            <i class="bi bi-search"></i>
-            <input id="roomSearch" type="search" name="keyword" value="@ViewBag.Keyword" placeholder="Tìm số phòng..." />
+    <form method="get" asp-controller="Phong" asp-action="Index" class="room-filter-panel mb-4" id="filterForm" style="display: flex; gap: 12px; width: 100%; background: #fff; padding: 16px; border-radius: 8px; border: 1px solid #e0e0e0; box-sizing: border-box;">
+
+        <div style="flex: 1; position: relative; display: flex; align-items: center; border: 1px solid #dee2e6; border-radius: 6px; background: #fff; height: 42px; overflow: hidden;">
+            <i class="bi bi-search" style="position: absolute; left: 14px; color: #8b92a1;"></i>
+            <input id="roomSearch" type="search" name="keyword" value="@ViewBag.Keyword" placeholder="Tìm số phòng..." style="width: 100%; height: 100%; padding: 10px 14px 10px 40px; border: none; outline: none; background: transparent; box-sizing: border-box;" />
         </div>
-        <select id="roomStatusFilter" name="trangThai" style="flex: 1; min-width: 140px; padding: 0.6rem 1rem; border: 1px solid #dee2e6; border-radius: 8px;">
-            <option value="">Tất cả trạng thái</option>
-            <option value="Trống" selected="@(ViewBag.TrangThai == "Trống" ? "selected" : null)">Phòng trống</option>
-            <option value="Đã đặt" selected="@(ViewBag.TrangThai == "Đã đặt" ? "selected" : null)">Đã đặt</option>
-            <option value="Đang sử dụng" selected="@(ViewBag.TrangThai == "Đang sử dụng" ? "selected" : null)">Đang sử dụng</option>
-            <option value="Đang dọn dẹp" selected="@(ViewBag.TrangThai == "Đang dọn dẹp" ? "selected" : null)">Đang dọn dẹp</option>
-        </select>
-        <select id="roomTypeFilter" name="maLoaiPhong" style="flex: 1; min-width: 140px; padding: 0.6rem 1rem; border: 1px solid #dee2e6; border-radius: 8px;">
-            <option value="">Tất cả loại phòng</option>
-            @if (ViewBag.DanhSachLoaiPhong != null)
-            {
-                foreach (var loai in ViewBag.DanhSachLoaiPhong)
-                {
-                    <option value="@loai.MaLoaiPhong" selected="@(loai.MaLoaiPhong == ViewBag.MaLoaiPhong ? "selected" : null)">@loai.TenLoaiPhong</option>
-                }
-            }
-        </select>
+
         <div class="d-flex align-items-center gap-2">
-            <button type="submit" class="btn text-white fw-semibold px-3 py-2 exact-search-btn" style="border-radius: 8px;"><i class="bi bi-search me-1"></i> Tìm kiếm</button>
-            <a asp-action="Index" class="btn btn-light px-3 py-2 border text-secondary" style="border-radius: 8px;">Khôi phục</a>
+            <button type="submit" class="btn text-white fw-semibold px-4 exact-search-btn" style="border-radius: 6px; height: 42px; display: flex; align-items: center;">
+                <i class="bi bi-search me-1"></i> Tìm kiếm
+            </button>
+            <a asp-action="Index" class="btn btn-light px-3 border text-secondary" style="border-radius: 6px; height: 42px; display: flex; align-items: center; background: #f8f9fa;">
+                Khôi phục
+            </a>
         </div>
+
     </form>
 
-    <div class="room-legend">
-        <span><i class="legend-dot room-empty"></i> Phòng trống</span>
-        <span><i class="legend-dot room-booked"></i> Đã đặt</span>
-        <span><i class="legend-dot room-occupied"></i> Đang sử dụng</span>
-        <span><i class="legend-dot room-cleaning"></i> Đang dọn dẹp</span>
+    <div class="room-legend" id="roomLegend">
+        <button type="button" class="room-filter-chip active" data-filter="all">
+            <i class="legend-dot room-all"></i> Tất cả <em>@Model.Count</em>
+        </button>
+        <button type="button" class="room-filter-chip" data-filter="room-empty">
+            <i class="legend-dot room-empty"></i> Phòng trống <em>@Model.Count(p => MauTrangThai(p.TrangThai) == "room-empty")</em>
+        </button>
+        <button type="button" class="room-filter-chip" data-filter="room-booked">
+            <i class="legend-dot room-booked"></i> Đã đặt <em>@Model.Count(p => MauTrangThai(p.TrangThai) == "room-booked")</em>
+        </button>
+        <button type="button" class="room-filter-chip" data-filter="room-occupied">
+            <i class="legend-dot room-occupied"></i> Đang sử dụng <em>@Model.Count(p => MauTrangThai(p.TrangThai) == "room-occupied")</em>
+        </button>
+        <button type="button" class="room-filter-chip" data-filter="room-cleaning">
+            <i class="legend-dot room-cleaning"></i> Đang dọn dẹp <em>@Model.Count(p => MauTrangThai(p.TrangThai) == "room-cleaning")</em>
+        </button>
     </div>
 
     @if (!Model.Any())
@@ -154,7 +154,7 @@
                             </div>
                             <strong class="room-card-number">@phong.SoPhong</strong>
                             <div class="room-card-type">@(phong.LoaiPhong?.TenLoaiPhong ?? "Chưa phân loại")</div>
-                            <div class="room-card-price"><i class="bi bi-brightness-high"></i>@(phong.LoaiPhong?.GiaTheoDem.ToString("N0") ?? "0")</div>
+                            <div class="room-card-price"><i class="bi bi-cash-coin"></i>@(phong.LoaiPhong?.GiaTheoDem.ToString("N0") ?? "0")</div>
                             @if (MauTrangThai(phong.TrangThai) == "room-occupied" && thoiGianNhan.TryGetValue(phong.MaPhong, out var tgNhan))
                             {
                                 <div class="room-card-stay" data-checkin="@tgNhan.ToString("yyyy-MM-ddTHH:mm:ss")">
@@ -470,16 +470,6 @@
             background: #3f8fd9;
         }
 
-    @@media(max-width:650px) {
-        .checkout-confirm-footer {
-            flex-wrap: wrap;
-        }
-
-            .checkout-confirm-footer button {
-                flex: 1 1 100%;
-            }
-    }
-
     .room-map-page .room-card {
         height: 150px;
     }
@@ -514,6 +504,173 @@
         color: rgba(255,255,255,.9);
         white-space: nowrap;
     }
+    /* ===== Nút lọc trạng thái ===== */
+    .room-map-page .room-filter-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 13px;
+        border-radius: 999px;
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        font-size: 12px;
+        font-weight: 600;
+        color: #374151;
+        cursor: pointer;
+        transition: background .15s, border-color .15s, color .15s;
+    }
+
+        .room-map-page .room-filter-chip em {
+            font-style: normal;
+            font-weight: 500;
+            color: #6b7280;
+        }
+
+        .room-map-page .room-filter-chip:hover {
+            background: #f3f4f6;
+        }
+
+        .room-map-page .room-filter-chip.active {
+            background: #1f2937;
+            border-color: #1f2937;
+            color: #fff;
+        }
+
+            .room-map-page .room-filter-chip.active em {
+                color: rgba(255,255,255,.8);
+            }
+
+    .room-map-page .legend-dot.room-all {
+        background: #9ca3af;
+    }
+    /* ===== Popup chi tiết phòng ===== */
+    .room-detail-modal .type-modal-dialog {
+        width: min(980px, calc(100% - 32px)) !important;
+        max-width: none !important;
+        margin: 24px auto !important;
+        min-height: 560px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .room-detail-modal #roomModalContent {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+    }
+
+    .room-detail-modal .rp-body {
+        flex: 1;
+    }
+
+    /* ===== Popup xác nhận trả phòng ===== */
+    .checkout-confirm-modal {
+        z-index: 2200;
+    }
+
+        .checkout-confirm-modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+    .checkout-confirm-dialog {
+        position: relative;
+        z-index: 1;
+        width: min(100%, 1100px);
+        max-height: calc(100vh - 40px);
+        overflow: auto;
+        border-radius: 18px;
+        background: #fff;
+        box-shadow: 0 24px 70px rgba(0,0,0,.25);
+    }
+
+    .checkout-confirm-header, .checkout-confirm-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 18px 24px;
+    }
+
+    .checkout-confirm-header {
+        border-bottom: 1px solid #e8edf2;
+    }
+
+        .checkout-confirm-header h2 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .checkout-confirm-header p {
+            margin: 5px 0 0;
+            color: #718096;
+        }
+
+    .checkout-confirm-table-wrap {
+        padding: 8px 24px;
+        overflow: auto;
+    }
+
+    .checkout-confirm-table {
+        width: 100%;
+        min-width: 760px;
+        border-collapse: separate;
+        border-spacing: 0 4px;
+    }
+
+        .checkout-confirm-table th {
+            padding: 12px;
+            background: #e7f5ed;
+            font-weight: 650;
+        }
+
+        .checkout-confirm-table td {
+            padding: 13px 12px;
+            background: #f8fafc;
+        }
+
+        .checkout-confirm-table tr.is-active td {
+            background: #fff;
+        }
+
+    .checkout-confirm-state {
+        display: inline-block;
+        padding: 4px 9px;
+        border-radius: 99px;
+        background: #e4f8ed;
+        color: #16804a;
+        font-size: 12px;
+    }
+
+        .checkout-confirm-state.inactive {
+            background: #fff3d6;
+            color: #986500;
+        }
+
+    .checkout-confirm-footer {
+        justify-content: flex-end;
+        border-top: 1px solid #e8edf2;
+    }
+
+        .checkout-confirm-footer .btn-success {
+            background: #209c60;
+            border-color: #209c60;
+        }
+
+    @@media (max-width: 650px) {
+        .checkout-confirm-footer {
+            flex-wrap: wrap;
+        }
+
+            .checkout-confirm-footer button {
+                flex: 1 1 100%;
+            }
+    }
+
+
 </style>
 
 <script>
@@ -864,5 +1021,35 @@
         }
         capNhat();
         setInterval(capNhat, 30000); // cập nhật mỗi 30 giây
+    })();
+</script>
+<script>
+    (function () {
+        const chips = document.querySelectorAll('#roomLegend .room-filter-chip');
+        const cards = document.querySelectorAll('.room-card');
+        const floors = document.querySelectorAll('.room-floor');
+
+        function locPhong(filter) {
+            cards.forEach(card => {
+                const hien = filter === 'all' || card.classList.contains(filter);
+                card.style.display = hien ? '' : 'none';
+            });
+
+            floors.forEach(floor => {
+                const soPhong = [...floor.querySelectorAll('.room-card')]
+                    .filter(c => c.style.display !== 'none').length;
+                floor.style.display = soPhong > 0 ? '' : 'none';
+                const dem = floor.querySelector('.room-floor-heading span');
+                if (dem) dem.textContent = soPhong + ' phòng';
+            });
+        }
+
+        chips.forEach(chip => {
+            chip.addEventListener('click', function () {
+                chips.forEach(c => c.classList.remove('active'));
+                this.classList.add('active');
+                locPhong(this.dataset.filter);
+            });
+        });
     })();
 </script>
