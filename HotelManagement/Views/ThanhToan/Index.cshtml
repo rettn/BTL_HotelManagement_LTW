@@ -4,7 +4,10 @@
     var banks = HotelManagement.Models.PaymentSetting.DanhSachNganHang;
 }
 
-<div class="container-fluid mt-4 mb-5">
+<div class="settings-container max-w-1000">
+    <a asp-controller="CaiDat" asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+        <i class="bi bi-arrow-left me-1"></i>Tổng quan cài đặt
+    </a>
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div class="d-flex align-items-center gap-3">
             <span class="badge bg-success-subtle text-success p-3 rounded-3">
@@ -16,16 +19,22 @@
             </div>
         </div>
 
-        <!-- Nút quay lại menu cài đặt chung -->
-        <a href="javascript:history.back()" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left me-1"></i> Quay lại
-        </a>
+
     </div>
+
+    <partial name="~/Views/CaiDat/_CaiDatTabs.cshtml" />
 
     @if (TempData["SuccessMessage"] != null)
     {
         <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
             <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+            <i class="bi bi-exclamation-circle-fill me-2"></i> @TempData["Error"]
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
@@ -99,7 +108,7 @@
                                     <label asp-for="SePayApiKey" class="form-label fw-semibold">SePay API Token / Key</label>
                                     <div class="input-group">
                                         <span class="input-group-text bg-light"><i class="bi bi-key"></i></span>
-                                        <input asp-for="SePayApiKey" type="password" class="form-control font-monospace" id="inputApiKey" placeholder="Dán mã API Token từ SePay (ví dụ: SP_...)" />
+                                        <input asp-for="SePayApiKey" type="password" autocomplete="off" class="form-control font-monospace" id="inputApiKey" placeholder="Dán mã API Token từ SePay (ví dụ: SP_...)" />
                                         <button class="btn btn-outline-secondary" type="button" id="btnToggleApiKey" title="Ẩn/Hiện">
                                             <i class="bi bi-eye" id="eyeIcon"></i>
                                         </button>

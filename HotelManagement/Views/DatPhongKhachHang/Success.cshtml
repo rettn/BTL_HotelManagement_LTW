@@ -10,11 +10,14 @@
     var settings = ViewBag.Settings as HotelManagement.Models.PaymentSetting ?? new HotelManagement.Models.PaymentSetting();
     var vietQrUrl = ViewBag.VietQrUrl as string ?? $"https://img.vietqr.io/image/{settings.NganHangMa}-{settings.SoTaiKhoan}-compact2.png?amount={soTienThanhToan}&addInfo=DP{Model.MaDatPhong}&accountName={Uri.EscapeDataString(settings.TenChuTaiKhoan ?? "")}";
     var noiDungCK = ViewBag.NoiDungChuyenKhoan as string ?? $"{settings.NoiDungPrefix}{Model.MaDatPhong}";
+    var hanThanhToan = (DateTime)(ViewBag.HanThanhToan ?? Model.NgayDat.AddMinutes(15));
+    var thoiHanGiuPhong = (int)(ViewBag.ThoiHanGiuPhong ?? 15);
 
     bool isDaThanhToan = Model.TrangThai == "DaCoc" || Model.TrangThai == "DaThanhToan";
 }
 
 <div class="booking-success-page">
+    @Html.AntiForgeryToken()
     <div class="container-narrow">
         
         <!-- THẺ CHÍNH: KẾT QUẢ ĐẶT PHÒNG -->
@@ -23,6 +26,14 @@
             <div class="success-icon-box">
                 <i class="fa-solid fa-circle-check"></i>
             </div>
+
+                @if (!isDaThanhToan)
+                {
+                    <div id="paymentCountdownBox" class="alert alert-warning d-flex align-items-center justify-content-center gap-2 mt-3 mb-0">
+                        <i class="fa-solid fa-hourglass-half"></i>
+                        <span>Thời gian giữ phòng còn lại: <strong id="paymentCountdown">--:--</strong></span>
+                    </div>
+                }
 
             <span class="success-badge">ĐẶT PHÒNG THÀNH CÔNG</span>
             <h2>Cảm ơn bạn đã lựa chọn khách sạn chúng tôi!</h2>
@@ -658,6 +669,42 @@
         const maDatPhong = @Model.MaDatPhong;
         let isPaid = @(isDaThanhToan ? "true" : "false");
         let checkTimer = null;
+        const paymentDeadline = new Date('@hanThanhToan.ToUniversalTime().ToString("O")');
+        let countdownTimer = null;
+
+        function releaseExpiredBooking() {
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+            fetch('@Url.Action("GiaiPhongPhieuChuaThanhToan", "DatPhongKhachHang")', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ id: maDatPhong, __RequestVerificationToken: token })
+            }).finally(() => window.location.href = '@Url.Action("Index", "DatPhongKhachHang")');
+        }
+
+        function updatePaymentCountdown() {
+            const countdown = document.getElementById('paymentCountdown');
+            if (!countdown || isPaid) return;
+            const remain = paymentDeadline.getTime() - Date.now();
+            if (remain <= 0) {
+                countdown.textContent = '00:00';
+                if (countdownTimer) clearInterval(countdownTimer);
+                const box = document.getElementById('paymentCountdownBox');
+                if (box) {
+                    box.classList.replace('alert-warning', 'alert-danger');
+                    box.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i><strong>Đã hết thời gian giữ phòng. Đang giải phóng phiếu...</strong>';
+                }
+                if (checkTimer) clearInterval(checkTimer);
+                releaseExpiredBooking();
+                return;
+            }
+            const totalSeconds = Math.floor(remain / 1000);
+            countdown.textContent = `${Math.floor(totalSeconds / 60).toString().padStart(2, '0')}:${(totalSeconds % 60).toString().padStart(2, '0')}`;
+        }
+
+        if (document.getElementById('paymentCountdown')) {
+            updatePaymentCountdown();
+            countdownTimer = setInterval(updatePaymentCountdown, 1000);
+        }
 
         // Hàm sao chép nhanh vào Clipboard
         function copyToClipboard(text, btnElement) {
@@ -678,6 +725,8 @@
         function handlePaymentSuccess(data) {
             isPaid = true;
             if (checkTimer) clearInterval(checkTimer);
+            if (countdownTimer) clearInterval(countdownTimer);
+            document.getElementById('paymentCountdownBox')?.remove();
 
             // Cập nhật giao diện
             const section = document.getElementById('paymentSection');
@@ -729,6 +778,12 @@
                 if (!response.ok) return;
 
                 const result = await response.json();
+                if (result && result.expired) {
+                    if (checkTimer) clearInterval(checkTimer);
+                    if (countdownTimer) clearInterval(countdownTimer);
+                    window.location.href = '@Url.Action("Index", "DatPhongKhachHang")';
+                    return;
+                }
                 if (result && result.isPaid) {
                     handlePaymentSuccess(result);
                 }

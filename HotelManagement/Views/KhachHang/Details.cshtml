@@ -101,6 +101,7 @@
                                 <th>Ngày đặt</th>
                                 <th>Ngày nhận</th>
                                 <th>Ngày trả</th>
+                                <th>Tiền phòng</th>
                                 <th>Tiền cọc</th>
                                 <th>Trạng thái</th>
                                 <th></th>
@@ -113,6 +114,11 @@
                                     .Where(ct => ct.Phong != null)
                                     .Select(ct => ct.Phong!.SoPhong)
                                     .ToList() ?? new List<string>();
+                                var soDem = (dp.NgayTraDuKien.Date - dp.NgayNhanDuKien.Date).Days;
+                                if (soDem <= 0) soDem = 1;
+                                var tienPhong = dp.ChiTietDatPhongs?
+                                    .Where(ct => ct.Phong != null)
+                                    .Sum(ct => (ct.DonGia > 0 ? ct.DonGia : ct.Phong!.LoaiPhong?.GiaTheoDem ?? 0) * soDem) ?? 0;
 
                                 <tr>
                                     <td class="fw-semibold">DP-@dp.MaDatPhong</td>
@@ -124,6 +130,7 @@
                                     <td>@dp.NgayDat.ToString("dd/MM/yyyy")</td>
                                     <td>@dp.NgayNhanDuKien.ToString("dd/MM/yyyy")</td>
                                     <td>@dp.NgayTraDuKien.ToString("dd/MM/yyyy")</td>
+                                    <td>@tienPhong.ToString("N0") đ</td>
                                     <td>@dp.TienCoc.ToString("N0") đ</td>
                                     <td>@dp.TrangThai</td>
                                     <td>

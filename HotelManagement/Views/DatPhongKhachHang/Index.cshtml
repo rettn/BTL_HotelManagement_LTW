@@ -251,30 +251,16 @@
                                     <div class="payment-card-head">
                                         <div class="d-flex align-items-center gap-2">
                                             <i class="fa-solid fa-qrcode fs-4 text-primary"></i>
-                                            <strong>Quét mã QR (VietQR)</strong>
+                                            <strong>Đặt phòng và thanh toán tiền cọc qua QR</strong>
                                         </div>
                                         <span class="badge bg-success-subtle text-success">Khuyên dùng</span>
                                     </div>
                                     <p class="payment-desc mb-0">
-                                        Quét mã chuyển khoản qua mọi app ngân hàng. Hệ thống <strong>tự động xác nhận sau 3 giây</strong> qua SePay.
+                                        Thanh toán trước <strong>@(caiDat?.TienCocMacDinh ?? 30)%</strong> theo quy định. Hệ thống tự động xác nhận qua SePay.
                                     </p>
                                 </div>
                             </label>
 
-                            <label class="payment-option-card mt-3" for="payTrucTiep">
-                                <input type="radio" asp-for="PhuongThucThanhToan" value="TrucTiep" id="payTrucTiep" class="payment-radio" />
-                                <div class="payment-card-inner">
-                                    <div class="payment-card-head">
-                                        <div class="d-flex align-items-center gap-2">
-                                            <i class="fa-solid fa-hotel fs-4 text-secondary"></i>
-                                            <strong>Thanh toán tại quầy lễ tân</strong>
-                                        </div>
-                                    </div>
-                                    <p class="payment-desc mb-0">
-                                        Thanh toán bằng tiền mặt hoặc quẹt thẻ khi đến nhận phòng tại khách sạn.
-                                    </p>
-                                </div>
-                            </label>
                         </div>
                     </div>
 

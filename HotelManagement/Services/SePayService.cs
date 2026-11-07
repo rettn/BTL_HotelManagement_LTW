@@ -101,7 +101,7 @@ namespace HotelManagement.Services
             var donGia = datPhong.ChiTietDatPhongs.FirstOrDefault()?.DonGia ?? 0;
             var tongTien = donGia * soDem;
             var tiLe = settings.TiLeThanhToanPercent > 0 ? settings.TiLeThanhToanPercent : 100;
-            var soTienCanThanhToan = requiredAmount ?? (tongTien * tiLe / 100m);
+            var soTienCanThanhToan = requiredAmount ?? (tongTien * 1.10m * tiLe / 100m);
 
             // Nếu chưa nhập SePay API Key
             if (string.IsNullOrWhiteSpace(settings.SePayApiKey))
@@ -186,7 +186,7 @@ namespace HotelManagement.Services
                             // Cập nhật trạng thái đặt phòng sang Đã Đặt Cọc / Đã Thanh Toán
                             datPhong.TrangThai = "DaCoc";
                             datPhong.TienCoc = amountIn;
-                            datPhong.GhiChu = $"{datPhong.GhiChu} [Đã nhận cọc {amountIn:N0}đ qua SePay (Mã GD: {transId}) vào {transDate}]".Trim();
+                            datPhong.GhiChu = $"{datPhong.GhiChu} [Đã nhận tiền cọc {amountIn:N0}đ qua SePay (Mã GD: {transId}) vào {transDate}]".Trim();
 
                             _context.DatPhongs.Update(datPhong);
                             await _context.SaveChangesAsync();
@@ -237,11 +237,11 @@ namespace HotelManagement.Services
             var donGia = datPhong.ChiTietDatPhongs.FirstOrDefault()?.DonGia ?? 0;
             var tongTien = donGia * soDem;
             var tiLe = settings.TiLeThanhToanPercent > 0 ? settings.TiLeThanhToanPercent : 100;
-            var amount = tongTien * tiLe / 100m;
+            var amount = tongTien * 1.10m * tiLe / 100m;
 
             datPhong.TrangThai = "DaCoc";
             datPhong.TienCoc = amount;
-            datPhong.GhiChu = $"{datPhong.GhiChu} [Xác nhận thanh toán {amount:N0}đ qua SePay - Thử nghiệm lúc {DateTime.Now:dd/MM/yyyy HH:mm:ss}]".Trim();
+            datPhong.GhiChu = $"{datPhong.GhiChu} [Xác nhận tiền cọc {amount:N0}đ qua SePay - Thử nghiệm lúc {DateTime.Now:dd/MM/yyyy HH:mm:ss}]".Trim();
 
             _context.DatPhongs.Update(datPhong);
             await _context.SaveChangesAsync();

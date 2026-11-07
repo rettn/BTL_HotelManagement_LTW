@@ -186,9 +186,7 @@ namespace HotelManagement.Controllers
             }
 
             // Ghi chú hình thức thanh toán
-            var ptttText = model.PhuongThucThanhToan == "VietQR"
-                ? "[Thanh toán trước qua VietQR]"
-                : "[Thanh toán khi nhận phòng]";
+            var ptttText = "[Thanh toán tiền cọc qua VietQR]";
 
             var ghiChuDayDu = $"{ptttText} [Khách tự đặt trực tuyến] {model.GhiChu?.Trim()}".Trim();
 
@@ -219,7 +217,9 @@ namespace HotelManagement.Controllers
 
             // Lấy % cọc từ cấu hình
             decimal phanTramCoc = caiDat?.TienCocMacDinh ?? 30; // Mặc định 30%
-            decimal tienCoc = tongTienDuKien * (phanTramCoc / 100m);
+            // Giá phòng trực tuyến áp dụng VAT 10%, giống hóa đơn Manager.
+            decimal tienPhongVaThue = tongTienDuKien * 1.10m;
+            decimal tienCoc = tienPhongVaThue * (phanTramCoc / 100m);
 
             // Tạo đặt phòng qua DatPhongService
             var datPhongVM = new DatPhongViewModel
@@ -227,7 +227,7 @@ namespace HotelManagement.Controllers
                 MaKH = khachHang.MaKH,
                 NgayNhan = ngayNhanDuKien, // Sử dụng ngày đã gắn giờ từ cấu hình
                 NgayTra = ngayTraDuKien,   // Sử dụng ngày đã gắn giờ từ cấu hình
-                TienCoc = tienCoc,         // Sử dụng tiền cọc đã tính toán từ cấu hình
+                TienCoc = tienCoc,
                 GhiChu = ghiChuDayDu,
                 MaPhongs = new List<int> { model.MaPhong }
             };
@@ -277,8 +277,11 @@ namespace HotelManagement.Controllers
             var tongTien = donGia * soDem;
 
             var settings = _sePayService.GetSettings();
+            var caiDatGiuPhong = await _context.CaiDatHeThongs.FirstOrDefaultAsync();
+            var thoiHanGiuPhong = Math.Clamp(caiDatGiuPhong?.ThoiHanGiuPhong ?? 15, 5, 120);
+            var hanThanhToan = datPhong.NgayDat.AddMinutes(thoiHanGiuPhong);
             var tiLe = settings.TiLeThanhToanPercent > 0 ? settings.TiLeThanhToanPercent : 100;
-            var soTienThanhToan = tongTien * tiLe / 100m;
+            var soTienThanhToan = tongTien * 1.10m * tiLe / 100m;
 
             // Tạo mã QR VietQR
             var vietQrUrl = _sePayService.GenerateVietQrUrl(datPhong.MaDatPhong, soTienThanhToan);
@@ -289,8 +292,34 @@ namespace HotelManagement.Controllers
             ViewBag.SoTienThanhToan = soTienThanhToan;
             ViewBag.VietQrUrl = vietQrUrl;
             ViewBag.NoiDungChuyenKhoan = $"{settings.NoiDungPrefix}{datPhong.MaDatPhong}";
+            ViewBag.HanThanhToan = hanThanhToan;
+            ViewBag.ThoiHanGiuPhong = thoiHanGiuPhong;
 
             return View(datPhong);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> GiaiPhongPhieuChuaThanhToan(int id)
+        {
+            var datPhong = await _context.DatPhongs
+                .Include(d => d.ChiTietDatPhongs)
+                .FirstOrDefaultAsync(d => d.MaDatPhong == id);
+
+            if (datPhong == null)
+                return Json(new { success = false, message = "Không tìm thấy phiếu đặt phòng." });
+
+            var caiDat = await _context.CaiDatHeThongs.FirstOrDefaultAsync();
+            var thoiHan = Math.Clamp(caiDat?.ThoiHanGiuPhong ?? 15, 5, 120);
+            var hanThanhToan = datPhong.NgayDat.AddMinutes(thoiHan);
+
+            if (datPhong.TrangThai == "ChoXacNhan" && DateTime.Now >= hanThanhToan)
+            {
+                var result = await _datPhongService.CancelAsync(id);
+                return Json(new { success = result.Success, message = result.Message });
+            }
+
+            return Json(new { success = false, message = "Phiếu chưa đến thời hạn giải phóng hoặc đã được thanh toán." });
         }
 
         // GET: /DatPhongKhachHang/KiemTraThanhToan?maDatPhong=5
@@ -301,6 +330,36 @@ namespace HotelManagement.Controllers
             if (maDatPhong <= 0)
             {
                 return Json(new { isPaid = false, message = "Mã đặt phòng không hợp lệ." });
+            }
+
+            // Kiểm tra hết hạn ở phía server mỗi lần polling. Như vậy phiếu
+            // vẫn được hủy và phòng được trả lại kể cả khi khách đóng trang
+            // trước lúc đồng hồ đếm ngược kết thúc.
+            var datPhong = await _context.DatPhongs
+                .AsNoTracking()
+                .FirstOrDefaultAsync(d => d.MaDatPhong == maDatPhong);
+
+            if (datPhong == null)
+            {
+                return Json(new { isPaid = false, expired = true, message = "Không tìm thấy phiếu đặt phòng." });
+            }
+
+            var caiDat = await _context.CaiDatHeThongs
+                .AsNoTracking()
+                .FirstOrDefaultAsync();
+            var thoiHanGiuPhong = Math.Clamp(caiDat?.ThoiHanGiuPhong ?? 15, 5, 120);
+            var hanThanhToan = datPhong.NgayDat.AddMinutes(thoiHanGiuPhong);
+
+            if (datPhong.TrangThai == "ChoXacNhan" && DateTime.Now >= hanThanhToan)
+            {
+                var resultHuy = await _datPhongService.CancelAsync(maDatPhong);
+                return Json(new
+                {
+                    isPaid = false,
+                    expired = true,
+                    cancelled = resultHuy.Success,
+                    message = resultHuy.Message
+                });
             }
 
             var result = await _sePayService.CheckPaymentAsync(maDatPhong);

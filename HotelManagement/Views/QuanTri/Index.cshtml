@@ -3,13 +3,19 @@
 @{
     ViewData["Title"] = "Quản lý tài khoản nhân sự"; Layout = "_AdminLayout";
 }
-<div class="mb-4">
-    <h2 class="fw-bold">Danh sách tài khoản</h2>
-</div>
-<a asp-controller="CaiDat" asp-action="Index" class="btn btn-outline-secondary mb-3">
-    <i class="bi bi-arrow-left"></i> Cài đặt
-</a>
-<div class="card">
+<div class="settings-container max-w-1000">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+        <a asp-controller="CaiDat" asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+            <i class="bi bi-arrow-left me-1"></i>Tổng quan cài đặt
+        </a>
+    </div>
+    <partial name="~/Views/CaiDat/_CaiDatTabs.cshtml" />
+
+    <div class="mb-4">
+        <h2 class="fw-bold">Danh sách tài khoản</h2>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4">
     <div class="card-body">
         <form method="get" class="d-flex gap-2 mb-3">
             <input name="keyword" value="@ViewBag.Keyword" class="form-control" placeholder="Tìm theo email hoặc số điện thoại..." />
@@ -67,5 +73,6 @@
             </tbody>
         </table>
         <div class="text-muted">Tổng số: <strong>@Model.Count</strong></div>
+    </div>
     </div>
 </div>
