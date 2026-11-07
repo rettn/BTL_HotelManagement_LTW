@@ -1,47 +1,254 @@
 @model HotelManagement.ViewModels.DichVuFormViewModel
 @{
-    ViewData["Title"] = "Dịch vụ & Hàng hóa";
+    ViewData["Title"] = "Thêm dịch vụ & hàng hóa";
     var groups = ViewBag.NhomHangs as List<string> ?? new();
+    var isSanPham = Model.LoaiHang == "SanPham";
 }
-<style>
-    .goods-form-page{color:#263449}.goods-form-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}.goods-form-head h2{margin:0 0 4px;font-size:24px;font-weight:700}.goods-form-head p{margin:0;color:#748198}.goods-form-card{max-width:960px;border:1px solid #e2e8f0;border-radius:14px;background:#fff;overflow:hidden}.goods-form-tabs{display:flex;gap:6px;padding:10px 22px 0;border-bottom:1px solid #e6ebf1}.goods-tab{padding:11px 13px;border:0;border-bottom:3px solid transparent;background:none;color:#64748b;font-weight:600}.goods-tab.active{border-color:#198754;color:#198754}.goods-form-body{padding:24px}.goods-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.goods-form-field label{display:block;margin-bottom:6px;font-size:13px;font-weight:650;color:#475569}.goods-form-field .form-control,.goods-form-field .form-select{min-height:43px;border-color:#dce3ed;border-radius:8px}.goods-form-field textarea{min-height:112px}.goods-form-help{margin-top:5px;color:#8390a3;font-size:11px}.goods-upload{display:flex;align-items:center;gap:18px;padding:16px;border:1px dashed #b9c7d6;border-radius:12px;background:#f9fbfd}.goods-upload-preview{width:120px;height:120px;display:grid;place-items:center;overflow:hidden;border-radius:11px;background:#eef2f6;color:#9aa5b1;font-size:30px}.goods-upload-preview img{width:100%;height:100%;object-fit:cover}.goods-upload-action{flex:1}.goods-form-footer{display:flex;justify-content:flex-end;gap:9px;padding:16px 24px;border-top:1px solid #e8edf2;background:#fbfcfd}.goods-form-section{margin-top:22px;padding:18px;border:1px solid #e2e8f0;border-radius:11px}.goods-form-section h3{margin:0 0 14px;font-size:15px;font-weight:700}.goods-stock-fields{display:none}.goods-stock-fields.show{display:grid}.goods-sell-toggle{display:flex;align-items:center;gap:10px;margin-top:17px}.goods-tab-panel[hidden]{display:none!important}
-    @@media(max-width:650px){.goods-form-body{padding:17px}.goods-form-grid{grid-template-columns:1fr}.goods-upload{align-items:flex-start;flex-direction:column}.goods-form-head{align-items:flex-start}}
-</style>
-<div class="goods-form-page">
-    <div class="goods-form-head"><div><h2>Thêm dịch vụ/ hàng hóa</h2></div><a asp-action="Index" class="btn btn-light border">Quay lại</a></div>
-    <form asp-action="Create" method="post" enctype="multipart/form-data" class="goods-form-card">
-        @Html.AntiForgeryToken()
-        <div asp-validation-summary="ModelOnly" class="text-danger px-4 pt-3"></div>
-        <div class="goods-form-tabs"><button type="button" class="goods-tab active" data-tab="basic">Thông tin</button><button type="button" class="goods-tab" data-tab="media">Hình ảnh, mô tả, ghi chú</button></div>
-        <div class="goods-form-body">
-            <section class="goods-tab-panel" data-panel="basic">
-                <div class="goods-form-grid">
-                    <div class="goods-form-field"><label asp-for="TenDichVu">Tên hàng</label><input asp-for="TenDichVu" class="form-control" placeholder="Ví dụ: Nước suối, giặt ủi..." /><span asp-validation-for="TenDichVu" class="text-danger small"></span></div>
-                    <div class="goods-form-field"><label>Loại hàng</label><select asp-for="LoaiHang" id="LoaiHang" class="form-select"><option value="DichVu">Dịch vụ</option><option value="SanPham">Sản phẩm</option></select></div>
-                    <div class="goods-form-field"><label>Mã hàng</label><input class="form-control" value="Tự động khi lưu" disabled /><div class="goods-form-help">Mã DV/SP được tạo tự động.</div></div>
-                    <div class="goods-form-field"><label asp-for="NhomHang">Nhóm hàng</label><input asp-for="NhomHang" list="goodsGroups" class="form-control" placeholder="Dịch vụ, đồ ăn, đồ uống..." /><datalist id="goodsGroups">@foreach(var group in groups){<option value="@group"></option>}</datalist></div>
-                    <div class="goods-form-field"><label asp-for="DonViTinh">Đơn vị tính</label><input asp-for="DonViTinh" class="form-control" placeholder="Lần, gói, chai..." /></div>
-                    <div class="goods-form-field goods-stock-fields" id="stockFields"><label asp-for="TonKho">Số lượng tồn kho</label><input asp-for="TonKho" type="number" min="0" class="form-control" /><span asp-validation-for="TonKho" class="text-danger small"></span></div>
-                </div>
-                <div class="goods-form-section"><h3>Giá bán, giá vốn</h3><div class="goods-form-grid"><div class="goods-form-field"><label asp-for="Gia">Giá bán</label><div class="input-group"><input asp-for="Gia" type="number" min="0" step="1" class="form-control" /><span class="input-group-text">VNĐ</span></div><span asp-validation-for="Gia" class="text-danger small"></span></div><div class="goods-form-field"><label asp-for="GiaVon">Giá vốn</label><div class="input-group"><input asp-for="GiaVon" type="number" min="0" step="1" class="form-control" /><span class="input-group-text">VNĐ</span></div><span asp-validation-for="GiaVon" class="text-danger small"></span></div></div></div>
-                <div class="goods-sell-toggle"><input asp-for="TrangThai" class="form-check-input" /><label asp-for="TrangThai" class="form-check-label">Cho phép kinh doanh</label></div>
-            </section>
-            <section class="goods-tab-panel" data-panel="media" hidden>
-                <div class="goods-form-field"><label asp-for="Anh">Ảnh dịch vụ / sản phẩm</label><div class="goods-upload"><div class="goods-upload-preview" id="imagePreview"><i class="bi bi-image"></i></div><div class="goods-upload-action"><input asp-for="Anh" type="file" accept="image/png,image/jpeg,image/webp" class="form-control" id="imageInput" /><div class="goods-form-help">JPG, PNG hoặc WEBP · tối đa 5 MB. Ảnh sẽ xuất hiện trong danh sách và khi thêm vào phòng.</div><span asp-validation-for="Anh" class="text-danger small"></span></div></div></div>
-                <div class="goods-form-field mt-3"><label asp-for="MoTa">Mô tả / ghi chú</label><textarea asp-for="MoTa" class="form-control" rows="5" placeholder="Thông tin phục vụ nhân viên khi ghi nhận dịch vụ..."></textarea><span asp-validation-for="MoTa" class="text-danger small"></span></div>
-            </section>
+
+<div class="goods-form-wrapper max-w-1000">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+        <div>
+            <h3 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+                <i class="bi bi-plus-circle-dotted text-success"></i> Thêm mới Mặt hàng
+            </h3>
+            <p class="text-muted mb-0 small">Thêm dịch vụ phòng hoặc sản phẩm/minibar mới vào danh mục kinh doanh.</p>
         </div>
-        <div class="goods-form-footer"><a asp-action="Index" class="btn btn-light border">Bỏ qua</a><button type="submit" class="btn btn-success px-4"><i class="bi bi-check-lg me-1"></i>Lưu hàng hóa</button></div>
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Quay lại danh sách
+        </a>
+    </div>
+
+    <form asp-action="Create" method="post" enctype="multipart/form-data" class="goods-edit-form">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger border-0 shadow-sm mb-3"></div>
+
+        <div class="row g-4">
+            <!-- Cột trái: Thông tin cơ bản và giá cả -->
+            <div class="col-lg-8">
+                <!-- Thông tin phân loại & tên gọi -->
+                <div class="card border-0 shadow-sm rounded-4 mb-4">
+                    <div class="card-body p-4">
+                        <h6 class="fw-bold text-dark mb-3 pb-2 border-bottom">
+                            <i class="bi bi-info-circle text-primary me-2"></i>Thông tin mặt hàng
+                        </h6>
+
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <label asp-for="TenDichVu" class="form-label fw-bold">Tên mặt hàng <span class="text-danger">*</span></label>
+                                <input asp-for="TenDichVu" class="form-control" placeholder="Ví dụ: Nước suối Lavie, Giặt ủi 1kg..." required />
+                                <span asp-validation-for="TenDichVu" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Loại mặt hàng</label>
+                                <select asp-for="LoaiHang" id="LoaiHang" class="form-select">
+                                    <option value="DichVu">Dịch vụ (Spa, Giặt...)</option>
+                                    <option value="SanPham">Sản phẩm (Minibar, Đồ ăn...)</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="NhomHang" class="form-label fw-bold">Nhóm hàng / Danh mục</label>
+                                <input asp-for="NhomHang" list="goodsGroups" class="form-control" placeholder="Đồ uống, Đồ ăn, Dịch vụ..." />
+                                <datalist id="goodsGroups">
+                                    @foreach (var g in groups)
+                                    {
+                                        <option value="@g"></option>
+                                    }
+                                </datalist>
+                                <div class="form-text">Gõ để chọn nhóm có sẵn hoặc nhập nhóm mới.</div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="DonViTinh" class="form-label fw-bold">Đơn vị tính</label>
+                                <input asp-for="DonViTinh" class="form-control" placeholder="Chai, lon, gói, lần, kg, giờ..." />
+                            </div>
+
+                            <!-- Trường tồn kho chỉ hiện khi là Sản phẩm -->
+                            <div class="col-md-12 stock-fields-group @(isSanPham ? "d-block" : "d-none")" id="stockFields">
+                                <div class="p-3 bg-light rounded-3 border">
+                                    <label asp-for="TonKho" class="form-label fw-bold text-dark">
+                                        <i class="bi bi-box-seam me-1 text-success"></i>Số lượng tồn kho ban đầu
+                                    </label>
+                                    <div class="input-group" style="max-width: 250px;">
+                                        <input asp-for="TonKho" type="number" min="0" class="form-control" placeholder="0" />
+                                        <span class="input-group-text">đơn vị</span>
+                                    </div>
+                                    <span asp-validation-for="TonKho" class="text-danger small"></span>
+                                    <div class="form-text">Số lượng trong kho minibar/kho buồng phòng. Tồn kho ≤ 10 sẽ được cảnh báo.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Thiết lập bảng giá -->
+                <div class="card border-0 shadow-sm rounded-4 mb-4">
+                    <div class="card-body p-4">
+                        <h6 class="fw-bold text-dark mb-3 pb-2 border-bottom">
+                            <i class="bi bi-cash-coin text-success me-2"></i>Bảng giá kinh doanh
+                        </h6>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="Gia" class="form-label fw-bold">Giá bán cho khách <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <input asp-for="Gia" type="number" min="0" step="1000" class="form-control fw-bold text-success" placeholder="0" required />
+                                    <span class="input-group-text">VNĐ</span>
+                                </div>
+                                <span asp-validation-for="Gia" class="text-danger small"></span>
+                                <div class="form-text">Giá niêm yết sẽ tính vào hóa đơn khi khách gọi dịch vụ.</div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="GiaVon" class="form-label fw-bold">Giá vốn nhập vào</label>
+                                <div class="input-group">
+                                    <input asp-for="GiaVon" type="number" min="0" step="1000" class="form-control text-muted" placeholder="0" />
+                                    <span class="input-group-text">VNĐ</span>
+                                </div>
+                                <span asp-validation-for="GiaVon" class="text-danger small"></span>
+                                <div class="form-text">Dùng để tính lợi nhuận gộp trong báo cáo tài chính.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mô tả chi tiết -->
+                <div class="card border-0 shadow-sm rounded-4">
+                    <div class="card-body p-4">
+                        <h6 class="fw-bold text-dark mb-3 pb-2 border-bottom">
+                            <i class="bi bi-card-text text-secondary me-2"></i>Mô tả & Hướng dẫn phục vụ
+                        </h6>
+                        <textarea asp-for="MoTa" class="form-control" rows="4" placeholder="Nhập ghi chú đặc điểm, cách tính phí hoặc hướng dẫn nhân viên phục vụ..."></textarea>
+                        <span asp-validation-for="MoTa" class="text-danger small"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cột phải: Hình ảnh & Trạng thái -->
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm rounded-4 mb-4">
+                    <div class="card-body p-4 text-center">
+                        <h6 class="fw-bold text-dark text-start mb-3">
+                            <i class="bi bi-image text-info me-2"></i>Ảnh minh họa
+                        </h6>
+
+                        <div class="goods-upload-box mb-3" id="imagePreviewContainer">
+                            <div class="goods-upload-placeholder" id="placeholderIcon">
+                                <i class="bi bi-cloud-arrow-up fs-1 text-muted"></i>
+                                <span class="d-block small text-muted mt-2">Chưa có ảnh</span>
+                            </div>
+                            <img src="" alt="Xem trước ảnh" id="imagePreview" class="d-none" />
+                        </div>
+
+                        <div class="d-grid mb-2">
+                            <label for="imageInput" class="btn btn-outline-success btn-sm py-2">
+                                <i class="bi bi-upload me-1"></i> Tải ảnh lên
+                            </label>
+                            <input asp-for="Anh" type="file" accept="image/png,image/jpeg,image/webp" class="d-none" id="imageInput" />
+                        </div>
+                        <span asp-validation-for="Anh" class="text-danger small d-block"></span>
+
+                        <div class="small text-muted text-start mt-3 pt-3 border-top" style="font-size: 12px; line-height: 1.5;">
+                            JPG, PNG hoặc WEBP · tối đa 5 MB. Ảnh xuất hiện trong danh sách và thẻ chọn dịch vụ cho phòng.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Thiết lập trạng thái kinh doanh -->
+                <div class="card border-0 shadow-sm rounded-4 mb-4">
+                    <div class="card-body p-4">
+                        <h6 class="fw-bold text-dark mb-3">
+                            <i class="bi bi-toggles text-warning me-2"></i>Trạng thái bán
+                        </h6>
+                        <div class="form-check form-switch m-0">
+                            <input asp-for="TrangThai" class="form-check-input" type="checkbox" checked />
+                            <label asp-for="TrangThai" class="form-check-label fw-semibold text-dark">
+                                Đang kinh doanh
+                            </label>
+                        </div>
+                        <div class="form-text mt-2">Khi tắt, mặt hàng sẽ không thể chọn thêm vào phòng khách đang ở.</div>
+                    </div>
+                </div>
+
+                <!-- Nút lưu form -->
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-success py-2 fw-semibold">
+                        <i class="bi bi-check-lg me-1"></i> Lưu mặt hàng
+                    </button>
+                    <a asp-action="Index" class="btn btn-light py-2 border">Hủy bỏ</a>
+                </div>
+            </div>
+        </div>
     </form>
 </div>
+
+<style>
+    .max-w-1000 {
+        max-width: 1050px;
+    }
+    .goods-upload-box {
+        width: 100%;
+        height: 180px;
+        border-radius: 14px;
+        border: 2px dashed #cbd5e1;
+        background: #f8fafc;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        position: relative;
+    }
+    .goods-upload-box img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .form-switch .form-check-input {
+        width: 2.5em;
+        height: 1.3em;
+        cursor: pointer;
+    }
+    .form-switch .form-check-input:checked {
+        background-color: #198754;
+        border-color: #198754;
+    }
+</style>
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-    <partial name="_RichTextEditor" />
     <script>
-        document.querySelectorAll('.goods-tab').forEach(tab => tab.addEventListener('click', () => { document.querySelectorAll('.goods-tab').forEach(x => x.classList.toggle('active', x === tab)); document.querySelectorAll('.goods-tab-panel').forEach(panel => panel.hidden = panel.dataset.panel !== tab.dataset.tab); }));
-        const typeSelect = document.getElementById('LoaiHang'); const stockFields = document.getElementById('stockFields');
-        function updateType() { const product = typeSelect.value === 'SanPham'; stockFields.classList.toggle('show', product); }
-        typeSelect.addEventListener('change', updateType); updateType();
-        document.getElementById('imageInput').addEventListener('change', event => { const file = event.target.files[0]; if (!file) return; const img = document.createElement('img'); img.src = URL.createObjectURL(file); img.onload = () => URL.revokeObjectURL(img.src); const box = document.getElementById('imagePreview'); box.replaceChildren(img); });
+        const typeSelect = document.getElementById('LoaiHang');
+        const stockFields = document.getElementById('stockFields');
+
+        function updateType() {
+            const isProduct = typeSelect.value === 'SanPham';
+            if (isProduct) {
+                stockFields.classList.remove('d-none');
+                stockFields.classList.add('d-block');
+            } else {
+                stockFields.classList.remove('d-block');
+                stockFields.classList.add('d-none');
+            }
+        }
+        typeSelect.addEventListener('change', updateType);
+
+        // Preview image
+        const imgInput = document.getElementById('imageInput');
+        const imgPreview = document.getElementById('imagePreview');
+        const placeholderIcon = document.getElementById('placeholderIcon');
+
+        imgInput.addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (evt) {
+                    imgPreview.src = evt.target.result;
+                    imgPreview.classList.remove('d-none');
+                    placeholderIcon.classList.add('d-none');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
     </script>
 }

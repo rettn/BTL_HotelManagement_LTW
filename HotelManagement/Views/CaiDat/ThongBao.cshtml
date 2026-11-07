@@ -1,52 +1,176 @@
-﻿@model HotelManagement.Models.CaiDatHeThong
+@model HotelManagement.Models.CaiDatHeThong
 @{
     ViewData["Title"] = "Cấu hình Thông báo";
-    var kenhStr = Model.KenhThongBao ?? "";
+    var kenhStr = Model?.KenhThongBao ?? "";
     var isSys = kenhStr.Contains("System");
     var isMail = kenhStr.Contains("Email");
 }
 
-<div class="container-fluid px-0 max-w-800">
-    <div class="d-flex align-items-center mb-4">
-        <a asp-action="Index" class="btn btn-outline-secondary me-3"><i class="bi bi-arrow-left"></i> Trở về</a>
-        <h3 class="mb-0">Cấu hình Thông báo</h3>
-    </div>
-    <div class="card shadow-sm">
-        <div class="card-body p-4">
-            <form asp-action="ThongBao" method="post">
-                <h5 class="mb-3 border-bottom pb-2">Thông báo cho nhân viên</h5>
-                <div class="form-check form-switch mb-3">
-                    <input class="form-check-input" type="checkbox" asp-for="ThongBaoDatMoi">
-                    <label class="form-check-label fw-bold">Nhận thông báo khi có đơn đặt phòng mới</label>
-                </div>
-                <div class="form-check form-switch mb-3">
-                    <input class="form-check-input" type="checkbox" asp-for="ThongBaoSapNhanTra">
-                    <label class="form-check-label fw-bold">Nhắc nhở sắp đến giờ nhận/trả phòng</label>
-                </div>
-                <div class="form-check form-switch mb-4">
-                    <input class="form-check-input" type="checkbox" asp-for="ThongBaoKho">
-                    <label class="form-check-label fw-bold">Cảnh báo khi dịch vụ trong kho sắp hết</label>
-                </div>
-
-                <h5 class="mb-3 border-bottom pb-2">Phương thức nhận thông báo</h5>
-                <div class="form-check mb-2">
-                    <input class="form-check-input" type="checkbox" name="KenhThongBao" value="System" @(isSys ? "checked" : "")>
-                    <label class="form-check-label">Hiển thị trực tiếp trên phần mềm</label>
-                </div>
-                <div class="form-check mb-2">
-                    <input class="form-check-input" type="checkbox" name="KenhThongBao" value="Email" @(isMail ? "checked" : "")>
-                    <label class="form-check-label">Gửi cảnh báo qua Email</label>
-                </div>
-                <div class="text-end mt-4"><button type="submit" class="btn btn-secondary px-4"><i class="bi bi-save"></i> Lưu thay đổi</button></div>
-            </form>
+<div class="settings-container max-w-1000">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+        <div class="d-flex align-items-center gap-3">
+            <a asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                <i class="bi bi-arrow-left me-1"></i>Tổng quan cài đặt
+            </a>
+            <h3 class="mb-0 fw-bold fs-4">Cấu hình Thông báo</h3>
         </div>
     </div>
+
+    <!-- Navigation Tabs -->
+    <partial name="_CaiDatTabs" />
+
+    @if (TempData["Success"] is string success)
+    {
+        <div class="alert alert-success alert-dismissible fade show d-flex align-items-center gap-2 mb-4" role="alert">
+            <i class="bi bi-check-circle-fill fs-5"></i>
+            <div>@success</div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <form asp-action="ThongBao" method="post">
+        @Html.AntiForgeryToken()
+
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm rounded-4 mb-4">
+                    <div class="card-body p-4">
+                        <h6 class="fw-bold text-dark mb-4 pb-2 border-bottom">
+                            <i class="bi bi-bell text-secondary me-2"></i>Sự kiện nhận cảnh báo
+                        </h6>
+
+                        <div class="notification-item d-flex align-items-center justify-content-between p-3 rounded-3 mb-3 border">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="notif-icon bg-primary-subtle text-primary">
+                                    <i class="bi bi-calendar-plus"></i>
+                                </div>
+                                <div>
+                                    <strong class="d-block text-dark">Đơn đặt phòng mới</strong>
+                                    <small class="text-muted">Nhận thông báo ngay khi có khách hàng đặt phòng trực tuyến thành công.</small>
+                                </div>
+                            </div>
+                            <div class="form-check form-switch m-0">
+                                <input class="form-check-input" type="checkbox" asp-for="ThongBaoDatMoi" />
+                            </div>
+                        </div>
+
+                        <div class="notification-item d-flex align-items-center justify-content-between p-3 rounded-3 mb-3 border">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="notif-icon bg-warning-subtle text-warning">
+                                    <i class="bi bi-clock-history"></i>
+                                </div>
+                                <div>
+                                    <strong class="d-block text-dark">Nhắc nhở nhận / trả phòng trong ngày</strong>
+                                    <small class="text-muted">Cảnh báo danh sách phòng sắp đến giờ check-in hoặc check-out để lễ tân chủ động.</small>
+                                </div>
+                            </div>
+                            <div class="form-check form-switch m-0">
+                                <input class="form-check-input" type="checkbox" asp-for="ThongBaoSapNhanTra" />
+                            </div>
+                        </div>
+
+                        <div class="notification-item d-flex align-items-center justify-content-between p-3 rounded-3 mb-4 border">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="notif-icon bg-danger-subtle text-danger">
+                                    <i class="bi bi-box-seam"></i>
+                                </div>
+                                <div>
+                                    <strong class="d-block text-dark">Cảnh báo tồn kho hàng hóa thấp</strong>
+                                    <small class="text-muted">Cảnh báo ngay trên Dashboard khi số lượng tồn kho của sản phẩm/minibar ≤ 10 đơn vị hoặc hết hàng.</small>
+                                </div>
+                            </div>
+                            <div class="form-check form-switch m-0">
+                                <input class="form-check-input" type="checkbox" asp-for="ThongBaoKho" />
+                            </div>
+                        </div>
+
+                        <h6 class="fw-bold text-dark mb-3 pb-2 border-bottom">
+                            <i class="bi bi-broadcast text-info me-2"></i>Kênh truyền thông báo
+                        </h6>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="channel-card p-3 rounded-3 border d-flex align-items-center gap-3 cursor-pointer">
+                                    <input class="form-check-input mt-0" type="checkbox" name="KenhThongBao" value="System" @(isSys ? "checked" : "") />
+                                    <div>
+                                        <strong class="d-block text-dark"><i class="bi bi-display me-1 text-primary"></i>Hệ thống nội bộ</strong>
+                                        <small class="text-muted">Hiển thị thông báo chuông và badge trên thanh điều hướng phần mềm.</small>
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="channel-card p-3 rounded-3 border d-flex align-items-center gap-3 cursor-pointer">
+                                    <input class="form-check-input mt-0" type="checkbox" name="KenhThongBao" value="Email" @(isMail ? "checked" : "") />
+                                    <div>
+                                        <strong class="d-block text-dark"><i class="bi bi-envelope me-1 text-success"></i>Email quản trị</strong>
+                                        <small class="text-muted">Gửi email thông báo tự động tới hòm thư quản trị khách sạn.</small>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                            <a asp-action="Index" class="btn btn-light px-4">Hủy bỏ</a>
+                            <button type="submit" class="btn btn-secondary px-4 fw-semibold text-white">
+                                <i class="bi bi-save me-1"></i>Lưu cấu hình thông báo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cột phải: Trợ giúp -->
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm rounded-4 bg-light">
+                    <div class="card-body p-4">
+                        <h6 class="fw-bold text-dark mb-3"><i class="bi bi-info-circle text-info me-2"></i>Lưu ý về thông báo</h6>
+                        <div class="small text-muted d-flex flex-column gap-3" style="font-size: 13px; line-height: 1.6;">
+                            <div>
+                                <strong class="text-dark d-block">1. Thông báo trên màn hình:</strong>
+                                Khi tính năng bật, các chỉ báo badge đỏ/cam sẽ xuất hiện trên thanh menu và Dashboard, giúp nhân viên phản ứng tức thời.
+                            </div>
+                            <div>
+                                <strong class="text-dark d-block">2. Kênh Email:</strong>
+                                Yêu cầu khách sạn đã cấu hình hòm thư Email liên hệ chính xác trong mục <em>Thông tin khách sạn</em>.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
 </div>
 
 <style>
+    .max-w-1000 {
+        max-width: 1050px;
+    }
+    .notif-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        flex-shrink: 0;
+    }
     .form-switch .form-check-input {
-        width: 2.5em;
-        height: 1.25em;
-        margin-right: 10px;
+        width: 2.7em;
+        height: 1.4em;
+        cursor: pointer;
+    }
+    .form-switch .form-check-input:checked {
+        background-color: #198754;
+        border-color: #198754;
+    }
+    .channel-card {
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background: #fff;
+    }
+    .channel-card:hover {
+        background: #f8fafc;
+        border-color: #198754;
     }
 </style>

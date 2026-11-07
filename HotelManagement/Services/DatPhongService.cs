@@ -1,4 +1,4 @@
-﻿using HotelManagement.Data;
+using HotelManagement.Data;
 using HotelManagement.Models;
 using HotelManagement.Repositories;
 using HotelManagement.ViewModels;
@@ -383,12 +383,12 @@ namespace HotelManagement.Services
                 chiTiet.Phong.TrangThai = "DangDon";
                 await _context.SaveChangesAsync();
 
-                var conPhongChuaTra = await _context.ChiTietDatPhongs
-                    .Where(c => c.MaDatPhong == maDatPhong)
-                    .AnyAsync(c => !c.DanhSachLuuTru
-                        .Any(l => l.ThoiGianTraPhong != null));
+                // Kiểm tra xem đơn đặt phòng còn phòng nào đang lưu trú (đã nhận nhưng chưa trả) không
+                var conPhongDangO = await _context.LuuTrus
+                    .Where(l => l.ChiTietDatPhong != null && l.ChiTietDatPhong.MaDatPhong == maDatPhong)
+                    .AnyAsync(l => l.ThoiGianNhanPhong != null && l.ThoiGianTraPhong == null);
 
-                if (!conPhongChuaTra)
+                if (!conPhongDangO)
                 {
                     chiTiet.DatPhong.TrangThai = "DaHoanThanh";
                     chiTiet.DatPhong.NgayTraThucTe = DateTime.Now;
@@ -414,6 +414,11 @@ namespace HotelManagement.Services
 
             if (model.NgayNhan.Date < DateTime.Today)
                 return "Ngày nhận phòng không được ở quá khứ.";
+
+            var caiDat = await _context.CaiDatHeThongs.FirstOrDefaultAsync();
+            var maxNgayDatTruoc = caiDat?.MaxDatTruoc ?? 90;
+            if (model.NgayNhan.Date > DateTime.Today.AddDays(maxNgayDatTruoc))
+                return $"Khách sạn chỉ nhận đặt phòng trước tối đa {maxNgayDatTruoc} ngày theo quy định.";
 
             if (model.TienCoc < 0)
                 return "Tiền cọc không được âm.";

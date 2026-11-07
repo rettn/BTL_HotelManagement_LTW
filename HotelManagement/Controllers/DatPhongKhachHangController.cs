@@ -64,6 +64,7 @@ namespace HotelManagement.Controllers
                 }
             }
 
+            ViewBag.CaiDat = await _context.CaiDatHeThongs.FirstOrDefaultAsync();
             await NapDuLieuPhongAsync(model, maPhong, maLoaiPhong);
             return View(model);
         }
@@ -79,6 +80,14 @@ namespace HotelManagement.Controllers
                 ModelState.AddModelError(nameof(model.NgayTra), "Ngày trả phòng phải sau ngày nhận phòng ít nhất 1 ngày.");
             }
 
+            var caiDat = await _context.CaiDatHeThongs.FirstOrDefaultAsync();
+            var maxNgayDatTruoc = caiDat?.MaxDatTruoc ?? 90;
+
+            if (model.NgayNhan.Date > DateTime.Today.AddDays(maxNgayDatTruoc))
+            {
+                ModelState.AddModelError(nameof(model.NgayNhan), $"Khách sạn chỉ nhận đặt phòng trước tối đa {maxNgayDatTruoc} ngày.");
+            }
+
             if (model.NgayNhan.Date < DateTime.Today)
             {
                 ModelState.AddModelError(nameof(model.NgayNhan), "Ngày nhận phòng không thể ở trong quá khứ.");
@@ -92,6 +101,7 @@ namespace HotelManagement.Controllers
 
             if (!ModelState.IsValid)
             {
+                ViewBag.CaiDat = caiDat;
                 await NapDuLieuPhongAsync(model, model.MaPhong, null);
                 return View(model);
             }
@@ -182,8 +192,8 @@ namespace HotelManagement.Controllers
 
             var ghiChuDayDu = $"{ptttText} [Khách tự đặt trực tuyến] {model.GhiChu?.Trim()}".Trim();
 
-            // Lấy cấu hình từ DB
-            var caiDat = await _context.CaiDatHeThongs.FirstOrDefaultAsync();
+            // Lấy cấu hình từ DB (đã lấy caiDat ở trên)
+            caiDat ??= await _context.CaiDatHeThongs.FirstOrDefaultAsync();
 
             // Xử lý giờ nhận/trả phòng từ cấu hình (mặc định 14:00 và 12:00 nếu lỗi)
             TimeSpan gioNhan = TimeSpan.TryParse(caiDat?.GioNhanPhong, out var gn) ? gn : new TimeSpan(14, 0, 0);

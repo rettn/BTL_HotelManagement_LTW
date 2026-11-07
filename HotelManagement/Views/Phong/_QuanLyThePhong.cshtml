@@ -1,4 +1,4 @@
-﻿@model HotelManagement.Models.Phong
+@model HotelManagement.Models.Phong
 
 @{
     var tt = Model.TrangThai?.Trim() ?? "";
@@ -164,6 +164,13 @@
         <div class="rp-no-booking">
             <i class="bi bi-calendar-plus"></i>
             Phòng hiện chưa có thông tin đặt phòng.
+        </div>
+    }
+    else if (dangDon)
+    {
+        <div class="rp-no-booking" style="background:#fffbeb; border-color:#fde68a; color:#92400e;">
+            <i class="bi bi-stars text-warning"></i>
+            Phòng vừa trả và đang được dọn dẹp. Vui lòng bấm "Hoàn thành dọn dẹp" bên dưới khi phòng đã sẵn sàng.
         </div>
     }
 

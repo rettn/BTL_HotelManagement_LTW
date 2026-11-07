@@ -1,0 +1,81 @@
+@{
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "Index";
+}
+
+<div class="settings-nav-tabs-wrapper mb-4">
+    <div class="settings-nav-tabs">
+        <a asp-controller="CaiDat" asp-action="ThongTinKhachSan" 
+           class="settings-nav-tab @(currentAction == "ThongTinKhachSan" ? "active" : "")">
+            <i class="bi bi-building"></i>
+            <span>Thông tin khách sạn</span>
+        </a>
+        <a asp-controller="CaiDat" asp-action="QuyDinhLuuTru" 
+           class="settings-nav-tab @(currentAction == "QuyDinhLuuTru" ? "active" : "")">
+            <i class="bi bi-file-earmark-ruled"></i>
+            <span>Quy định lưu trú</span>
+        </a>
+        <a asp-controller="CaiDat" asp-action="CauHinhDatPhong" 
+           class="settings-nav-tab @(currentAction == "CauHinhDatPhong" ? "active" : "")">
+            <i class="bi bi-calendar-check"></i>
+            <span>Cấu hình đặt phòng</span>
+        </a>
+        <a asp-controller="CaiDat" asp-action="ThongBao" 
+           class="settings-nav-tab @(currentAction == "ThongBao" ? "active" : "")">
+            <i class="bi bi-bell"></i>
+            <span>Thông báo</span>
+        </a>
+        <a asp-controller="ThanhToan" asp-action="Index" 
+           class="settings-nav-tab @(ViewContext.RouteData.Values["controller"]?.ToString() == "ThanhToan" ? "active" : "")">
+            <i class="bi bi-qr-code-scan"></i>
+            <span>Thanh toán VietQR</span>
+        </a>
+        <a asp-controller="QuanTri" asp-action="Index" 
+           class="settings-nav-tab @(ViewContext.RouteData.Values["controller"]?.ToString() == "QuanTri" ? "active" : "")">
+            <i class="bi bi-person-gear"></i>
+            <span>Nhân sự & Phân quyền</span>
+        </a>
+    </div>
+</div>
+
+<style>
+    .settings-nav-tabs-wrapper {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 6px;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+    .settings-nav-tabs {
+        display: flex;
+        gap: 6px;
+    }
+    .settings-nav-tab {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 9px 16px;
+        border-radius: 9px;
+        color: #64748b;
+        font-weight: 600;
+        font-size: 13.5px;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+    .settings-nav-tab i {
+        font-size: 16px;
+    }
+    .settings-nav-tab:hover {
+        color: #198754;
+        background: #f1fbf4;
+    }
+    .settings-nav-tab.active {
+        background: #198754;
+        color: #fff;
+        box-shadow: 0 2px 6px rgba(25, 135, 84, 0.25);
+    }
+    .settings-nav-tab.active i {
+        color: #fff;
+    }
+</style>
+

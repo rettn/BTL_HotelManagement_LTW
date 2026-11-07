@@ -9,8 +9,59 @@
 <div class="container-fluid px-0">
     <div class="mb-4">
         <h3 class="fw-bold text-dark mb-1">Bảng điều khiển</h3>
-     
     </div>
+
+    @* Hiển thị thông báo động theo cấu hình hệ thống *@
+    @{
+        var caiDat = ViewBag.CaiDat as HotelManagement.Models.CaiDatHeThong;
+        int soSapHet = ViewBag.SoSanPhamSapHet ?? 0;
+        int soNhanHomNay = ViewBag.SoPhongNhanHomNay ?? 0;
+        int soTraHomNay = ViewBag.SoPhongTraHomNay ?? 0;
+    }
+
+    @if (caiDat != null)
+    {
+        <div class="mb-3 d-flex flex-column gap-2">
+            @if (caiDat.ThongBaoKho && soSapHet > 0)
+            {
+                <div class="alert alert-warning py-2 px-3 border-0 rounded-3 shadow-sm d-flex align-items-center justify-content-between mb-0">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-exclamation-diamond-fill text-warning fs-5"></i>
+                        <span><strong>Cảnh báo kho hàng:</strong> Có <strong class="text-danger">@soSapHet</strong> mặt hàng sản phẩm/minibar đang sắp hết hàng (tồn kho ≤ 10).</span>
+                    </div>
+                    <a asp-controller="DichVu" asp-action="Index" asp-route-tonKho="low" class="btn btn-warning btn-sm py-1 px-3 text-dark fw-semibold">
+                        Kiểm tra ngay <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            }
+
+            @if (caiDat.ThongBaoSapNhanTra && (soNhanHomNay > 0 || soTraHomNay > 0))
+            {
+                <div class="alert alert-info py-2 px-3 border-0 rounded-3 shadow-sm d-flex align-items-center justify-content-between mb-0">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-clock-history text-info fs-5"></i>
+                        <span><strong>Lịch nhận / trả hôm nay:</strong> Dự kiến đón <strong>@soNhanHomNay</strong> lượt nhận phòng và <strong>@soTraHomNay</strong> lượt trả phòng.</span>
+                    </div>
+                    <a asp-controller="DatPhong" asp-action="Index" class="btn btn-info btn-sm py-1 px-3 text-white fw-semibold">
+                        Xem lịch đặt <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            }
+
+            @if (caiDat.ThongBaoDatMoi && Model.PhieuChoXacNhan > 0)
+            {
+                <div class="alert alert-success py-2 px-3 border-0 rounded-3 shadow-sm d-flex align-items-center justify-content-between mb-0">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-bell-fill text-success fs-5"></i>
+                        <span><strong>Đơn đặt phòng mới:</strong> Có <strong class="text-success">@Model.PhieuChoXacNhan</strong> phiếu đặt phòng đang chờ xác nhận xử lý.</span>
+                    </div>
+                    <a asp-controller="DatPhong" asp-action="Index" class="btn btn-success btn-sm py-1 px-3 text-white fw-semibold">
+                        Xử lý ngay <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            }
+        </div>
+    }
 
     <div class="row g-3 mb-4">
         <div class="col-md-4 col-sm-6">

@@ -1,4 +1,4 @@
-﻿using HotelManagement.Data;
+using HotelManagement.Data;
 using HotelManagement.Models;
 using HotelManagement.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -66,46 +66,68 @@ namespace HotelManagement.Controllers
             if (phong == null)
                 return NotFound();
 
-            // Lay cac chi tiet dat phong cua phong nay,
-            // khong lay cac phieu da huy.
-            var danhSachChiTiet = await _context.ChiTietDatPhongs
-                .AsNoTracking()
-                .Include(c => c.DatPhong)
-                    .ThenInclude(d => d!.KhachHang)
-                .Include(c => c.DanhSachLuuTru)
-                .Where(c =>
-                    c.MaPhong == id &&
-                    c.DatPhong != null &&
-                    c.DatPhong.TrangThai != "DaHuy" &&
-                    c.DatPhong.TrangThai != "DaThanhToan" &&
-                    c.DatPhong.TrangThai != "DaHoanThanh")
-                .ToListAsync();
+            var tt = phong.TrangThai?.Trim() ?? "";
+            bool laTrong = tt == "Trong" || tt == "Trống";
+            bool dangDon = tt == "DangDon" || tt == "Đang dọn dẹp";
+            bool dangSuDung = tt == "DangSuDung" || tt == "Đang sử dụng";
+            bool daDat = tt == "DaDat" || tt == "Đã đặt";
 
-            var hienTai = DateTime.Now;
+            ChiTietDatPhong? chiTiet = null;
 
-            // Uu tien phieu dang co khach luu tru.
-            // Neu khong co, chon phieu co ngay tra trong tuong lai
-            // gan nhat.
-            var chiTiet = danhSachChiTiet
-                .Where(c => c.DanhSachLuuTru.Any(l =>
-                    l.ThoiGianNhanPhong != null &&
-                    l.ThoiGianTraPhong == null))
-                .OrderByDescending(c => c.DanhSachLuuTru
-                    .Where(l => l.ThoiGianNhanPhong != null &&
-                                l.ThoiGianTraPhong == null)
-                    .Max(l => l.ThoiGianNhanPhong))
-                .FirstOrDefault();
-
-            chiTiet ??= danhSachChiTiet
-                .Where(c => c.NgayTra > hienTai.Date)
-                .OrderBy(c => c.NgayNhan)
-                .FirstOrDefault();
-
-            // Neu khong co lich tuong lai, van hien thi lich gan nhat
-            // de ho tro doi chieu trang thai phong.
-            chiTiet ??= danhSachChiTiet
-                .OrderByDescending(c => c.NgayNhan)
-                .FirstOrDefault();
+            if (dangSuDung)
+            {
+                // Phòng đang sử dụng: Lấy phiếu mà khách ĐANG lưu trú thực tế (chưa trả phòng)
+                chiTiet = await _context.ChiTietDatPhongs
+                    .AsNoTracking()
+                    .Include(c => c.DatPhong)
+                        .ThenInclude(d => d!.KhachHang)
+                    .Include(c => c.DanhSachLuuTru)
+                    .Where(c => c.MaPhong == id &&
+                                c.DatPhong != null &&
+                                c.DatPhong.TrangThai != "DaHuy" &&
+                                c.DanhSachLuuTru.Any(l => l.ThoiGianNhanPhong != null && l.ThoiGianTraPhong == null))
+                    .OrderByDescending(c => c.DanhSachLuuTru
+                        .Where(l => l.ThoiGianNhanPhong != null && l.ThoiGianTraPhong == null)
+                        .Max(l => l.ThoiGianNhanPhong))
+                    .FirstOrDefaultAsync();
+            }
+            else if (daDat)
+            {
+                // Phòng đã đặt trước: Khách chưa nhận phòng, lấy phiếu đặt phòng sắp tới gần nhất
+                chiTiet = await _context.ChiTietDatPhongs
+                    .AsNoTracking()
+                    .Include(c => c.DatPhong)
+                        .ThenInclude(d => d!.KhachHang)
+                    .Include(c => c.DanhSachLuuTru)
+                    .Where(c => c.MaPhong == id &&
+                                c.DatPhong != null &&
+                                c.DatPhong.TrangThai != "DaHuy" &&
+                                c.DatPhong.TrangThai != "DaThanhToan" &&
+                                c.DatPhong.TrangThai != "DaHoanThanh" &&
+                                !c.DanhSachLuuTru.Any(l => l.ThoiGianNhanPhong != null))
+                    .OrderBy(c => c.NgayNhan)
+                    .FirstOrDefaultAsync();
+            }
+            else
+            {
+                // Phòng trống hoặc đang dọn dẹp: Khách cũ đã trả phòng rồi.
+                // TUYỆT ĐỐI KHÔNG lấy phiếu của khách cũ đã trả phòng (đã có ThoiGianTraPhong hoặc đã từng nhận phòng).
+                // Chỉ lấy phiếu NẾU có một lịch đặt phòng MỚI trong tương lai chưa nhận phòng.
+                chiTiet = await _context.ChiTietDatPhongs
+                    .AsNoTracking()
+                    .Include(c => c.DatPhong)
+                        .ThenInclude(d => d!.KhachHang)
+                    .Include(c => c.DanhSachLuuTru)
+                    .Where(c => c.MaPhong == id &&
+                                c.DatPhong != null &&
+                                c.DatPhong.TrangThai != "DaHuy" &&
+                                c.DatPhong.TrangThai != "DaThanhToan" &&
+                                c.DatPhong.TrangThai != "DaHoanThanh" &&
+                                c.NgayNhan.Date >= DateTime.Today &&
+                                !c.DanhSachLuuTru.Any(l => l.ThoiGianNhanPhong != null))
+                    .OrderBy(c => c.NgayNhan)
+                    .FirstOrDefaultAsync();
+            }
 
             ViewBag.ChiTietDatPhong = chiTiet;
             ViewBag.DatPhong = chiTiet?.DatPhong;

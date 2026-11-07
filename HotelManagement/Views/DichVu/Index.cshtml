@@ -4,72 +4,596 @@
     ViewData["Title"] = "Dịch vụ & Hàng hóa";
     var items = Model.ToList();
     var groups = ViewBag.NhomHangs as List<string> ?? new();
+    var tonKhoLowCount = items.Count(x => x.LoaiHang == "SanPham" && x.TonKho > 0 && x.TonKho <= 10);
+    var tonKhoOutCount = items.Count(x => x.LoaiHang == "SanPham" && x.TonKho == 0);
 }
 
-<style>
-    .goods-page{color:#263449}.goods-head,.goods-toolbar,.goods-actions,.goods-filters{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.goods-head{margin-bottom:18px}.goods-head h2{margin:0 0 5px;font-size:25px;font-weight:700}.goods-head p{margin:0;color:#748198}.goods-actions{justify-content:flex-end}.goods-add{display:inline-flex;align-items:center;gap:8px;padding:10px 15px;border-radius:9px;background:#198754;color:white;text-decoration:none;font-weight:650}.goods-add:hover{background:#157347;color:white}.goods-add.secondary{background:#fff;color:#198754;border:1px solid #198754}.goods-tools{padding:14px;margin-bottom:14px;border:1px solid #e2e8f0;border-radius:12px;background:#fff}.goods-toolbar{justify-content:flex-start}.goods-search{position:relative;min-width:260px;flex:1;max-width:520px}.goods-search i{position:absolute;top:12px;left:12px;color:#8290a5}.goods-search input{width:100%;height:42px;padding:8px 12px 8px 36px;border:1px solid #dce3ed;border-radius:9px;outline:0}.goods-filter{height:40px;min-width:150px;padding:0 11px;border:1px solid #dce3ed;border-radius:9px;background:#fff;color:#40516a}.goods-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:15px}.goods-summary-card{position:relative;padding:15px 17px;border:1px solid #e2e8f0;border-radius:11px;background:#fff}.goods-summary-card span{display:block;color:#718096;font-size:12px}.goods-summary-card strong{display:block;margin-top:5px;font-size:23px}.goods-summary-card i{position:absolute;top:15px;right:17px;color:#198754;font-size:20px}.goods-table-panel{overflow:hidden;border:1px solid #e2e8f0;border-radius:13px;background:#fff}.goods-table-wrap{overflow:auto}.goods-table{width:100%;min-width:1000px;border-collapse:collapse}.goods-table th{padding:13px 12px;background:#f5f8fb;color:#65748b;text-align:left;font-size:12px;white-space:nowrap}.goods-table td{padding:11px 12px;border-top:1px solid #edf0f5;vertical-align:middle;font-size:13px}.goods-table tr:hover td{background:#fafcff}.goods-image{width:44px;height:44px;object-fit:cover;border-radius:9px;border:1px solid #e5e9ef;background:#f5f7fa}.goods-image-empty{display:grid;place-items:center;color:#8b98a9;font-size:19px}.goods-code{font-weight:700;color:#198754}.goods-name{font-weight:650;color:#263449}.goods-muted{display:block;margin-top:3px;color:#8290a5;font-size:11px}.goods-badge{display:inline-block;padding:4px 8px;border:1px solid #d5dee8;border-radius:7px;color:#496176;font-size:11px;white-space:nowrap}.goods-badge.product{border-color:#8bd5a6;color:#198754;background:#f1fbf4}.goods-status{font-size:12px;white-space:nowrap}.goods-status.active{color:#18864d}.goods-status.inactive{color:#7b8798}.goods-stock-low{color:#c47608;font-weight:650}.goods-stock-out{color:#c03939;font-weight:650}.goods-row-actions{display:flex;justify-content:flex-end;align-items:center;gap:5px}.goods-icon-btn{display:inline-grid;place-items:center;width:32px;height:32px;border:1px solid #dce3ed;border-radius:7px;background:white;color:#56657a;text-decoration:none;cursor:pointer}.goods-icon-btn:hover{background:#f3f7fb;color:#198754}.goods-favorite{border:0;background:none;color:#9aa5b1;cursor:pointer;font-size:17px}.goods-favorite.on{color:#e5a300}.goods-empty{text-align:center;padding:45px 12px;color:#7b8798}.goods-footer{display:flex;justify-content:space-between;padding:11px 14px;color:#748198;font-size:12px;border-top:1px solid #edf0f5}.goods-alert{margin-bottom:12px}.goods-hidden{display:none!important}
-    @@media(max-width:800px){.goods-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.goods-head{align-items:flex-start}.goods-actions{width:100%;justify-content:flex-start}.goods-search{max-width:none}.goods-filter{flex:1}}
-</style>
-
-<div class="goods-page">
-    <div class="goods-head">
-        <div><h2>Danh mục & Bảng giá</h2></div>
-        <div class="goods-actions">
-            <a asp-action="Create" asp-route-loaiHang="DichVu" class="goods-add secondary"><i class="bi bi-plus-lg"></i> Thêm dịch vụ</a>
-            <a asp-action="Create" asp-route-loaiHang="SanPham" class="goods-add"><i class="bi bi-plus-lg"></i> Thêm hàng hóa</a>
+<div class="goods-page-container">
+    <!-- Header trang -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+        <div>
+            <h3 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+                <i class="bi bi-box-seam text-success"></i> Quản lý Dịch vụ & Hàng hóa
+            </h3>
+            <p class="text-muted mb-0 small">Quản lý danh mục dịch vụ phòng, hàng hóa minibar, thiết lập bảng giá và theo dõi tồn kho.</p>
+        </div>
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <a asp-controller="Kho" asp-action="Index" class="btn btn-outline-secondary">
+                <i class="bi bi-boxes me-1"></i> Quản lý kho hàng
+            </a>
+            <a asp-action="Create" asp-route-loaiHang="DichVu" class="btn btn-outline-primary">
+                <i class="bi bi-stars me-1"></i> Thêm dịch vụ
+            </a>
+            <a asp-action="Create" asp-route-loaiHang="SanPham" class="btn btn-success">
+                <i class="bi bi-plus-lg me-1"></i> Thêm hàng hóa
+            </a>
         </div>
     </div>
 
-    @if (TempData["SuccessMessage"] is string success) { <div class="alert alert-success goods-alert">@success</div> }
-    @if (TempData["ErrorMessage"] is string error) { <div class="alert alert-warning goods-alert">@error</div> }
+    <!-- Thông báo kết quả thao tác -->
+    @if (TempData["SuccessMessage"] is string success)
+    {
+        <div class="alert alert-success alert-dismissible fade show d-flex align-items-center gap-2 mb-4 border-0 shadow-sm" role="alert">
+            <i class="bi bi-check-circle-fill fs-5"></i>
+            <div>@success</div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] is string error)
+    {
+        <div class="alert alert-warning alert-dismissible fade show d-flex align-items-center gap-2 mb-4 border-0 shadow-sm" role="alert">
+            <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+            <div>@error</div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
 
-    <div class="goods-summary">
-        <div class="goods-summary-card"><span>Mặt hàng đang xem</span><strong>@items.Count</strong><i class="bi bi-box-seam"></i></div>
-        <div class="goods-summary-card"><span>Dịch vụ</span><strong>@items.Count(x => x.LoaiHang != "SanPham")</strong><i class="bi bi-stars"></i></div>
-        <div class="goods-summary-card"><span>Sản phẩm</span><strong>@items.Count(x => x.LoaiHang == "SanPham")</strong><i class="bi bi-basket"></i></div>
-        <div class="goods-summary-card"><span>Ngừng kinh doanh</span><strong>@items.Count(x => !x.TrangThai)</strong><i class="bi bi-pause-circle"></i></div>
+    <!-- Thẻ thống kê tổng quan -->
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-xl-3">
+            <div class="goods-stat-card">
+                <div class="stat-icon-wrapper bg-primary-subtle text-primary">
+                    <i class="bi bi-collection"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-label">Tổng mặt hàng</span>
+                    <strong class="stat-number">@items.Count</strong>
+                    <small class="text-muted">Đang hiển thị ở trang này</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xl-3">
+            <div class="goods-stat-card">
+                <div class="stat-icon-wrapper bg-info-subtle text-info">
+                    <i class="bi bi-stars"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-label">Dịch vụ phòng</span>
+                    <strong class="stat-number text-info">@items.Count(x => x.LoaiHang != "SanPham")</strong>
+                    <small class="text-muted">Spa, giặt ủi, ẩm thực...</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xl-3">
+            <div class="goods-stat-card">
+                <div class="stat-icon-wrapper bg-success-subtle text-success">
+                    <i class="bi bi-basket2"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-label">Sản phẩm / Minibar</span>
+                    <strong class="stat-number text-success">@items.Count(x => x.LoaiHang == "SanPham")</strong>
+                    <small class="text-muted">Đồ uống, snack, bánh ngọt...</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xl-3">
+            <div class="goods-stat-card">
+                <div class="stat-icon-wrapper @(tonKhoOutCount > 0 ? "bg-danger-subtle text-danger" : tonKhoLowCount > 0 ? "bg-warning-subtle text-warning" : "bg-secondary-subtle text-secondary")">
+                    <i class="bi @(tonKhoOutCount > 0 ? "bi-exclamation-octagon-fill" : "bi-box-seam")"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-label">Cảnh báo tồn kho</span>
+                    <strong class="stat-number @(tonKhoOutCount > 0 ? "text-danger" : tonKhoLowCount > 0 ? "text-warning" : "text-muted")">
+                        @(tonKhoOutCount + tonKhoLowCount)
+                    </strong>
+                    <small class="text-muted">
+                        @if (tonKhoOutCount > 0) { <span class="text-danger fw-semibold">@tonKhoOutCount hết hàng</span> }
+                        @if (tonKhoLowCount > 0) { <span class="text-warning fw-semibold"> · @tonKhoLowCount sắp hết</span> }
+                        @if (tonKhoOutCount == 0 && tonKhoLowCount == 0) { <span>Kho hàng dồi dào</span> }
+                    </small>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="goods-tools">
-        <form asp-action="Index" method="get" class="goods-toolbar">
-            <label class="goods-search"><i class="bi bi-search"></i><input name="keyword" value="@ViewBag.Keyword" placeholder="Tìm theo mã, tên hàng" /></label>
-            <select name="loaiHang" class="goods-filter"><option value="">Tất cả loại hàng</option><option value="DichVu" selected="@(ViewBag.LoaiHang == "DichVu")">Dịch vụ</option><option value="SanPham" selected="@(ViewBag.LoaiHang == "SanPham")">Sản phẩm</option></select>
-            <select name="nhomHang" class="goods-filter"><option value="">Tất cả nhóm hàng</option>@foreach(var group in groups){<option value="@group" selected="@(ViewBag.NhomHang == group)">@group</option>}</select>
-            <select name="tonKho" class="goods-filter"><option value="">Mọi tồn kho</option><option value="low" selected="@(ViewBag.TonKho == "low")">Sắp hết (≤10)</option><option value="out" selected="@(ViewBag.TonKho == "out")">Hết hàng</option></select>
-            <select name="trangThai" class="goods-filter"><option value="">Mọi trạng thái</option><option value="active" selected="@(ViewBag.TrangThai == "active")">Đang kinh doanh</option><option value="inactive" selected="@(ViewBag.TrangThai == "inactive")">Ngừng kinh doanh</option></select>
-            <button class="btn btn-success" type="submit"><i class="bi bi-funnel me-1"></i>Lọc</button>
-            <a asp-action="Index" class="btn btn-light border">Đặt lại</a>
-        </form>
+    <!-- Hộp công cụ tìm kiếm và lọc -->
+    <div class="goods-filter-card card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-3 p-md-4">
+            <form asp-action="Index" method="get" class="row g-2 align-items-center">
+                <!-- Ô tìm kiếm -->
+                <div class="col-12 col-md-4 col-xl-3">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0 text-muted">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input name="keyword" value="@ViewBag.Keyword" class="form-control border-start-0 ps-0" placeholder="Tìm theo mã hoặc tên hàng..." />
+                    </div>
+                </div>
+
+                <!-- Lọc loại hàng -->
+                <div class="col-6 col-md-3 col-xl-2">
+                    <select name="loaiHang" class="form-select">
+                        <option value="">-- Tất cả loại --</option>
+                        <option value="DichVu" selected="@(ViewBag.LoaiHang == "DichVu")">Dịch vụ</option>
+                        <option value="SanPham" selected="@(ViewBag.LoaiHang == "SanPham")">Sản phẩm</option>
+                    </select>
+                </div>
+
+                <!-- Lọc nhóm hàng -->
+                <div class="col-6 col-md-3 col-xl-2">
+                    <select name="nhomHang" class="form-select">
+                        <option value="">-- Nhóm hàng --</option>
+                        @foreach (var g in groups)
+                        {
+                            <option value="@g" selected="@(ViewBag.NhomHang == g)">@g</option>
+                        }
+                    </select>
+                </div>
+
+                <!-- Lọc tồn kho -->
+                <div class="col-6 col-md-3 col-xl-2">
+                    <select name="tonKho" class="form-select">
+                        <option value="">-- Tồn kho --</option>
+                        <option value="low" selected="@(ViewBag.TonKho == "low")">Sắp hết (≤ 10)</option>
+                        <option value="out" selected="@(ViewBag.TonKho == "out")">Đã hết hàng (0)</option>
+                    </select>
+                </div>
+
+                <!-- Lọc trạng thái kinh doanh -->
+                <div class="col-6 col-md-3 col-xl-2">
+                    <select name="trangThai" class="form-select">
+                        <option value="">-- Trạng thái --</option>
+                        <option value="active" selected="@(ViewBag.TrangThai == "active")">Đang kinh doanh</option>
+                        <option value="inactive" selected="@(ViewBag.TrangThai == "inactive")">Ngừng kinh doanh</option>
+                    </select>
+                </div>
+
+                <!-- Nút thao tác lọc -->
+                <div class="col-12 col-xl-1 d-flex gap-2">
+                    <button class="btn btn-success flex-grow-1" type="submit" title="Lọc dữ liệu">
+                        <i class="bi bi-funnel"></i>
+                    </button>
+                    <a asp-action="Index" class="btn btn-light border" title="Đặt lại bộ lọc">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                    </a>
+                </div>
+            </form>
+        </div>
     </div>
 
-    <div class="goods-table-panel">
-        <div class="goods-table-wrap">
-            <table class="goods-table">
-                <thead><tr><th>Ảnh</th><th>Mã hàng hóa</th><th>Tên hàng</th><th>Nhóm hàng</th><th>Loại hàng</th><th>Giá bán</th><th>Tồn kho</th><th>Trạng thái</th><th></th></tr></thead>
-                <tbody>
-                @foreach (var item in items)
-                {
+    <!-- Bảng danh sách dịch vụ / hàng hóa -->
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+        <div class="table-responsive">
+            <table class="table goods-custom-table align-middle mb-0">
+                <thead>
                     <tr>
-                        <td>@if (!string.IsNullOrWhiteSpace(item.AnhUrl)) { <img class="goods-image" src="@item.AnhUrl" alt="Ảnh @item.TenDichVu" /> } else { <span class="goods-image goods-image-empty"><i class="bi bi-image"></i></span> }</td>
-                        <td><span class="goods-code">@(string.IsNullOrWhiteSpace(item.MaHang) ? $"DV{item.Id:D6}" : item.MaHang)</span></td>
-                        <td><span class="goods-name">@item.TenDichVu</span><span class="goods-muted">@item.DonViTinh @if (item.LoaiHang == "DichVu" && item.GiaVon > 0) { <span> · Giá vốn @item.GiaVon.ToString("N0") đ</span> }</span></td>
-                        <td>@item.NhomHang</td>
-                        <td><span class="goods-badge @(item.LoaiHang == "SanPham" ? "product" : "")">@(item.LoaiHang == "SanPham" ? "Sản phẩm" : "Dịch vụ")</span></td>
-                        <td class="text-nowrap">@item.Gia.ToString("N0") đ</td>
-                        <td>@if (item.LoaiHang == "SanPham") { <span class="@(item.TonKho == 0 ? "goods-stock-out" : item.TonKho <= 10 ? "goods-stock-low" : "")">@item.TonKho</span> } else { <span class="text-muted">—</span> }</td>
-                        <td><span class="goods-status @(item.TrangThai ? "active" : "inactive")"><i class="bi @(item.TrangThai ? "bi-check-circle-fill" : "bi-pause-circle-fill") me-1"></i>@(item.TrangThai ? "Đang kinh doanh" : "Ngừng kinh doanh")</span></td>
-                        <td><div class="goods-row-actions">
-                            <form asp-action="ToggleFavorite" method="post"><input type="hidden" name="id" value="@item.Id" /><button class="goods-favorite @(item.YeuThich ? "on" : "")" title="@(item.YeuThich ? "Bỏ yêu thích" : "Đánh dấu yêu thích")"><i class="bi @(item.YeuThich ? "bi-star-fill" : "bi-star")"></i></button></form>
-                            <a asp-action="Edit" asp-route-id="@item.Id" class="goods-icon-btn" title="Sửa"><i class="bi bi-pencil"></i></a>
-                            <form asp-action="ToggleStatus" method="post"><input type="hidden" name="id" value="@item.Id" /><button class="goods-icon-btn" title="@(item.TrangThai ? "Ngừng kinh doanh" : "Mở kinh doanh")"><i class="bi @(item.TrangThai ? "bi-pause" : "bi-play")"></i></button></form>
-                        </div></td>
+                        <th style="width: 70px;" class="text-center">Ảnh</th>
+                        <th style="width: 120px;">Mã hàng</th>
+                        <th>Tên dịch vụ / sản phẩm</th>
+                        <th style="width: 140px;">Nhóm hàng</th>
+                        <th style="width: 120px;">Loại hàng</th>
+                        <th style="width: 140px;" class="text-end">Giá bán</th>
+                        <th style="width: 130px;" class="text-center">Tồn kho</th>
+                        <th style="width: 160px;" class="text-center">Trạng thái</th>
+                        <th style="width: 110px;" class="text-end pe-3">Thao tác</th>
                     </tr>
-                }
-                @if (items.Count == 0) { <tr><td colspan="9" class="goods-empty"><i class="bi bi-search fs-3 d-block mb-2"></i>Không tìm thấy mặt hàng phù hợp.</td></tr> }
+                </thead>
+                <tbody>
+                    @foreach (var item in items)
+                    {
+                        var isProduct = item.LoaiHang == "SanPham";
+                        var stockState = !isProduct ? "none" : (item.TonKho == 0 ? "out" : (item.TonKho <= 10 ? "low" : "ok"));
+
+                        <tr class="goods-row @(!item.TrangThai ? "goods-row-inactive" : "")">
+                            <!-- Ảnh mặt hàng -->
+                            <td class="text-center">
+                                <div class="goods-thumb-box">
+                                    @if (!string.IsNullOrWhiteSpace(item.AnhUrl))
+                                    {
+                                        <img src="@item.AnhUrl" alt="@item.TenDichVu" class="goods-thumb-img" />
+                                    }
+                                    else
+                                    {
+                                        <div class="goods-thumb-fallback @(isProduct ? "fallback-product" : "fallback-service")">
+                                            <i class="bi @(isProduct ? "bi-box-seam" : "bi-stars")"></i>
+                                        </div>
+                                    }
+                                </div>
+                            </td>
+
+                            <!-- Mã hàng hóa -->
+                            <td>
+                                <span class="goods-code-badge">
+                                    @(string.IsNullOrWhiteSpace(item.MaHang) ? $"DV{item.Id:D6}" : item.MaHang)
+                                </span>
+                            </td>
+
+                            <!-- Tên mặt hàng -->
+                            <td>
+                                <div class="d-flex flex-column">
+                                    <span class="goods-name-title">@item.TenDichVu</span>
+                                    <div class="goods-meta-sub">
+                                        <span class="text-muted"><i class="bi bi-tag me-1"></i>ĐVT: <strong>@(string.IsNullOrWhiteSpace(item.DonViTinh) ? "Lần" : item.DonViTinh)</strong></span>
+                                        @if (item.GiaVon > 0)
+                                        {
+                                            <span class="text-muted ms-2">• Giá vốn: @item.GiaVon.ToString("N0") đ</span>
+                                        }
+                                    </div>
+                                </div>
+                            </td>
+
+                            <!-- Nhóm hàng -->
+                            <td>
+                                <span class="goods-group-text">
+                                    @(string.IsNullOrWhiteSpace(item.NhomHang) ? "Chung" : item.NhomHang)
+                                </span>
+                            </td>
+
+                            <!-- Loại hàng (Badge) -->
+                            <td>
+                                @if (isProduct)
+                                {
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1">
+                                        <i class="bi bi-basket me-1"></i>Sản phẩm
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2 py-1">
+                                        <i class="bi bi-stars me-1"></i>Dịch vụ
+                                    </span>
+                                }
+                            </td>
+
+                            <!-- Giá bán -->
+                            <td class="text-end">
+                                <span class="goods-price-text">@item.Gia.ToString("N0")</span>
+                                <small class="text-muted">đ</small>
+                            </td>
+
+                            <!-- Tồn kho -->
+                            <td class="text-center">
+                                @if (isProduct)
+                                {
+                                    @if (stockState == "out")
+                                    {
+                                        <span class="badge bg-danger text-white rounded-pill px-2 py-1">
+                                            <i class="bi bi-x-circle me-1"></i>Hết hàng (0)
+                                        </span>
+                                    }
+                                    else if (stockState == "low")
+                                    {
+                                        <span class="badge bg-warning text-dark rounded-pill px-2 py-1" title="Sắp hết hàng, cần nhập thêm">
+                                            <i class="bi bi-exclamation-triangle me-1"></i>Còn @item.TonKho
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-light text-success border border-success-subtle rounded-pill px-2 py-1">
+                                            <i class="bi bi-check me-1"></i>@item.TonKho
+                                        </span>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="text-muted fs-6" title="Dịch vụ không giới hạn tồn kho">—</span>
+                                }
+                            </td>
+
+                            <!-- Trạng thái kinh doanh -->
+                            <td class="text-center">
+                                @if (item.TrangThai)
+                                {
+                                    <span class="status-indicator-badge status-active">
+                                        <span class="status-dot dot-active"></span> Đang bán
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="status-indicator-badge status-inactive">
+                                        <span class="status-dot dot-inactive"></span> Tạm dừng
+                                    </span>
+                                }
+                            </td>
+
+                            <!-- Thao tác -->
+                            <td class="text-end pe-3">
+                                <div class="d-inline-flex align-items-center gap-1">
+                                    <!-- Nút yêu thích -->
+                                    <form asp-action="ToggleFavorite" method="post" class="d-inline">
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <button type="submit" class="action-btn-icon @(item.YeuThich ? "btn-star-on" : "btn-star-off")" title="@(item.YeuThich ? "Bỏ yêu thích" : "Đánh dấu yêu thích")">
+                                            <i class="bi @(item.YeuThich ? "bi-star-fill" : "bi-star")"></i>
+                                        </button>
+                                    </form>
+
+                                    <!-- Nút chỉnh sửa -->
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="action-btn-icon btn-edit" title="Chỉnh sửa thông tin">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+
+                                    <!-- Nút bật/tắt kinh doanh -->
+                                    <form asp-action="ToggleStatus" method="post" class="d-inline">
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <button type="submit" class="action-btn-icon btn-toggle-state" title="@(item.TrangThai ? "Tạm ngừng kinh doanh" : "Mở bán lại")">
+                                            <i class="bi @(item.TrangThai ? "bi-pause" : "bi-play-fill")"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+
+                    @if (items.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="9" class="text-center py-5">
+                                <div class="empty-state-box py-4">
+                                    <div class="empty-icon text-muted mb-2">
+                                        <i class="bi bi-search fs-1"></i>
+                                    </div>
+                                    <h6 class="fw-bold text-dark">Không tìm thấy dịch vụ hoặc hàng hóa nào</h6>
+                                    <p class="text-muted small mb-3">Thử thay đổi từ khóa tìm kiếm hoặc điều chỉnh lại bộ lọc.</p>
+                                    <a asp-action="Index" class="btn btn-outline-success btn-sm px-3">
+                                        <i class="bi bi-arrow-counterclockwise me-1"></i>Xem tất cả
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
                 </tbody>
             </table>
         </div>
-        <div class="goods-footer"><span>Hiển thị <strong>@items.Count</strong> mặt hàng</span><span>Hàng hóa đã sử dụng được lưu lịch sử; hãy ngừng kinh doanh thay vì xóa.</span></div>
-        @await Html.PartialAsync("_Pagination", (HotelManagement.ViewModels.PaginationViewModel)ViewBag.Pagination)
+
+        <!-- Chân bảng & phân trang -->
+        <div class="card-footer bg-white border-top py-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <span class="text-muted small">
+                Hiển thị <strong>@items.Count</strong> mặt hàng.
+                <span class="d-none d-md-inline ms-1">• Lưu ý: Các mặt hàng đã phát sinh hóa đơn được bảo lưu lịch sử để đối soát.</span>
+            </span>
+            @if (ViewBag.Pagination != null)
+            {
+                <div>
+                    @await Html.PartialAsync("_Pagination", (HotelManagement.ViewModels.PaginationViewModel)ViewBag.Pagination)
+                </div>
+            }
+        </div>
     </div>
 </div>
+
+<style>
+    .goods-page-container {
+        color: #263449;
+    }
+
+    /* Thẻ thống kê */
+    .goods-stat-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 16px 18px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.02);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .goods-stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.05);
+    }
+    .stat-icon-wrapper {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        flex-shrink: 0;
+    }
+    .stat-info {
+        display: flex;
+        flex-direction: column;
+    }
+    .stat-label {
+        font-size: 12px;
+        color: #64748b;
+        font-weight: 500;
+    }
+    .stat-number {
+        font-size: 22px;
+        font-weight: 700;
+        line-height: 1.2;
+        color: #1e293b;
+    }
+
+    /* Table styles */
+    .goods-custom-table {
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    .goods-custom-table thead th {
+        background: #f8fafc;
+        color: #64748b;
+        font-size: 12.5px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        padding: 14px 12px;
+        border-bottom: 1px solid #edf2f7;
+    }
+    .goods-custom-table tbody td {
+        padding: 12px;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 13.5px;
+    }
+    .goods-row:hover td {
+        background-color: #fafcff;
+    }
+    .goods-row-inactive td {
+        background-color: #fafafa;
+        opacity: 0.75;
+    }
+
+    /* Thumbnail ảnh */
+    .goods-thumb-box {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+        background: #f8fafc;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.2s ease;
+    }
+    .goods-thumb-box:hover {
+        transform: scale(1.08);
+    }
+    .goods-thumb-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .goods-thumb-fallback {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+    }
+    .fallback-product {
+        background: #f0fdf4;
+        color: #16a34a;
+    }
+    .fallback-service {
+        background: #f0f9ff;
+        color: #0284c7;
+    }
+
+    /* Mã hàng badge */
+    .goods-code-badge {
+        font-family: 'Consolas', 'Courier New', monospace;
+        font-size: 12px;
+        font-weight: 700;
+        color: #166534;
+        background: #f0fdf4;
+        padding: 3px 8px;
+        border-radius: 6px;
+        border: 1px solid #bbf7d0;
+    }
+
+    /* Tên mặt hàng & Meta */
+    .goods-name-title {
+        font-weight: 650;
+        color: #1e293b;
+        font-size: 14px;
+    }
+    .goods-meta-sub {
+        font-size: 12px;
+        margin-top: 2px;
+    }
+    .goods-group-text {
+        font-weight: 500;
+        color: #475569;
+    }
+
+    /* Giá bán */
+    .goods-price-text {
+        font-size: 15px;
+        font-weight: 700;
+        color: #16a34a;
+    }
+
+    /* Chỉ báo trạng thái */
+    .status-indicator-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12.5px;
+        font-weight: 600;
+        padding: 3px 10px;
+        border-radius: 20px;
+    }
+    .status-active {
+        color: #15803d;
+        background: #f0fdf4;
+        border: 1px solid #dcfce7;
+    }
+    .status-inactive {
+        color: #64748b;
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+    }
+    .status-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+    }
+    .dot-active {
+        background-color: #22c55e;
+        box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2);
+    }
+    .dot-inactive {
+        background-color: #94a3b8;
+    }
+
+    /* Action buttons */
+    .action-btn-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        background: #ffffff;
+        color: #64748b;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        text-decoration: none;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+    .action-btn-icon:hover {
+        background: #f8fafc;
+        color: #1e293b;
+        border-color: #cbd5e1;
+    }
+    .btn-star-on {
+        color: #eab308;
+        border-color: #fde047;
+        background: #fefce8;
+    }
+    .btn-star-on:hover {
+        color: #ca8a04;
+    }
+    .btn-star-off:hover {
+        color: #eab308;
+    }
+    .btn-edit:hover {
+        color: #0284c7;
+        border-color: #bae6fd;
+        background: #f0f9ff;
+    }
+    .btn-toggle-state:hover {
+        color: #15803d;
+        border-color: #bbf7d0;
+        background: #f0fdf4;
+    }
+</style>

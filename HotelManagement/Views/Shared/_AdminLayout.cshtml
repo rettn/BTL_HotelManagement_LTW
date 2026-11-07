@@ -1,6 +1,11 @@
 @using Microsoft.AspNetCore.Identity
 @inject UserManager<IdentityUser> UserManager
+@inject HotelManagement.Data.ApplicationDbContext DbContext
 @{
+    var hotelSettings = DbContext.CaiDatHeThongs.FirstOrDefault();
+    var hotelName = !string.IsNullOrWhiteSpace(hotelSettings?.TenKhachSan) ? hotelSettings.TenKhachSan : "Hotel Manager";
+    var hotelLogo = !string.IsNullOrWhiteSpace(hotelSettings?.HinhAnh) ? hotelSettings.HinhAnh : Url.Content("~/images/logo2.webp");
+
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
     var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
 
@@ -40,7 +45,7 @@
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>@ViewData["Title"] - Hotel Manager</title>
+        <title>@ViewData["Title"] - @hotelName</title>
 
         <script>
             (() => {
@@ -66,10 +71,11 @@
                        asp-action="Index"
                        class="brand-link">
                         <span class="brand-mark">
-                            <!-- Anh logo: file nam o wwwroot/images/logo.png -->
-                            <img src="~/images/logo2.webp"
-                                 alt="Logo khách sạn"
-                                 class="brand-logo" />
+                            <!-- Anh logo khach san tu CaiDatHeThong -->
+                            <img src="@hotelLogo"
+                                 alt="@hotelName"
+                                 class="brand-logo"
+                                 style="object-fit: contain;" />
                         </span>
                     </a>
 
@@ -282,7 +288,7 @@
                 </main>
 
                 <footer class="admin-footer">
-                    <span>© @DateTime.Now.Year Hotel Manager</span>
+                    <span>© @DateTime.Now.Year @hotelName</span>
                     <span>Hệ thống quản lý khách sạn</span>
                 </footer>
             </div>

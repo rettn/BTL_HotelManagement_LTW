@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace HotelManagement.Models
 {
@@ -13,6 +13,8 @@ namespace HotelManagement.Models
         public string? SoDienThoai { get; set; }
         public string? Email { get; set; }
         public string? ThongTinHoaDon { get; set; }
+        [StringLength(500)]
+        public string? HinhAnh { get; set; } // Đường dẫn ảnh Logo / Đại diện khách sạn
 
         // 2. Quy định lưu trú
         public string? GioNhanPhong { get; set; } = "14:00";

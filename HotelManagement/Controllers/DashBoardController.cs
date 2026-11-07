@@ -56,6 +56,23 @@ namespace HotelManagement.Controllers
                 .Take(5)
                 .ToListAsync();
 
+            var caiDat = await _context.CaiDatHeThongs.FirstOrDefaultAsync();
+            ViewBag.CaiDat = caiDat;
+
+            if (caiDat?.ThongBaoKho == true)
+            {
+                ViewBag.SoSanPhamSapHet = await _context.DichVus
+                    .CountAsync(d => d.LoaiHang == "SanPham" && d.TonKho <= 10 && d.TrangThai);
+            }
+
+            if (caiDat?.ThongBaoSapNhanTra == true)
+            {
+                ViewBag.SoPhongNhanHomNay = await _context.ChiTietDatPhongs
+                    .CountAsync(c => c.DatPhong != null && c.DatPhong.TrangThai != "DaHuy" && c.NgayNhan.Date == today);
+                ViewBag.SoPhongTraHomNay = await _context.ChiTietDatPhongs
+                    .CountAsync(c => c.DatPhong != null && c.DatPhong.TrangThai != "DaHuy" && c.NgayTra.Date == today);
+            }
+
             var viewModel = new DashboardViewModel
             {
                 TongSoPhong = tongSoPhong,

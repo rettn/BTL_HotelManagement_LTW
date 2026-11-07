@@ -97,6 +97,35 @@ await IdentitySeeder.SeedAsync(
     app.Services,
     app.Configuration);
 
+// Tự động kiểm tra và cập nhật cấu trúc bảng CaiDatHeThongs nếu thiếu cột HinhAnh
+using (var scope = app.Services.CreateScope())
+{
+    try
+    {
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        db.Database.ExecuteSqlRaw(@"
+            ALTER TABLE CaiDatHeThongs ADD COLUMN IF NOT EXISTS HinhAnh VARCHAR(500) NULL;
+        ");
+    }
+    catch
+    {
+        // Fallback cho MySQL không hỗ trợ IF NOT EXISTS
+        try
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var checkCol = db.Database.SqlQueryRaw<int>(@"
+                SELECT COUNT(*) AS Value FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'CaiDatHeThongs' AND COLUMN_NAME = 'HinhAnh'
+            ").ToList().FirstOrDefault();
+            if (checkCol == 0)
+            {
+                db.Database.ExecuteSqlRaw("ALTER TABLE CaiDatHeThongs ADD COLUMN HinhAnh VARCHAR(500) NULL;");
+            }
+        }
+        catch { }
+    }
+}
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {

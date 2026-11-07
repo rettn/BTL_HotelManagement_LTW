@@ -1,30 +1,105 @@
-﻿@model HotelManagement.Models.CaiDatHeThong
+@model HotelManagement.Models.CaiDatHeThong
 @{
     ViewData["Title"] = "Cấu hình đặt phòng";
 }
 
-<div class="container-fluid px-0 max-w-800">
-    <div class="d-flex align-items-center mb-4">
-        <a asp-action="Index" class="btn btn-outline-secondary me-3"><i class="bi bi-arrow-left"></i> Trở về</a>
-        <h3 class="mb-0">Cấu hình đặt phòng</h3>
-    </div>
-    <div class="card shadow-sm">
-        <div class="card-body p-4">
-            <form asp-action="CauHinhDatPhong" method="post">
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Khoảng thời gian đặt trước tối đa (Ngày)</label>
-                    <input type="number" class="form-control" asp-for="MaxDatTruoc">
-                </div>
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Số khách mặc định / 1 phòng</label>
-                    <input type="number" class="form-control" asp-for="SoKhachMacDinh">
-                </div>
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Thời hạn giữ phòng chờ thanh toán (Phút)</label>
-                    <input type="number" class="form-control" asp-for="ThoiHanGiuPhong">
-                </div>
-                <div class="text-end mt-4"><button type="submit" class="btn btn-danger px-4"><i class="bi bi-save"></i> Lưu thay đổi</button></div>
-            </form>
+<div class="settings-container max-w-1000">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+        <div class="d-flex align-items-center gap-3">
+            <a asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                <i class="bi bi-arrow-left me-1"></i>Tổng quan cài đặt
+            </a>
+            <h3 class="mb-0 fw-bold fs-4">Cấu hình đặt phòng</h3>
         </div>
     </div>
+
+    <!-- Navigation Tabs -->
+    <partial name="_CaiDatTabs" />
+
+    @if (TempData["Success"] is string success)
+    {
+        <div class="alert alert-success alert-dismissible fade show d-flex align-items-center gap-2 mb-4" role="alert">
+            <i class="bi bi-check-circle-fill fs-5"></i>
+            <div>@success</div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <form asp-action="CauHinhDatPhong" method="post">
+        @Html.AntiForgeryToken()
+
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm rounded-4 mb-4">
+                    <div class="card-body p-4">
+                        <h6 class="fw-bold text-dark mb-4 pb-2 border-bottom">
+                            <i class="bi bi-calendar-check text-danger me-2"></i>Quy tắc đặt & giữ phòng
+                        </h6>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Khoảng thời gian đặt trước tối đa (Ngày)</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="bi bi-calendar-range text-danger"></i></span>
+                                <input type="number" min="7" max="365" class="form-control" asp-for="MaxDatTruoc" required />
+                                <span class="input-group-text">ngày</span>
+                            </div>
+                            <div class="form-text">Khách hàng chỉ có thể chọn ngày nhận phòng trong vòng số ngày này kể từ hôm nay (ví dụ: tối đa 90 ngày).</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Số khách mặc định trên một phòng</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="bi bi-people text-primary"></i></span>
+                                <input type="number" min="1" max="10" class="form-control" asp-for="SoKhachMacDinh" required />
+                                <span class="input-group-text">người</span>
+                            </div>
+                            <div class="form-text">Số lượng khách người lớn được gợi ý sẵn khi bắt đầu tạo đơn đặt phòng mới.</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Thời hạn giữ phòng chờ thanh toán cọc (Phút)</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="bi bi-stopwatch text-warning"></i></span>
+                                <input type="number" min="5" max="120" class="form-control" asp-for="ThoiHanGiuPhong" required />
+                                <span class="input-group-text">phút</span>
+                            </div>
+                            <div class="form-text">Thời gian đồng hồ đếm ngược giữ phòng trên màn hình thanh toán SePay / VietQR cho khách đặt online trước khi phòng được giải phóng.</div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                            <a asp-action="Index" class="btn btn-light px-4">Hủy bỏ</a>
+                            <button type="submit" class="btn btn-danger px-4 fw-semibold">
+                                <i class="bi bi-save me-1"></i>Lưu cấu hình đặt phòng
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cột phải: Thông tin hữu ích -->
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm rounded-4 bg-light">
+                    <div class="card-body p-4">
+                        <h6 class="fw-bold text-dark mb-3"><i class="bi bi-shield-check text-success me-2"></i>Tác động an toàn</h6>
+                        <div class="small text-muted d-flex flex-column gap-3" style="font-size: 13px; line-height: 1.6;">
+                            <div>
+                                <strong class="text-dark d-block">1. Tránh đặt phòng quá xa:</strong>
+                                Giới hạn ngày đặt trước giúp khách sạn kiểm soát tốt biến động giá mùa cao điểm và kế hoạch sửa chữa nâng cấp phòng.
+                            </div>
+                            <div>
+                                <strong class="text-dark d-block">2. Chống găm phòng ảo:</strong>
+                                Thời hạn giữ phòng (ví dụ 15 phút) đảm bảo phòng không bị chiếm dụng vô thời hạn nếu khách không chuyển khoản cọc.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
 </div>
+
+<style>
+    .max-w-1000 {
+        max-width: 1050px;
+    }
+</style>

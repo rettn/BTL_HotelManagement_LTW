@@ -1,40 +1,209 @@
-﻿@model HotelManagement.Models.CaiDatHeThong
+@model HotelManagement.Models.CaiDatHeThong
 @{
     ViewData["Title"] = "Thông tin khách sạn";
+    var defaultLogo = Url.Content("~/images/logo2.webp");
+    var currentLogo = !string.IsNullOrEmpty(Model?.HinhAnh) ? Model.HinhAnh : defaultLogo;
 }
 
-<div class="container-fluid px-0 max-w-800">
-    <div class="d-flex align-items-center mb-4">
-        <a asp-action="Index" class="btn btn-outline-secondary me-3"><i class="bi bi-arrow-left"></i> Trở về</a>
-        <h3 class="mb-0">Thông tin khách sạn</h3>
-    </div>
-    <div class="card shadow-sm">
-        <div class="card-body p-4">
-            <form asp-action="ThongTinKhachSan" method="post">
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Tên khách sạn</label>
-                    <input type="text" class="form-control" asp-for="TenKhachSan">
-                </div>
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Địa chỉ</label>
-                    <input type="text" class="form-control" asp-for="DiaChi">
-                </div>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label fw-bold">Số điện thoại</label>
-                        <input type="text" class="form-control" asp-for="SoDienThoai">
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label fw-bold">Email liên hệ</label>
-                        <input type="email" class="form-control" asp-for="Email">
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Thông tin xuất hóa đơn (Tên công ty, MST...)</label>
-                    <textarea class="form-control" asp-for="ThongTinHoaDon" rows="3"></textarea>
-                </div>
-                <div class="text-end mt-4"><button type="submit" class="btn btn-primary px-4"><i class="bi bi-save"></i> Lưu thay đổi</button></div>
-            </form>
+<div class="settings-container max-w-1000">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+        <div class="d-flex align-items-center gap-3">
+            <a asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                <i class="bi bi-arrow-left me-1"></i>Tổng quan cài đặt
+            </a>
+            <h3 class="mb-0 fw-bold fs-4">Thông tin khách sạn</h3>
         </div>
     </div>
+
+    <!-- Navigation Tabs -->
+    <partial name="_CaiDatTabs" />
+
+    @if (TempData["Success"] is string success)
+    {
+        <div class="alert alert-success alert-dismissible fade show d-flex align-items-center gap-2 mb-4" role="alert">
+            <i class="bi bi-check-circle-fill fs-5"></i>
+            <div>@success</div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["Error"] is string error)
+    {
+        <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center gap-2 mb-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+            <div>@error</div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <form asp-action="ThongTinKhachSan" method="post" enctype="multipart/form-data">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="XoaHinhAnh" id="inputXoaHinhAnh" value="false" />
+
+        <div class="row g-4">
+            <!-- Cột trái: Quản lý Logo / Ảnh đại diện thương hiệu -->
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm rounded-4 h-100">
+                    <div class="card-body p-4 text-center">
+                        <h6 class="fw-bold text-dark text-start mb-3">
+                            <i class="bi bi-image text-success me-2"></i>Ảnh đại diện / Logo
+                        </h6>
+
+                        <div class="hotel-logo-preview-wrapper mb-3">
+                            <img src="@currentLogo" alt="Logo khách sạn" id="hotelLogoPreview" />
+                        </div>
+
+                        <div class="d-grid gap-2 mb-3">
+                            <label for="hinhAnhUpload" class="btn btn-outline-success btn-sm py-2">
+                                <i class="bi bi-upload me-1"></i>Chọn ảnh mới
+                            </label>
+                            <input type="file" id="hinhAnhUpload" name="HinhAnhUpload" accept=".jpg,.jpeg,.png,.webp,.svg" class="d-none" />
+
+                            @if (!string.IsNullOrEmpty(Model?.HinhAnh))
+                            {
+                                <button type="button" class="btn btn-outline-danger btn-sm py-2" id="btnXoaAnh">
+                                    <i class="bi bi-trash me-1"></i>Xóa ảnh tùy chỉnh
+                                </button>
+                            }
+                        </div>
+
+                        <div class="small text-muted text-start border-top pt-3">
+                            <ul class="ps-3 mb-0" style="font-size: 12px; line-height: 1.6;">
+                                <li>Hỗ trợ định dạng: <strong>JPG, PNG, WEBP, SVG</strong>.</li>
+                                <li>Dung lượng ảnh tối đa: <strong>5 MB</strong>.</li>
+                                <li>Tỷ lệ khuyến nghị: hình vuông (1:1) hoặc chữ nhật (4:3) rõ nét.</li>
+                                <li>Hình ảnh sẽ hiển thị trên Header, Sidebar, Hóa đơn và Trang đặt phòng trực tuyến.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cột phải: Form nhập thông tin khách sạn -->
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm rounded-4">
+                    <div class="card-body p-4">
+                        <h6 class="fw-bold text-dark mb-4 pb-2 border-bottom">
+                            <i class="bi bi-info-circle text-primary me-2"></i>Thông tin liên hệ & Hóa đơn
+                        </h6>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Tên khách sạn <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-muted"><i class="bi bi-building"></i></span>
+                                <input type="text" class="form-control" asp-for="TenKhachSan" placeholder="Ví dụ: Khách Sạn Grand Lotus Luxury" required />
+                            </div>
+                            <div class="form-text">Tên thương hiệu sẽ hiển thị trên thanh tiêu đề, chân trang và đầu hóa đơn.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Địa chỉ khách sạn</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-muted"><i class="bi bi-geo-alt"></i></span>
+                                <input type="text" class="form-control" asp-for="DiaChi" placeholder="Ví dụ: 123 Đường Trần Phú, Phường 1, TP. Nha Trang" />
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Hotline / Số điện thoại</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light text-muted"><i class="bi bi-telephone"></i></span>
+                                    <input type="text" class="form-control" asp-for="SoDienThoai" placeholder="0379 868 686" />
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Email liên hệ</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light text-muted"><i class="bi bi-envelope"></i></span>
+                                    <input type="email" class="form-control" asp-for="Email" placeholder="contact@grandlotus.com" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Thông tin pháp nhân & Xuất hóa đơn VAT</label>
+                            <textarea class="form-control" asp-for="ThongTinHoaDon" rows="3" placeholder="Ví dụ: Công ty TNHH Du lịch & Khách sạn Grand Lotus - MST: 0108998899 - Tài khoản Vietcombank: 1012345678"></textarea>
+                            <div class="form-text">Thông tin này sẽ được in dưới chân hóa đơn dịch vụ gửi cho khách hàng.</div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                            <a asp-action="Index" class="btn btn-light px-4">Hủy bỏ</a>
+                            <button type="submit" class="btn btn-success px-4 fw-semibold">
+                                <i class="bi bi-save me-1"></i>Lưu thông tin khách sạn
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
 </div>
+
+<style>
+    .max-w-1000 {
+        max-width: 1050px;
+    }
+    .hotel-logo-preview-wrapper {
+        width: 160px;
+        height: 160px;
+        margin: 0 auto;
+        border-radius: 16px;
+        border: 2px dashed #cbd5e1;
+        background: #f8fafc;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px;
+    }
+    .hotel-logo-preview-wrapper img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        border-radius: 10px;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #198754;
+        box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.15);
+    }
+</style>
+
+@section Scripts {
+    <script>
+        const inputUpload = document.getElementById('hinhAnhUpload');
+        const imgPreview = document.getElementById('hotelLogoPreview');
+        const inputXoa = document.getElementById('inputXoaHinhAnh');
+        const defaultLogo = '@defaultLogo';
+
+        if (inputUpload) {
+            inputUpload.addEventListener('change', function (e) {
+                const file = e.target.files[0];
+                if (file) {
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert('Kích thước ảnh tối đa là 5 MB.');
+                        this.value = '';
+                        return;
+                    }
+                    const reader = new FileReader();
+                    reader.onload = function (evt) {
+                        imgPreview.src = evt.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                    inputXoa.value = 'false';
+                }
+            });
+        }
+
+        const btnXoa = document.getElementById('btnXoaAnh');
+        if (btnXoa) {
+            btnXoa.addEventListener('click', function () {
+                if (confirm('Bạn có chắc chắn muốn xóa ảnh tùy chỉnh và quay về logo mặc định?')) {
+                    imgPreview.src = defaultLogo;
+                    inputUpload.value = '';
+                    inputXoa.value = 'true';
+                    this.style.display = 'none';
+                }
+            });
+        }
+    </script>
+}

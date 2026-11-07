@@ -1,7 +1,18 @@
 @model HotelManagement.ViewModels.DatPhongKhachHangViewModel
+@inject HotelManagement.Data.ApplicationDbContext DbContext
 @{
     ViewData["Title"] = "Đặt phòng trực tuyến";
     Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var caiDat = DbContext.CaiDatHeThongs.FirstOrDefault();
+    var hotelName = !string.IsNullOrWhiteSpace(caiDat?.TenKhachSan) ? caiDat.TenKhachSan : "Khách Sạn Grand Lotus";
+    var maxNgay = caiDat?.MaxDatTruoc ?? 90;
+    var maxDateStr = DateTime.Today.AddDays(maxNgay).ToString("yyyy-MM-dd");
+    var gioNhanStr = caiDat?.GioNhanPhong ?? "14:00";
+    var gioTraStr = caiDat?.GioTraPhong ?? "12:00";
+    var hotline = !string.IsNullOrWhiteSpace(caiDat?.SoDienThoai) ? caiDat.SoDienThoai : "0379 868 686";
+    var chinhSachHuy = !string.IsNullOrWhiteSpace(caiDat?.ChinhSachHuy) ? caiDat.ChinhSachHuy : "Hỗ trợ hủy phòng miễn phí trước 24 giờ.";
+    var thoiHanGiu = caiDat?.ThoiHanGiuPhong ?? 15;
 }
 
 <div class="customer-booking-page">
@@ -15,7 +26,7 @@
             <div class="header-content">
                 <span class="booking-badge"><i class="fa-solid fa-crown me-1"></i> DÀNH CHO KHÁCH HÀNG</span>
                 <h1>PHIẾU ĐẶT PHÒNG TRỰC TUYẾN</h1>
-                <p>Cảm ơn bạn đã lựa chọn khách sạn chúng tôi. Vui lòng điền thông tin và lựa chọn phòng phù hợp nhất cho kỳ nghỉ của bạn.</p>
+                <p>Cảm ơn bạn đã lựa chọn @hotelName. Vui lòng điền thông tin và lựa chọn phòng phù hợp nhất cho kỳ nghỉ của bạn.</p>
             </div>
         </div>
 
@@ -131,7 +142,7 @@
                                 <label asp-for="NgayNhan" class="form-label required-mark">Ngày nhận phòng (Check-in)</label>
                                 <div class="input-icon-wrap">
                                     <i class="fa-solid fa-calendar-check"></i>
-                                    <input asp-for="NgayNhan" type="date" class="form-control" id="checkInDate" min="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+                                    <input asp-for="NgayNhan" type="date" class="form-control" id="checkInDate" min="@DateTime.Today.ToString("yyyy-MM-dd")" max="@maxDateStr" required />
                                 </div>
                                 <span asp-validation-for="NgayNhan" class="text-danger small"></span>
                             </div>
@@ -167,7 +178,7 @@
                         {
                             <div class="alert alert-warning">
                                 <i class="fa-solid fa-triangle-exclamation me-2"></i>
-                                Hiện tại không có phòng nào ở trạng thái trống. Vui lòng liên hệ hotline khách sạn: <strong>0379 868 686</strong> để được hỗ trợ.
+                                Hiện tại không có phòng nào ở trạng thái trống. Vui lòng liên hệ hotline khách sạn: <strong>@hotline</strong> để được hỗ trợ.
                             </div>
                         }
                         else
@@ -326,11 +337,11 @@
                             </div>
 
                             <div class="booking-policy">
-                                <h6><i class="fa-solid fa-shield-halved text-success me-1"></i> Chính sách khách sạn:</h6>
+                                <h6><i class="fa-solid fa-shield-halved text-success me-1"></i> Chính sách @hotelName:</h6>
                                 <ul>
-                                    <li>Hỗ trợ hủy phòng miễn phí trước 24 giờ.</li>
-                                    <li>Nhận phòng từ 14:00, trả phòng trước 12:00.</li>
-                                    <li>Nhân viên sẽ gọi điện xác nhận trong vòng 15 phút.</li>
+                                    <li>@chinhSachHuy</li>
+                                    <li>Nhận phòng từ <strong>@gioNhanStr</strong>, trả phòng trước <strong>@gioTraStr</strong>.</li>
+                                    <li>Thời hạn giữ phòng thanh toán VietQR: <strong>@thoiHanGiu phút</strong>.</li>
                                 </ul>
                             </div>
 

@@ -1,42 +1,125 @@
-﻿@model HotelManagement.Models.CaiDatHeThong
+@model HotelManagement.Models.CaiDatHeThong
 @{
     ViewData["Title"] = "Quy định lưu trú";
 }
 
-<div class="container-fluid px-0 max-w-800">
-    <div class="d-flex align-items-center mb-4">
-        <a asp-action="Index" class="btn btn-outline-secondary me-3"><i class="bi bi-arrow-left"></i> Trở về</a>
-        <h3 class="mb-0">Quy định lưu trú</h3>
-    </div>
-    <div class="card shadow-sm">
-        <div class="card-body p-4">
-            <form asp-action="QuyDinhLuuTru" method="post">
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label fw-bold">Giờ nhận phòng mặc định</label>
-                        <input type="time" class="form-control" asp-for="GioNhanPhong">
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label fw-bold">Giờ trả phòng mặc định</label>
-                        <input type="time" class="form-control" asp-for="GioTraPhong">
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label fw-bold">Thời gian trả muộn tối đa (tiếng)</label>
-                        <input type="number" class="form-control" asp-for="ThoiGianTraMuon">
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label fw-bold">Tiền cọc mặc định (%)</label>
-                        <input type="number" class="form-control" asp-for="TienCocMacDinh">
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Chính sách hủy phòng</label>
-                    <textarea class="form-control" asp-for="ChinhSachHuy" rows="4"></textarea>
-                </div>
-                <div class="text-end mt-4"><button type="submit" class="btn btn-warning px-4"><i class="bi bi-save"></i> Lưu thay đổi</button></div>
-            </form>
+<div class="settings-container max-w-1000">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+        <div class="d-flex align-items-center gap-3">
+            <a asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                <i class="bi bi-arrow-left me-1"></i>Tổng quan cài đặt
+            </a>
+            <h3 class="mb-0 fw-bold fs-4">Quy định lưu trú</h3>
         </div>
     </div>
+
+    <!-- Navigation Tabs -->
+    <partial name="_CaiDatTabs" />
+
+    @if (TempData["Success"] is string success)
+    {
+        <div class="alert alert-success alert-dismissible fade show d-flex align-items-center gap-2 mb-4" role="alert">
+            <i class="bi bi-check-circle-fill fs-5"></i>
+            <div>@success</div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <form asp-action="QuyDinhLuuTru" method="post">
+        @Html.AntiForgeryToken()
+
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm rounded-4 mb-4">
+                    <div class="card-body p-4">
+                        <h6 class="fw-bold text-dark mb-4 pb-2 border-bottom">
+                            <i class="bi bi-clock-history text-warning me-2"></i>Khung giờ nhận & trả phòng
+                        </h6>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Giờ nhận phòng tiêu chuẩn (Check-in)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="bi bi-box-arrow-in-right text-success"></i></span>
+                                    <input type="time" class="form-control" asp-for="GioNhanPhong" required />
+                                </div>
+                                <div class="form-text">Khung giờ khách có thể nhận phòng mà không tính phụ phí. Mặc định 14:00.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Giờ trả phòng tiêu chuẩn (Check-out)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="bi bi-box-arrow-right text-danger"></i></span>
+                                    <input type="time" class="form-control" asp-for="GioTraPhong" required />
+                                </div>
+                                <div class="form-text">Giờ khách phải hoàn tất trả phòng. Mặc định 12:00 trưa.</div>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Thời gian trả muộn tối đa (Tiếng)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="bi bi-hourglass-split text-warning"></i></span>
+                                    <input type="number" min="1" max="24" class="form-control" asp-for="ThoiGianTraMuon" required />
+                                    <span class="input-group-text">giờ</span>
+                                </div>
+                                <div class="form-text">Số giờ tối đa cho phép trả muộn tính theo phụ phí giờ trước khi tính nguyên đêm.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Tỷ lệ tiền cọc mặc định (%)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="bi bi-percent text-primary"></i></span>
+                                    <input type="number" min="0" max="100" class="form-control" asp-for="TienCocMacDinh" required />
+                                    <span class="input-group-text">% tổng đơn</span>
+                                </div>
+                                <div class="form-text">Tự động gợi ý số tiền cọc khi tạo đơn đặt phòng hoặc khách đặt online (VD: 30%).</div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Chính sách hủy phòng & hoàn cọc</label>
+                            <textarea class="form-control" asp-for="ChinhSachHuy" rows="4" placeholder="Quy định hủy trước bao nhiêu tiếng, mức hoàn trả cọc..."></textarea>
+                            <div class="form-text">Chính sách này sẽ được hiển thị khi hủy đặt phòng và trên trang đặt phòng của khách hàng.</div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                            <a asp-action="Index" class="btn btn-light px-4">Hủy bỏ</a>
+                            <button type="submit" class="btn btn-warning px-4 fw-semibold text-dark">
+                                <i class="bi bi-save me-1"></i>Lưu quy định lưu trú
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cột phải: Hướng dẫn & Tác động thực tế -->
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm rounded-4 bg-light">
+                    <div class="card-body p-4">
+                        <h6 class="fw-bold text-dark mb-3"><i class="bi bi-lightbulb text-warning me-2"></i>Quy tắc vận hành</h6>
+                        <div class="small text-muted d-flex flex-column gap-3" style="font-size: 13px; line-height: 1.6;">
+                            <div>
+                                <strong class="text-dark d-block">1. Tự động điền giờ:</strong>
+                                Khi nhân viên hoặc khách hàng tạo phiếu đặt phòng mới, khung giờ check-in và check-out sẽ tự động áp dụng từ đây.
+                            </div>
+                            <div>
+                                <strong class="text-dark d-block">2. Gợi ý tiền cọc thông minh:</strong>
+                                Hệ thống sẽ tự động tính nhanh: <code>Tiền cọc = Tổng tiền x Tỷ lệ cọc%</code> để nhân viên không phải tính nhẩm.
+                            </div>
+                            <div>
+                                <strong class="text-dark d-block">3. Hiển thị minh bạch:</strong>
+                                Chính sách hủy phòng sẽ xuất hiện trực tiếp trong modal hủy phòng nhằm đối chiếu hoàn cọc chính xác.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
 </div>
+
+<style>
+    .max-w-1000 {
+        max-width: 1050px;
+    }
+</style>

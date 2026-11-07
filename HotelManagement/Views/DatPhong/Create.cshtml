@@ -1,4 +1,4 @@
-﻿@model HotelManagement.ViewModels.DatPhongViewModel
+@model HotelManagement.ViewModels.DatPhongViewModel
 @using HotelManagement.Models
 @using System.Globalization
 
@@ -70,20 +70,28 @@
             <div class="form-section-title"><i class="bi bi-calendar-event"></i> Thời gian lưu trú &amp; tiền cọc</div>
             <div class="row g-3">
                 <div class="col-md-4">
-                    <label asp-for="NgayNhan" class="form-label">Ngày nhận dự kiến</label>
-                    <input asp-for="NgayNhan" id="NgayNhan" type="date" class="form-control" required />
+                    <label asp-for="NgayNhan" class="form-label">Ngày nhận dự kiến (@(ViewBag.GioNhanPhong ?? "14:00"))</label>
+                    <input asp-for="NgayNhan" id="NgayNhan" type="date" class="form-control" 
+                           min="@DateTime.Today.ToString("yyyy-MM-dd")" 
+                           max="@DateTime.Today.AddDays((int)(ViewBag.MaxDatTruoc ?? 90)).ToString("yyyy-MM-dd")" required />
                     <span asp-validation-for="NgayNhan" class="text-danger"></span>
                 </div>
                 <div class="col-md-4">
-                    <label asp-for="NgayTra" class="form-label">Ngày trả dự kiến</label>
-                    <input asp-for="NgayTra" id="NgayTra" type="date" class="form-control" required />
+                    <label asp-for="NgayTra" class="form-label">Ngày trả dự kiến (@(ViewBag.GioTraPhong ?? "12:00"))</label>
+                    <input asp-for="NgayTra" id="NgayTra" type="date" class="form-control" 
+                           min="@DateTime.Today.AddDays(1).ToString("yyyy-MM-dd")" required />
                     <span asp-validation-for="NgayTra" class="text-danger"></span>
                 </div>
                 <div class="col-md-4">
-                    <label for="TienCocDisplay" class="form-label">Tiền cọc (VNĐ)</label>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <label for="TienCocDisplay" class="form-label mb-0">Tiền cọc (VNĐ)</label>
+                        <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" id="btnGoiYCoc" title="Áp dụng tỷ lệ cọc @(ViewBag.TienCocMacDinh ?? 30)% từ Cài đặt">
+                            <i class="bi bi-magic me-1"></i>Gợi ý cọc @(ViewBag.TienCocMacDinh ?? 30)%
+                        </button>
+                    </div>
                     <!-- Ô hiển thị có dấu phẩy; giá trị thật gửi lên server nằm ở input ẩn -->
                     <input type="text" id="TienCocDisplay" inputmode="numeric" autocomplete="off"
-                           class="form-control" placeholder="0" />
+                           class="form-control mt-1" placeholder="0" />
                     <input asp-for="TienCoc" id="TienCoc" type="hidden" />
                     <span asp-validation-for="TienCoc" class="text-danger"></span>
                 </div>
@@ -518,7 +526,8 @@
 
                 if (tongGiaTheoDem > 0) {
                     var tongTien = tongGiaTheoDem * soDem;
-                    setDeposit(tongTien * 0.10);
+                    var phanTramCoc = @((decimal)(ViewBag.TienCocMacDinh ?? 30)) / 100.0;
+                    setDeposit(tongTien * phanTramCoc);
 
                     $('#sumDem').text(soDem);
                     $('#sumPhong').text(soPhong);
@@ -529,6 +538,22 @@
                     $('#staySummary').hide();
                 }
             }
+
+            $('#btnGoiYCoc').on('click', function () {
+                var dNhan = new Date($('#NgayNhan').val());
+                var dTra = new Date($('#NgayTra').val());
+                if (!isNaN(dNhan) && !isNaN(dTra) && dTra > dNhan) {
+                    var soDem = Math.max(1, Math.round((dTra - dNhan) / (1000 * 60 * 60 * 24)));
+                    var tongGiaTheoDem = 0;
+                    $('#MaPhongsSelect option:selected').each(function () {
+                        tongGiaTheoDem += parseFloat($(this).attr('data-gia')) || 0;
+                    });
+                    if (tongGiaTheoDem > 0) {
+                        var phanTramCoc = @((decimal)(ViewBag.TienCocMacDinh ?? 30)) / 100.0;
+                        setDeposit((tongGiaTheoDem * soDem) * phanTramCoc);
+                    }
+                }
+            });
 
             let availabilityRequest;
             async function refreshAvailableRooms() {

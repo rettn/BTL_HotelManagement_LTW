@@ -142,6 +142,12 @@ namespace HotelManagement.Controllers
                 quyDinh = $"Hủy trước {(soNgayTruocNhan < 0 ? 0 : soNgayTruocNhan):0} ngày (< 3 ngày): Theo chính sách không được hoàn lại tiền cọc.";
             }
 
+            var caiDat = await _context.CaiDatHeThongs.FirstOrDefaultAsync();
+            if (!string.IsNullOrWhiteSpace(caiDat?.ChinhSachHuy))
+            {
+                quyDinh = $"{quyDinh}\nChính sách hủy của khách sạn: {caiDat.ChinhSachHuy}";
+            }
+
             decimal soTienHoanGoiY = (datPhong.TienCoc * (decimal)tiLeHoan) / 100m;
 
             return Json(new
@@ -964,6 +970,12 @@ namespace HotelManagement.Controllers
                     TrangThai = p.TrangThai
                 })
                 .ToListAsync();
+
+            var caiDat = await _context.CaiDatHeThongs.FirstOrDefaultAsync();
+            ViewBag.TienCocMacDinh = caiDat?.TienCocMacDinh ?? 30;
+            ViewBag.MaxDatTruoc = caiDat?.MaxDatTruoc ?? 90;
+            ViewBag.GioNhanPhong = caiDat?.GioNhanPhong ?? "14:00";
+            ViewBag.GioTraPhong = caiDat?.GioTraPhong ?? "12:00";
         }
 
         // Cập nhật danh sách phòng khả dụng theo khoảng ngày lưu trú.
@@ -987,6 +999,12 @@ namespace HotelManagement.Controllers
                     TrangThai = p.TrangThai
                 })
                 .ToListAsync();
+
+            var caiDat = await _context.CaiDatHeThongs.FirstOrDefaultAsync();
+            ViewBag.TienCocMacDinh = caiDat?.TienCocMacDinh ?? 30;
+            ViewBag.MaxDatTruoc = caiDat?.MaxDatTruoc ?? 90;
+            ViewBag.GioNhanPhong = caiDat?.GioNhanPhong ?? "14:00";
+            ViewBag.GioTraPhong = caiDat?.GioTraPhong ?? "12:00";
 
             var maPhongDaDat = await _context.ChiTietDatPhongs.AsNoTracking()
                 .Where(c => c.NgayNhan < ngayTra.Date && c.NgayTra > ngayNhan.Date &&
