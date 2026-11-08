@@ -3,6 +3,8 @@
     ViewData["Title"] = "Quản lý ca làm";
     var previous = Model.StartDate.AddDays(Model.IsDayView ? -1 : -7);
     var next = Model.StartDate.AddDays(Model.IsDayView ? 1 : 7);
+    var scheduleStart = Model.IsDayView ? Model.StartDate.AddDays(-(((int)Model.StartDate.DayOfWeek + 6) % 7)) : Model.StartDate;
+    var scheduleEnd = scheduleStart.AddDays(6);
     var weekText = Model.IsDayView ? Model.StartDate.ToString("dddd, dd/MM/yyyy", System.Globalization.CultureInfo.GetCultureInfo("vi-VN")) : $"{Model.StartDate:dd/MM} – {Model.EndDate:dd/MM/yyyy}";
     var dayNames = new[] { (1, "Thứ 2"), (2, "Thứ 3"), (3, "Thứ 4"), (4, "Thứ 5"), (5, "Thứ 6"), (6, "Thứ 7"), (0, "Chủ nhật") };
     string StatusLabel(string value) => value switch { "DaXacNhan" => "Đã xác nhận", "TuChoi" => "Từ chối", _ => "Chờ xác nhận" };
@@ -64,7 +66,7 @@
                         {
                             var assignments=Model.Assignments.Where(x=>x.EmployeeId==employee.Id&&x.Date.Date==date.Date).OrderBy(x=>x.Start).ToList();
                             <td>
-                                @if(assignments.Count==0){<button type="button" class="schedule-empty-cell js-schedule-slot" data-employee-id="@employee.Id" data-date="@date.ToString("yyyy-MM-dd")" data-day="@((int)date.DayOfWeek)" title="Xếp ca cho @employee.Name ngày @date.ToString("dd/MM/yyyy")"><i class="bi bi-plus-circle"></i><span>Xếp ca</span></button>}
+                                @if(assignments.Count==0){<button type="button" class="schedule-empty-cell js-schedule-slot" data-employee-id="@employee.Id" data-date="@date.ToString("yyyy-MM-dd")" data-start-date="@scheduleStart.ToString("yyyy-MM-dd")" data-end-date="@scheduleEnd.ToString("yyyy-MM-dd")" data-day="@((int)date.DayOfWeek)" title="Xếp ca cho @employee.Name ngày @date.ToString("dd/MM/yyyy")"><i class="bi bi-plus-circle"></i><span>Xếp ca</span></button>}
                                 else
                                 {
                                     <div class="schedule-shift-list">
@@ -112,8 +114,8 @@ document.querySelectorAll('.js-schedule-slot').forEach(slot => {
         Array.from(employeeSelect.options).forEach(option => {
             option.selected = option.value === slot.dataset.employeeId;
         });
-        startDate.value = slot.dataset.date;
-        endDate.value = slot.dataset.date;
+        startDate.value = slot.dataset.startDate;
+        endDate.value = slot.dataset.endDate;
         modalElement.querySelectorAll('[name="DaysOfWeek"]').forEach(checkbox => {
             checkbox.checked = checkbox.value === day;
         });
@@ -126,19 +128,19 @@ document.querySelectorAll('.js-schedule-slot').forEach(slot => {
 
 <div class="modal fade schedule-modal" id="createScheduleModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered"><div class="modal-content">
-        <div class="modal-header"><div><h5 class="modal-title fw-bold">Xếp ca làm</h5><div class="small text-muted">Chọn nhiều nhân viên và ngày để xếp lịch hàng loạt.</div></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button></div>
+        <div class="modal-header"><div><h5 class="modal-title fw-bold">Xếp ca làm</h5><div class="small text-muted">Chọn nhiều nhân viên và ngày để xếp lịch hàng loạt.</div></div><button type="button" class="btn-close" data-coreui-dismiss="modal" aria-label="Đóng"></button></div>
         <form asp-action="CreateSchedule" method="post">
             @Html.AntiForgeryToken()
             <div class="modal-body"><div class="row g-3">
                 <div class="col-md-6 schedule-field"><label>Nhân viên <span class="text-danger">*</span></label><select name="EmployeeIds" class="form-select" multiple size="5" required>@foreach(var employee in Model.Employees){<option value="@employee.Id">NV@(employee.Id.ToString("D4")) · @employee.Name · @employee.Position</option>}</select><div class="form-text">Giữ Ctrl để chọn nhiều nhân viên.</div></div>
                 <div class="col-md-6 schedule-field"><label>Ca làm <span class="text-danger">*</span></label><select name="ShiftId" class="form-select" required><option value="">Chọn ca</option>@foreach(var shift in Model.Shifts){<option value="@shift.Id">@shift.Name (@shift.Start.ToString(@"hh\:mm")–@shift.End.ToString(@"hh\:mm"))</option>}</select>
                     <label class="mt-3">Trạng thái</label><select name="Status" class="form-select"><option value="ChoXacNhan">Chờ xác nhận</option><option value="DaXacNhan">Đã xác nhận</option><option value="TuChoi">Từ chối</option></select></div>
-                <div class="col-md-6 schedule-field"><label>Từ ngày</label><input type="date" name="StartDate" value="@Model.StartDate.ToString("yyyy-MM-dd")" class="form-control" required /></div>
-                <div class="col-md-6 schedule-field"><label>Đến ngày</label><input type="date" name="EndDate" value="@Model.EndDate.ToString("yyyy-MM-dd")" class="form-control" required /></div>
+                <div class="col-md-6 schedule-field"><label>Từ ngày</label><input type="date" name="StartDate" value="@scheduleStart.ToString("yyyy-MM-dd")" class="form-control" required /></div>
+                <div class="col-md-6 schedule-field"><label>Đến ngày</label><input type="date" name="EndDate" value="@scheduleEnd.ToString("yyyy-MM-dd")" class="form-control" required /></div>
                 <div class="col-12 schedule-field"><label>Áp dụng vào các ngày</label><div class="schedule-day-picks">@foreach(var day in dayNames){<label><input type="checkbox" name="DaysOfWeek" value="@day.Item1" checked /> @day.Item2</label>}</div><div class="form-text">Lịch tối đa 31 ngày. Hệ thống sẽ từ chối nhân viên có ca bị trùng giờ.</div></div>
                 <div class="col-12 schedule-field"><label>Ghi chú</label><input name="Note" maxlength="250" class="form-control" placeholder="Ghi chú cho ca (nếu có)" /></div>
             </div></div>
-            <div class="modal-footer"><button type="button" class="schedule-btn" data-bs-dismiss="modal">Hủy</button><button type="submit" class="schedule-btn primary"><i class="bi bi-check-lg"></i> Lưu lịch</button></div>
+            <div class="modal-footer"><button type="button" class="schedule-btn" data-coreui-dismiss="modal">Hủy</button><button type="submit" class="schedule-btn primary"><i class="bi bi-check-lg"></i> Lưu lịch</button></div>
         </form>
     </div></div>
 </div>
