@@ -1,6 +1,7 @@
 using HotelManagement.Data;
 using HotelManagement.Models;
 using HotelManagement.Repositories;
+using HotelManagement.Security;
 using HotelManagement.ViewModels;
 using Microsoft.EntityFrameworkCore;
 
@@ -52,7 +53,7 @@ namespace HotelManagement.Services
                     NgayNhanDuKien = model.NgayNhan.Date,
                     NgayTraDuKien = model.NgayTra.Date,
                     TienCoc = model.TienCoc,
-                    GhiChu = model.GhiChu?.Trim(),
+                    GhiChu = RichTextSanitizer.Sanitize(model.GhiChu),
                     TrangThai = "ChoXacNhan"
                 };
 
@@ -138,7 +139,7 @@ namespace HotelManagement.Services
                 datPhong.NgayNhanDuKien = model.NgayNhan.Date;
                 datPhong.NgayTraDuKien = model.NgayTra.Date;
                 datPhong.TienCoc = model.TienCoc;
-                datPhong.GhiChu = model.GhiChu?.Trim();
+                datPhong.GhiChu = RichTextSanitizer.Sanitize(model.GhiChu);
 
                 _context.ChiTietDatPhongs.RemoveRange(
                     datPhong.ChiTietDatPhongs);

@@ -1,5 +1,6 @@
 using HotelManagement.Data;
 using HotelManagement.Models;
+using HotelManagement.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -68,7 +69,7 @@ namespace HotelManagement.Controllers
             settings.DiaChi = model.DiaChi?.Trim();
             settings.SoDienThoai = model.SoDienThoai?.Trim();
             settings.Email = model.Email?.Trim();
-            settings.ThongTinHoaDon = model.ThongTinHoaDon?.Trim();
+            settings.ThongTinHoaDon = RichTextSanitizer.Sanitize(model.ThongTinHoaDon);
 
             if (XoaHinhAnh == true)
             {

@@ -12,6 +12,9 @@ public static partial class RichTextSanitizer
         @"</?\s*(p|br|strong|b|em|i|u|s|ul|ol|li|h1|h2|h3|blockquote|div|span|a)\b[^>]*>",
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
+    private static readonly Regex RemainingTags = new(
+        @"<[^>]*>", RegexOptions.Compiled);
+
     public static string Sanitize(string? html)
     {
         if (string.IsNullOrWhiteSpace(html)) return string.Empty;
@@ -30,6 +33,7 @@ public static partial class RichTextSanitizer
             }
             return closing ? $"</{name}>" : $"<{name}>";
         });
+        safe = RemainingTags.Replace(safe, string.Empty);
         return safe.Trim();
     }
 }

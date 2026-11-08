@@ -106,7 +106,7 @@
         <div class="mb-4">
             <span class="text-muted small d-block mb-1">Ghi chú</span>
             <div class="p-3 bg-light rounded-3 text-secondary">
-                @(string.IsNullOrEmpty(Model.GhiChu) ? "Không có ghi chú bổ sung." : Model.GhiChu)
+                @if (string.IsNullOrEmpty(Model.GhiChu)) { <text>Không có ghi chú bổ sung.</text> } else { @Html.Raw(HotelManagement.Security.RichTextSanitizer.Sanitize(Model.GhiChu)) }
             </div>
         </div>
 

@@ -42,7 +42,7 @@
                 @if (!string.IsNullOrEmpty(thongTinThue))
                 {
                     <div class="mt-1 text-secondary">
-                        <small><i>@thongTinThue</i></small>
+                        <small><i>@Html.Raw(HotelManagement.Security.RichTextSanitizer.Sanitize(thongTinThue))</i></small>
                     </div>
                 }
             </div>

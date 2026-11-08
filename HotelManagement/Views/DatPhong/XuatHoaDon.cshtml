@@ -247,7 +247,7 @@
             @if (!string.IsNullOrEmpty(hotelInfo?.ThongTinHoaDon))
             {
                 <div class="text-end text-muted small" style="font-size: 11.5px; max-width: 280px;">
-                    @hotelInfo.ThongTinHoaDon
+                    @Html.Raw(HotelManagement.Security.RichTextSanitizer.Sanitize(hotelInfo.ThongTinHoaDon))
                 </div>
             }
         </div>

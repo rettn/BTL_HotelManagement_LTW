@@ -3,8 +3,8 @@
 </style>
 <script>
 (() => {
-    const source = document.querySelector('textarea[name="MoTa"]');
-    if (!source || source.dataset.richReady) return;
+    document.querySelectorAll('textarea[data-rich-text-editor]').forEach(source => {
+    if (source.dataset.richReady) return;
     source.dataset.richReady = 'true'; source.classList.add('rich-editor-original');
     const wrapper = document.createElement('div'); wrapper.className = 'rich-editor';
     const toolbar = document.createElement('div'); toolbar.className = 'rich-editor-toolbar'; toolbar.setAttribute('role','toolbar');
@@ -26,5 +26,6 @@
     function sync(){const t=document.createElement('template');t.innerHTML=editor.innerHTML;source.value=[...clean(t.content).childNodes].map(n=>n.outerHTML||n.textContent).join('');source.dispatchEvent(new Event('input',{bubbles:true}));}
     editor.addEventListener('input',sync);editor.addEventListener('paste',event=>{event.preventDefault();const t=document.createElement('template');t.innerHTML=event.clipboardData.getData('text/html')||'';const safe=clean(t.content);if(!safe.childNodes.length)safe.append(document.createTextNode(event.clipboardData.getData('text/plain')));const holder=document.createElement('div');holder.append(safe);document.execCommand('insertHTML',false,holder.innerHTML);sync();});
     source.closest('form')?.addEventListener('submit',sync);
+    });
 })();
 </script>

@@ -107,7 +107,7 @@
 
         <div class="form-section">
             <div class="form-section-title"><i class="bi bi-chat-left-text"></i> Ghi chú</div>
-            <textarea asp-for="GhiChu" class="form-control" rows="3" placeholder="Thông tin bổ sung (nếu có)"></textarea>
+            <textarea asp-for="GhiChu" class="form-control" rows="3" data-rich-text-editor="true" placeholder="Thông tin bổ sung (nếu có)"></textarea>
             <span asp-validation-for="GhiChu" class="text-danger"></span>
         </div>
 
@@ -411,6 +411,7 @@
 }
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <partial name="_RichTextEditor" />
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>

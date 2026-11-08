@@ -122,7 +122,7 @@
 
                         <div class="mb-4">
                             <label class="form-label fw-bold">Thông tin pháp nhân & Xuất hóa đơn VAT</label>
-                            <textarea class="form-control" asp-for="ThongTinHoaDon" rows="3" placeholder="Ví dụ: Công ty TNHH Du lịch & Khách sạn Grand Lotus - MST: 0108998899 - Tài khoản Vietcombank: 1012345678"></textarea>
+                            <textarea class="form-control" asp-for="ThongTinHoaDon" rows="3" data-rich-text-editor="true" placeholder="Ví dụ: Công ty TNHH Du lịch & Khách sạn Grand Lotus - MST: 0108998899 - Tài khoản Vietcombank: 1012345678"></textarea>
                             <div class="form-text">Thông tin này sẽ được in dưới chân hóa đơn dịch vụ gửi cho khách hàng.</div>
                         </div>
 
@@ -206,4 +206,5 @@
             });
         }
     </script>
+    <partial name="_RichTextEditor" />
 }
