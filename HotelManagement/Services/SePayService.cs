@@ -100,7 +100,8 @@ namespace HotelManagement.Services
             if (soDem <= 0) soDem = 1;
             var donGia = datPhong.ChiTietDatPhongs.FirstOrDefault()?.DonGia ?? 0;
             var tongTien = donGia * soDem;
-            var tiLe = settings.TiLeThanhToanPercent > 0 ? settings.TiLeThanhToanPercent : 100;
+            var caiDat = await _context.CaiDatHeThongs.FirstOrDefaultAsync();
+            var tiLe = Math.Clamp(caiDat?.TienCocMacDinh ?? 30, 0, 100);
             var soTienCanThanhToan = requiredAmount ?? (tongTien * 1.10m * tiLe / 100m);
 
             // Nếu chưa nhập SePay API Key
@@ -239,7 +240,8 @@ namespace HotelManagement.Services
             if (soDem <= 0) soDem = 1;
             var donGia = datPhong.ChiTietDatPhongs.FirstOrDefault()?.DonGia ?? 0;
             var tongTien = donGia * soDem;
-            var tiLe = settings.TiLeThanhToanPercent > 0 ? settings.TiLeThanhToanPercent : 100;
+            var caiDat = await _context.CaiDatHeThongs.FirstOrDefaultAsync();
+            var tiLe = Math.Clamp(caiDat?.TienCocMacDinh ?? 30, 0, 100);
             var amount = tongTien * 1.10m * tiLe / 100m;
 
             datPhong.TrangThai = "DaCoc";

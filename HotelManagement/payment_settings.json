@@ -5,6 +5,5 @@
   "TenChuTaiKhoan": "DANG THE TOAN",
   "SePayApiKey": "HXOD7WIX2OK1T7YX0PK8BILV6PCYVQMUMWCRAPMAVQERQZOJBIGTOR0FKXPS5NLF",
   "SePayApiUrl": "https://my.sepay.vn/userapi/transactions/list",
-  "NoiDungPrefix": "DP",
-  "TiLeThanhToanPercent": 10
+  "NoiDungPrefix": "DP"
 }
