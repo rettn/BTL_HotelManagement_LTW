@@ -12,7 +12,7 @@
         </div>
 
         <h2>Đăng nhập</h2>
-        <p class="login-subtitle">Đăng nhập tài khoản để đặt phòng và trải nghiệm dịch vụ khách sạn</p>
+        @* <p class="login-subtitle">Đăng nhập tài khoản để đặt phòng và trải nghiệm dịch vụ khách sạn</p> *@
 
         @if (TempData["Error"] != null)
         {
@@ -35,7 +35,7 @@
             </div>
         }
 
-        <!-- NÚT DÀNH CHO KHÁCH HÀNG: ĐIỀN FORM ĐẶT PHÒNG KHÔNG CẦN ĐĂNG NHẬP -->
+        @* <!-- NÚT DÀNH CHO KHÁCH HÀNG: ĐIỀN FORM ĐẶT PHÒNG KHÔNG CẦN ĐĂNG NHẬP -->
         <div class="guest-booking-callout mb-4">
             <div class="callout-icon">
                 <i class="fa-solid fa-calendar-check"></i>
@@ -51,7 +51,7 @@
 
         <div class="divider">
             <span>HOẶC ĐĂNG NHẬP QUẢN TRỊ / NHÂN SỰ</span>
-        </div>
+        </div> *@
 
         <!-- FORM ĐĂNG NHẬP TRUYỀN THỐNG -->
         <form asp-controller="Account" asp-action="Login" method="post" class="traditional-login-form">
@@ -101,14 +101,37 @@
 @section Styles {
     <style>
         .login-page {
+            position: relative;
+            isolation: isolate;
+            overflow: hidden;
             min-height: 100vh;
             display: grid;
             place-items: center;
             padding: 32px 16px;
-            background: linear-gradient(135deg, #f7f4ee 0%, #ece5da 100%);
+            background: #17212e;
+        }
+
+        .login-page::before {
+            content: "";
+            position: absolute;
+            inset: -10px;
+            z-index: -2;
+            background: url('/images/anhNenLogin.jpg') center center / cover no-repeat;
+            filter: blur(3px);
+            transform: scale(1.015);
+        }
+
+        .login-page::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            z-index: -1;
+            background: rgba(14, 24, 38, 0.18);
         }
 
         .login-card {
+            position: relative;
+            z-index: 1;
             width: 100%;
             max-width: 450px;
             padding: 40px 36px;
