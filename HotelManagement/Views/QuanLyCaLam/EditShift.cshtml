@@ -1,0 +1,17 @@
+@model HotelManagement.ViewModels.ShiftTemplateViewModel
+@{
+    ViewData["Title"] = "Sửa ca làm";
+}
+<div class="container-fluid px-0"><div class="mb-4"><h2 class="fw-bold">Sửa loại ca</h2><p class="text-muted">Cập nhật khung giờ và trạng thái của ca làm.</p></div>
+    <div class="card border-0 shadow-sm" style="max-width:760px;border-radius:13px"><div class="card-body p-4">
+        <form asp-action="EditShift" method="post">@Html.AntiForgeryToken()<input type="hidden" asp-for="Id"/><div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+            <div class="row g-3"><div class="col-md-6"><label asp-for="Name" class="form-label">Tên ca</label><input asp-for="Name" class="form-control"/><span asp-validation-for="Name" class="text-danger small"></span></div>
+            <div class="col-md-3"><label asp-for="Start" class="form-label">Bắt đầu</label><input asp-for="Start" type="time" value="@Model.Start.ToString(@"hh\:mm")" class="form-control"/></div>
+            <div class="col-md-3"><label asp-for="End" class="form-label">Kết thúc</label><input asp-for="End" type="time" value="@Model.End.ToString(@"hh\:mm")" class="form-control"/></div>
+            <div class="col-md-4"><label asp-for="Color" class="form-label">Màu hiển thị</label><input asp-for="Color" type="color" class="form-control form-control-color w-100"/><span asp-validation-for="Color" class="text-danger small"></span></div>
+            <div class="col-md-8"><label asp-for="Note" class="form-label">Ghi chú</label><input asp-for="Note" class="form-control"/></div>
+            <div class="col-12 form-check ms-2"><input asp-for="Active" class="form-check-input"/><label asp-for="Active" class="form-check-label">Đang sử dụng và có thể xếp lịch</label></div></div>
+            <div class="d-flex justify-content-end gap-2 mt-4"><a asp-action="Ca" class="btn btn-light border">Hủy</a><button class="btn btn-success"><i class="bi bi-check-lg me-1"></i>Lưu thay đổi</button></div>
+        </form>
+    </div></div>
+</div>

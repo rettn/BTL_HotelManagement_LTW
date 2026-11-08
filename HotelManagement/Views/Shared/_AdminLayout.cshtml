@@ -187,8 +187,11 @@
                         <div class="sidebar-section-label">NHÂN SỰ</div>
                         <a asp-controller="NhanVien" asp-action="Index"
                            class="sidebar-link @(currentController.Equals("NhanVien", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
-                            <i class="bi bi-person-badge"></i>
-                            <span>Quản lý nhân sự</span>
+                            <i class="bi bi-person-badge"></i><span>Quản lý nhân sự</span>
+                        </a>
+                        <a asp-controller="QuanLyCaLam" asp-action="Index"
+                           class="sidebar-link @(currentController.Equals("QuanLyCaLam", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
+                            <i class="bi bi-calendar-week"></i><span>Quản lý ca làm</span>
                         </a>
                     }
                     @if (CanAccess("payroll"))

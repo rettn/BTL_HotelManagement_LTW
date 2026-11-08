@@ -1,0 +1,144 @@
+@model HotelManagement.ViewModels.ScheduleCalendarViewModel
+@{
+    ViewData["Title"] = "Quản lý ca làm";
+    var previous = Model.StartDate.AddDays(Model.IsDayView ? -1 : -7);
+    var next = Model.StartDate.AddDays(Model.IsDayView ? 1 : 7);
+    var weekText = Model.IsDayView ? Model.StartDate.ToString("dddd, dd/MM/yyyy", System.Globalization.CultureInfo.GetCultureInfo("vi-VN")) : $"{Model.StartDate:dd/MM} – {Model.EndDate:dd/MM/yyyy}";
+    var dayNames = new[] { (1, "Thứ 2"), (2, "Thứ 3"), (3, "Thứ 4"), (4, "Thứ 5"), (5, "Thứ 6"), (6, "Thứ 7"), (0, "Chủ nhật") };
+    string StatusLabel(string value) => value switch { "DaXacNhan" => "Đã xác nhận", "TuChoi" => "Từ chối", _ => "Chờ xác nhận" };
+}
+<style>
+.schedule-page{color:#263449}.schedule-head,.schedule-heading,.schedule-toolbar,.schedule-filters,.schedule-date-nav,.schedule-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.schedule-head{margin-bottom:18px}.schedule-head h2,.schedule-heading h3{margin:0;font-weight:700}.schedule-head p{margin:4px 0 0;color:#748198}.schedule-actions{justify-content:flex-end}.schedule-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:9px 13px;border:1px solid #dce3ed;border-radius:8px;background:#fff;color:#40516a;text-decoration:none;white-space:nowrap}.schedule-btn:hover{background:#f4f8fb;color:#198754}.schedule-btn.primary{background:#198754;border-color:#198754;color:#fff}.schedule-btn.primary:hover{background:#157347;color:#fff}.schedule-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}.schedule-stat{position:relative;padding:14px 16px;border:1px solid #e2e8f0;border-radius:11px;background:#fff}.schedule-stat span{display:block;color:#718096;font-size:12px}.schedule-stat strong{display:block;margin-top:4px;font-size:22px}.schedule-stat i{position:absolute;right:16px;top:14px;color:#198754;font-size:20px}.schedule-panel{overflow:hidden;border:1px solid #e2e8f0;border-radius:13px;background:#fff}.schedule-toolbar{padding:13px 15px;border-bottom:1px solid #edf0f5}.schedule-date-nav{justify-content:flex-start}.schedule-period{min-width:220px;text-align:center;font-weight:700;color:#34445a}.schedule-toggle{display:inline-flex;padding:3px;border:1px solid #dce3ed;border-radius:8px;background:#f6f8fa}.schedule-toggle a{padding:7px 12px;border-radius:6px;color:#637187;text-decoration:none;font-size:13px}.schedule-toggle a.active{background:#198754;color:#fff}.schedule-filters{justify-content:flex-start;padding:12px 15px;background:#fbfcfd;border-bottom:1px solid #edf0f5}.schedule-filters input,.schedule-filters select{height:38px;min-width:150px;border:1px solid #dce3ed;border-radius:8px;padding:0 10px;background:#fff;color:#40516a}.schedule-filters input[type=search]{width:min(360px,100%)}.schedule-calendar-wrap{overflow:auto}.schedule-calendar{width:100%;min-width:1040px;border-collapse:separate;border-spacing:0;table-layout:fixed}.schedule-calendar th{padding:12px 10px;background:#edf7f1;color:#53647a;text-align:left;font-size:12px;border-bottom:1px solid #dfe9e3}.schedule-calendar th:first-child{width:210px;position:sticky;left:0;z-index:2}.schedule-calendar td{height:112px;padding:8px;border-bottom:1px solid #edf0f5;border-left:1px solid #f0f2f5;vertical-align:top;background:#fff}.schedule-calendar td:first-child{position:sticky;left:0;z-index:1;width:210px;background:#fbfcfd;border-left:0}.schedule-employee{font-weight:700;color:#34445a}.schedule-employee small{display:block;margin-top:4px;color:#8290a5;font-weight:400}.schedule-day-head{display:flex;justify-content:space-between;gap:8px}.schedule-day-head.today{color:#198754}.schedule-day-head small{display:block;margin-top:3px;color:#8190a4;font-weight:400}.schedule-shift-list{display:grid;gap:6px}.schedule-shift-card{padding:7px 8px;border:1px solid #e5ebe7;border-left:4px solid var(--shift-color,#198754);border-radius:7px;background:#fff;box-shadow:0 2px 5px rgba(30,50,40,.04)}.schedule-shift-card.pending{background:#fff9e9;border-color:#f4e4b6;border-left-color:#e5a400}.schedule-shift-card.confirmed{background:#eef8f1;border-color:#d3ebda;border-left-color:#198754}.schedule-shift-card.rejected{background:#fff1f1;border-color:#f2d0d0;border-left-color:#dc3545;opacity:.85}.schedule-shift-time{font-size:11px;font-weight:700;color:#34445a;white-space:nowrap}.schedule-shift-name{font-size:12px;font-weight:650;color:#3c4a5d;overflow-wrap:anywhere}.schedule-shift-status{display:inline-block;margin-top:4px;padding:2px 6px;border-radius:10px;background:#f0f2f5;color:#617086;font-size:10px}.schedule-shift-actions{display:flex;align-items:center;gap:5px;margin-top:5px}.schedule-shift-actions select{width:100%;min-width:0;height:26px;padding:0 4px;border:1px solid #dce3ed;border-radius:5px;background:#fff;color:#59677a;font-size:10px}.schedule-icon-btn{display:grid;place-items:center;flex:none;width:26px;height:26px;border:1px solid #dce3ed;border-radius:5px;background:#fff;color:#526174;text-decoration:none;font-size:12px}.schedule-icon-btn:hover{color:#198754}.schedule-empty-cell{display:flex;width:100%;height:100%;min-height:94px;align-items:center;justify-content:center;gap:6px;border:0;border-radius:7px;background:transparent;padding:14px;color:#a6b1bf;text-align:center;cursor:pointer;transition:background .15s,color .15s}.schedule-empty-cell:hover,.schedule-empty-cell:focus-visible{background:#eef8f1;color:#198754;outline:2px solid #b7dfc5;outline-offset:-2px}.schedule-empty-cell span{opacity:0;transition:opacity .15s}.schedule-empty-cell:hover span,.schedule-empty-cell:focus-visible span{opacity:1}.schedule-foot{padding:11px 15px;color:#748198;font-size:12px}.schedule-modal .modal-content{border:0;border-radius:14px;overflow:hidden}.schedule-modal .modal-header{background:#f8fafc}.schedule-modal .modal-body{padding:20px}.schedule-field label{display:block;margin-bottom:5px;color:#53647a;font-size:12px;font-weight:650}.schedule-field .form-control,.schedule-field .form-select{min-height:40px;border-color:#dce3ed;border-radius:8px}.schedule-day-picks{display:flex;gap:8px;flex-wrap:wrap}.schedule-day-picks label{display:flex;align-items:center;gap:5px;padding:6px 9px;border:1px solid #e2e8f0;border-radius:7px;background:#fff;font-size:12px}.schedule-empty{padding:56px 15px;text-align:center;color:#8290a5}.schedule-empty i{display:block;margin-bottom:9px;font-size:34px;color:#aab4c0}
+@@media(max-width:850px){.schedule-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.schedule-head{align-items:flex-start}.schedule-actions{width:100%;justify-content:flex-start}.schedule-period{min-width:170px}}
+</style>
+<div class="schedule-page">
+    <div class="schedule-head">
+        <div><h2>Quản lý ca làm</h2><p>Lập lịch tuần, theo dõi trạng thái và phân công ca cho nhân viên</p></div>
+        <div class="schedule-actions">
+            <a asp-action="Ca" class="schedule-btn"><i class="bi bi-clock-history"></i> Cấu hình ca</a>
+            <button type="button" class="schedule-btn primary" data-bs-toggle="modal" data-bs-target="#createScheduleModal"><i class="bi bi-calendar-plus"></i> Xếp ca</button>
+        </div>
+    </div>
+    @if(TempData["SuccessMessage"] is string success){<div class="alert alert-success">@success</div>}
+    @if(TempData["ErrorMessage"] is string error){<div class="alert alert-warning">@error</div>}
+    <div class="schedule-summary">
+        <div class="schedule-stat"><span>Tổng ca trong kỳ</span><strong>@Model.TotalAssignments</strong><i class="bi bi-calendar2-week"></i></div>
+        <div class="schedule-stat"><span>Đã xác nhận</span><strong>@Model.ConfirmedCount</strong><i class="bi bi-check-circle"></i></div>
+        <div class="schedule-stat"><span>Chờ xác nhận</span><strong>@Model.PendingCount</strong><i class="bi bi-hourglass-split"></i></div>
+        <div class="schedule-stat"><span>Từ chối</span><strong>@Model.RejectedCount</strong><i class="bi bi-x-circle"></i></div>
+    </div>
+    <section class="schedule-panel">
+        <div class="schedule-toolbar">
+            <div class="schedule-date-nav">
+                <a class="schedule-btn" asp-action="Index" asp-route-weekStart="@previous.ToString("yyyy-MM-dd")" asp-route-dayView="@Model.IsDayView" asp-route-search="@Model.Search" asp-route-status="@Model.StatusFilter" asp-route-employeeId="@Model.EmployeeFilter" aria-label="Kỳ trước"><i class="bi bi-chevron-left"></i></a>
+                <a class="schedule-btn" asp-action="Index" asp-route-weekStart="@DateTime.Today.ToString("yyyy-MM-dd")" asp-route-dayView="@Model.IsDayView" asp-route-search="@Model.Search" asp-route-status="@Model.StatusFilter" asp-route-employeeId="@Model.EmployeeFilter">Hôm nay</a>
+                <a class="schedule-btn" asp-action="Index" asp-route-weekStart="@next.ToString("yyyy-MM-dd")" asp-route-dayView="@Model.IsDayView" asp-route-search="@Model.Search" asp-route-status="@Model.StatusFilter" asp-route-employeeId="@Model.EmployeeFilter" aria-label="Kỳ sau"><i class="bi bi-chevron-right"></i></a>
+                <strong class="schedule-period">@weekText</strong>
+            </div>
+            <div class="schedule-toggle">
+                <a asp-action="Index" asp-route-weekStart="@Model.StartDate.ToString("yyyy-MM-dd")" asp-route-dayView="true" asp-route-search="@Model.Search" asp-route-status="@Model.StatusFilter" asp-route-employeeId="@Model.EmployeeFilter" class="@(Model.IsDayView ? "active" : "")">Ngày</a>
+                <a asp-action="Index" asp-route-weekStart="@Model.StartDate.ToString("yyyy-MM-dd")" asp-route-dayView="false" asp-route-search="@Model.Search" asp-route-status="@Model.StatusFilter" asp-route-employeeId="@Model.EmployeeFilter" class="@(!Model.IsDayView ? "active" : "")">Tuần</a>
+            </div>
+        </div>
+        <form asp-action="Index" method="get" class="schedule-filters">
+            <input type="hidden" name="weekStart" value="@Model.StartDate.ToString("yyyy-MM-dd")" />
+            <input type="hidden" name="dayView" value="@Model.IsDayView.ToString().ToLowerInvariant()" />
+            <input type="search" name="search" value="@Model.Search" placeholder="Tìm nhân viên, chức vụ..." />
+            <select name="employeeId"><option value="">Tất cả nhân viên</option>@foreach(var employee in Model.Employees){<option value="@employee.Id" selected="@(Model.EmployeeFilter==employee.Id)">@employee.Name</option>}</select>
+            <select name="status"><option value="">Mọi trạng thái</option><option value="ChoXacNhan" selected="@(Model.StatusFilter=="ChoXacNhan")">Chờ xác nhận</option><option value="DaXacNhan" selected="@(Model.StatusFilter=="DaXacNhan")">Đã xác nhận</option><option value="TuChoi" selected="@(Model.StatusFilter=="TuChoi")">Từ chối</option></select>
+            <button class="schedule-btn primary" type="submit"><i class="bi bi-funnel"></i> Lọc</button>
+            <a asp-action="Index" asp-route-weekStart="@Model.StartDate.ToString("yyyy-MM-dd")" asp-route-dayView="@Model.IsDayView" class="schedule-btn">Xóa lọc</a>
+        </form>
+        @if(Model.Employees.Count==0){<div class="schedule-empty"><i class="bi bi-people"></i>Không có nhân viên đang làm việc phù hợp bộ lọc.</div>}
+        else if(Model.Shifts.Count==0){<div class="schedule-empty"><i class="bi bi-clock"></i>Chưa có ca làm. <a asp-action="Ca">Tạo danh mục ca</a> trước khi xếp lịch.</div>}
+        else
+        {
+            <div class="schedule-calendar-wrap">
+                <table class="schedule-calendar">
+                    <thead><tr><th>Nhân viên</th>@foreach(var date in Model.Dates){<th><div class="schedule-day-head @(date.Date==DateTime.Today?"today":"")"><span>@date.ToString("ddd",System.Globalization.CultureInfo.GetCultureInfo("vi-VN"))<small>@date.ToString("dd/MM")</small></span><small>@Model.Assignments.Count(x=>x.Date.Date==date.Date) ca</small></div></th>}</tr></thead>
+                    <tbody>
+                    @foreach(var employee in Model.Employees)
+                    {
+                        <tr><td><div class="schedule-employee">@employee.Name<small>@employee.Position · NV@(employee.Id.ToString("D4"))</small></div></td>
+                        @foreach(var date in Model.Dates)
+                        {
+                            var assignments=Model.Assignments.Where(x=>x.EmployeeId==employee.Id&&x.Date.Date==date.Date).OrderBy(x=>x.Start).ToList();
+                            <td>
+                                @if(assignments.Count==0){<button type="button" class="schedule-empty-cell js-schedule-slot" data-employee-id="@employee.Id" data-date="@date.ToString("yyyy-MM-dd")" data-day="@((int)date.DayOfWeek)" title="Xếp ca cho @employee.Name ngày @date.ToString("dd/MM/yyyy")"><i class="bi bi-plus-circle"></i><span>Xếp ca</span></button>}
+                                else
+                                {
+                                    <div class="schedule-shift-list">
+                                    @foreach(var item in assignments)
+                                    {
+                                        var stateClass=item.Status=="DaXacNhan"?"confirmed":item.Status=="TuChoi"?"rejected":"pending";
+                                        <article class="schedule-shift-card @stateClass" style="--shift-color:@item.Color">
+                                            <div class="schedule-shift-time">@item.Start.ToString(@"hh\:mm") – @item.End.ToString(@"hh\:mm")</div>
+                                            <div class="schedule-shift-name">@item.ShiftName</div>
+                                            <span class="schedule-shift-status">@StatusLabel(item.Status)</span>
+                                            <div class="schedule-shift-actions">
+                                                <form asp-action="UpdateStatus" method="post" class="flex-grow-1">
+                                                    @Html.AntiForgeryToken()<input type="hidden" name="id" value="@item.Id"/><input type="hidden" name="weekStart" value="@Model.StartDate.ToString("yyyy-MM-dd")"/>
+                                                    <select name="status" aria-label="Trạng thái ca" onchange="this.form.submit()"><option value="ChoXacNhan" selected="@(item.Status=="ChoXacNhan")">Chờ</option><option value="DaXacNhan" selected="@(item.Status=="DaXacNhan")">Xác nhận</option><option value="TuChoi" selected="@(item.Status=="TuChoi")">Từ chối</option></select>
+                                                </form>
+                                                <a asp-action="EditSchedule" asp-route-id="@item.Id" class="schedule-icon-btn" title="Sửa ca"><i class="bi bi-pencil"></i></a>
+                                                <form asp-action="DeleteSchedule" method="post" onsubmit="return confirm('Xóa ca này khỏi lịch?')">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@item.Id"/><input type="hidden" name="weekStart" value="@Model.StartDate.ToString("yyyy-MM-dd")"/><button class="schedule-icon-btn text-danger" type="submit" title="Xóa ca"><i class="bi bi-trash"></i></button></form>
+                                            </div>
+                                        </article>
+                                    }
+                                    </div>
+                                }
+                            </td>
+                        }
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+            <div class="schedule-foot">Đang xem @Model.Employees.Count nhân viên · @Model.Dates.Count ngày · Ca qua đêm được tính sang ngày kế tiếp.</div>
+        }
+    </section>
+</div>
+
+@section Scripts {
+<script>
+document.querySelectorAll('.js-schedule-slot').forEach(slot => {
+    slot.addEventListener('click', () => {
+        const modalElement = document.getElementById('createScheduleModal');
+        const employeeSelect = modalElement.querySelector('[name="EmployeeIds"]');
+        const startDate = modalElement.querySelector('[name="StartDate"]');
+        const endDate = modalElement.querySelector('[name="EndDate"]');
+        const day = slot.dataset.day;
+
+        Array.from(employeeSelect.options).forEach(option => {
+            option.selected = option.value === slot.dataset.employeeId;
+        });
+        startDate.value = slot.dataset.date;
+        endDate.value = slot.dataset.date;
+        modalElement.querySelectorAll('[name="DaysOfWeek"]').forEach(checkbox => {
+            checkbox.checked = checkbox.value === day;
+        });
+
+        coreui.Modal.getOrCreateInstance(modalElement).show();
+    });
+});
+</script>
+}
+
+<div class="modal fade schedule-modal" id="createScheduleModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered"><div class="modal-content">
+        <div class="modal-header"><div><h5 class="modal-title fw-bold">Xếp ca làm</h5><div class="small text-muted">Chọn nhiều nhân viên và ngày để xếp lịch hàng loạt.</div></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button></div>
+        <form asp-action="CreateSchedule" method="post">
+            @Html.AntiForgeryToken()
+            <div class="modal-body"><div class="row g-3">
+                <div class="col-md-6 schedule-field"><label>Nhân viên <span class="text-danger">*</span></label><select name="EmployeeIds" class="form-select" multiple size="5" required>@foreach(var employee in Model.Employees){<option value="@employee.Id">NV@(employee.Id.ToString("D4")) · @employee.Name · @employee.Position</option>}</select><div class="form-text">Giữ Ctrl để chọn nhiều nhân viên.</div></div>
+                <div class="col-md-6 schedule-field"><label>Ca làm <span class="text-danger">*</span></label><select name="ShiftId" class="form-select" required><option value="">Chọn ca</option>@foreach(var shift in Model.Shifts){<option value="@shift.Id">@shift.Name (@shift.Start.ToString(@"hh\:mm")–@shift.End.ToString(@"hh\:mm"))</option>}</select>
+                    <label class="mt-3">Trạng thái</label><select name="Status" class="form-select"><option value="ChoXacNhan">Chờ xác nhận</option><option value="DaXacNhan">Đã xác nhận</option><option value="TuChoi">Từ chối</option></select></div>
+                <div class="col-md-6 schedule-field"><label>Từ ngày</label><input type="date" name="StartDate" value="@Model.StartDate.ToString("yyyy-MM-dd")" class="form-control" required /></div>
+                <div class="col-md-6 schedule-field"><label>Đến ngày</label><input type="date" name="EndDate" value="@Model.EndDate.ToString("yyyy-MM-dd")" class="form-control" required /></div>
+                <div class="col-12 schedule-field"><label>Áp dụng vào các ngày</label><div class="schedule-day-picks">@foreach(var day in dayNames){<label><input type="checkbox" name="DaysOfWeek" value="@day.Item1" checked /> @day.Item2</label>}</div><div class="form-text">Lịch tối đa 31 ngày. Hệ thống sẽ từ chối nhân viên có ca bị trùng giờ.</div></div>
+                <div class="col-12 schedule-field"><label>Ghi chú</label><input name="Note" maxlength="250" class="form-control" placeholder="Ghi chú cho ca (nếu có)" /></div>
+            </div></div>
+            <div class="modal-footer"><button type="button" class="schedule-btn" data-bs-dismiss="modal">Hủy</button><button type="submit" class="schedule-btn primary"><i class="bi bi-check-lg"></i> Lưu lịch</button></div>
+        </form>
+    </div></div>
+</div>

@@ -1,0 +1,31 @@
+@using HotelManagement.Models
+@{
+    ViewData["Title"] = "Cấu hình ca làm";
+    var shifts = ViewBag.CaLams as List<CaLamViec> ?? new();
+}
+<style>
+.shift-config-page{color:#263449}.shift-config-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px}.shift-config-head h2{margin:0;font-size:24px;font-weight:700}.shift-config-head p{margin:4px 0 0;color:#748198}.shift-config-panel{margin-bottom:15px;overflow:hidden;border:1px solid #e2e8f0;border-radius:13px;background:#fff}.shift-config-title{padding:14px 17px;border-bottom:1px solid #edf0f5}.shift-config-title h3{margin:0;font-size:16px;font-weight:700}.shift-config-body{padding:17px}.shift-config-form{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:12px;align-items:end}.shift-config-field label{display:block;margin-bottom:5px;color:#53647a;font-size:12px;font-weight:650}.shift-config-field .form-control{min-height:40px;border-color:#dce3ed;border-radius:8px}.shift-config-table{width:100%;border-collapse:collapse}.shift-config-table th{padding:12px;background:#edf7f1;color:#53647a;text-align:left;font-size:12px;white-space:nowrap}.shift-config-table td{padding:12px;border-top:1px solid #edf0f5;vertical-align:middle;font-size:13px}.shift-config-color{display:inline-block;width:13px;height:13px;margin-right:7px;border-radius:50%;vertical-align:-2px}.shift-config-actions{display:flex;justify-content:flex-end;gap:6px}.shift-config-empty{padding:38px;text-align:center;color:#8290a5}
+@@media(max-width:950px){.shift-config-form{grid-template-columns:repeat(2,minmax(0,1fr))}.shift-config-form .span-2{grid-column:span 2}}
+</style>
+<div class="shift-config-page">
+    <div class="shift-config-head"><div><h2>Danh mục ca làm</h2><p>Thiết lập giờ bắt đầu, kết thúc và màu hiển thị của từng ca</p></div><a asp-action="Index" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Quay lại lịch</a></div>
+    @if(TempData["SuccessMessage"] is string success){<div class="alert alert-success">@success</div>}
+    @if(TempData["ErrorMessage"] is string error){<div class="alert alert-warning">@error</div>}
+    <section class="shift-config-panel"><div class="shift-config-title"><h3><i class="bi bi-plus-circle me-2 text-success"></i>Tạo loại ca</h3></div><div class="shift-config-body">
+        <form asp-action="CreateShift" method="post" class="shift-config-form">
+            @Html.AntiForgeryToken()
+            <div class="shift-config-field"><label for="Name">Tên ca</label><input id="Name" name="Name" maxlength="80" class="form-control" placeholder="Ví dụ: Ca sáng" required /></div>
+            <div class="shift-config-field"><label for="Start">Bắt đầu</label><input id="Start" name="Start" type="time" value="08:00" class="form-control" required /></div>
+            <div class="shift-config-field"><label for="End">Kết thúc</label><input id="End" name="End" type="time" value="16:00" class="form-control" required /></div>
+            <div class="shift-config-field"><label for="Color">Màu ca</label><input id="Color" name="Color" type="color" value="#198754" class="form-control form-control-color w-100" /></div>
+            <button class="btn btn-success" type="submit"><i class="bi bi-check-lg me-1"></i>Tạo ca</button>
+            <div class="shift-config-field span-2"><label for="Note">Ghi chú</label><input id="Note" name="Note" maxlength="250" class="form-control" placeholder="Ghi chú tùy chọn" /></div>
+        </form>
+    </div></section>
+    <section class="shift-config-panel"><div class="shift-config-title"><h3>Các ca đã cấu hình <span class="text-muted fw-normal">(@shifts.Count)</span></h3></div>
+        @if(shifts.Count==0){<div class="shift-config-empty"><i class="bi bi-clock fs-3 d-block mb-2"></i>Chưa có ca làm nào. Tạo loại ca đầu tiên ở phía trên.</div>}
+        else{<div class="table-responsive"><table class="shift-config-table"><thead><tr><th>Ca làm</th><th>Giờ làm</th><th>Thời lượng</th><th>Trạng thái</th><th class="text-end">Thao tác</th></tr></thead><tbody>
+            @foreach(var shift in shifts){var duration=shift.GioKetThuc>shift.GioBatDau?shift.GioKetThuc-shift.GioBatDau:shift.GioKetThuc.Add(TimeSpan.FromDays(1))-shift.GioBatDau;<tr><td><span class="shift-config-color" style="background:@shift.MauSac"></span><strong>@shift.TenCa</strong>@if(!string.IsNullOrWhiteSpace(shift.GhiChu)){<small class="d-block text-muted mt-1">@shift.GhiChu</small>}</td><td>@shift.GioBatDau.ToString(@"hh\:mm") – @shift.GioKetThuc.ToString(@"hh\:mm")</td><td>@duration.ToString(@"hh\:mm") @(shift.GioKetThuc<=shift.GioBatDau?"· qua đêm":"")</td><td><span class="badge rounded-pill @(shift.TrangThai?"bg-success-subtle text-success":"bg-secondary-subtle text-secondary")">@(shift.TrangThai?"Đang sử dụng":"Đã ngừng")</span></td><td><div class="shift-config-actions"><a asp-action="EditShift" asp-route-id="@shift.MaCa" class="btn btn-sm btn-outline-secondary" title="Sửa"><i class="bi bi-pencil"></i></a><form asp-action="ToggleShift" method="post">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@shift.MaCa"/><button type="submit" class="btn btn-sm @(shift.TrangThai?"btn-outline-danger":"btn-outline-success")" title="@(shift.TrangThai?"Ngừng sử dụng":"Mở lại")"><i class="bi @(shift.TrangThai?"bi-pause":"bi-play")"></i></button></form></div></td></tr>}
+        </tbody></table></div>}
+    </section>
+</div>

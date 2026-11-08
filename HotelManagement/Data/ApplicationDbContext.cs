@@ -37,6 +37,8 @@ namespace HotelManagement.Data
         public DbSet<PhuCap> PhuCaps { get; set; }
         public DbSet<KhauTru> KhauTrus { get; set; }
         public DbSet<CaiDatHeThong> CaiDatHeThongs { get; set; }
+        public DbSet<CaLamViec> CaLamViecs { get; set; }
+        public DbSet<LichCaLamViec> LichCaLamViecs { get; set; }
         protected override void OnModelCreating(
             Microsoft.EntityFrameworkCore.ModelBuilder builder)
         {
@@ -73,6 +75,25 @@ namespace HotelManagement.Data
                 .WithMany()
                 .HasForeignKey(k => k.MaNV)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<LichCaLamViec>()
+                .HasOne(x => x.NhanVien)
+                .WithMany()
+                .HasForeignKey(x => x.MaNV)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<LichCaLamViec>()
+                .HasOne(x => x.CaLamViec)
+                .WithMany(x => x.LichCaLamViecs)
+                .HasForeignKey(x => x.MaCa)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<LichCaLamViec>()
+                .HasIndex(x => new { x.MaNV, x.NgayLam, x.MaCa })
+                .IsUnique();
+
+            builder.Entity<LichCaLamViec>()
+                .HasIndex(x => new { x.NgayLam, x.TrangThai });
         }
 
 
