@@ -1,4 +1,4 @@
-﻿namespace HotelManagement.ViewModels
+namespace HotelManagement.ViewModels
 {
     public class HoaDonCheckoutViewModel
     {
@@ -23,6 +23,7 @@
         public decimal TienCoc { get; set; }
         public decimal SoTienConLai { get; set; }
         public string PhuongThucThanhToan { get; set; } = "TienMat";
+        public string KieuXuatHoaDon { get; set; } = "Gop"; // "Gop" (Mặc định) hoặc "Tach" (Tách riêng từng phòng)
 
         public string NganHangMa { get; set; } = string.Empty;
         public string SoTaiKhoan { get; set; } = string.Empty;

@@ -827,59 +827,160 @@ namespace HotelManagement.Controllers
 
                 await _context.SaveChangesAsync();
 
-                foreach (var roomModel in roomPaymentModels)
+                // Lấy danh sách lượt lưu trú đang thanh toán để truy vấn dịch vụ thực tế
+                var maLuuTrusThanhToan = chiTietThanhToan
+                    .SelectMany(c => c.DanhSachLuuTru)
+                    .Select(l => l.MaLuuTru)
+                    .ToList();
+
+                var dsDichVuThucTe = await _context.ChiTietDichVus
+                    .AsNoTracking()
+                    .Include(cdv => cdv.DichVu)
+                    .Where(cdv => maLuuTrusThanhToan.Contains(cdv.MaLuuTru))
+                    .ToListAsync();
+
+                if (!dsDichVuThucTe.Any())
                 {
-                    var chiTietPhong = chiTietThanhToan.First(c => c.MaPhong == roomModel.MaPhong);
-                    var hoaDon = new HoaDon
+                    dsDichVuThucTe = await _context.ChiTietDichVus
+                        .AsNoTracking()
+                        .Include(cdv => cdv.DichVu)
+                        .Where(cdv => _context.LuuTrus.Any(l => l.MaLuuTru == cdv.MaLuuTru
+                                                             && l.ChiTietDatPhong != null
+                                                             && l.ChiTietDatPhong.MaDatPhong == datPhong.MaDatPhong))
+                        .ToListAsync();
+                }
+
+                // ========================================================
+                // PHÂN NHÁNH: XỬ LÝ TÁCH / GỘP HÓA ĐƠN LINH HOẠT
+                // ========================================================
+                bool laXuatGop = string.Equals(model.KieuXuatHoaDon, "Gop", StringComparison.OrdinalIgnoreCase) 
+                                 || roomPaymentModels.Count <= 1;
+
+                if (laXuatGop)
+                {
+                    decimal tongTienPhong = roomPaymentModels.Sum(r => r.TienPhong);
+                    decimal tongTienDichVu = dsDichVuThucTe.Sum(dv => dv.SoLuong * dv.DonGia);
+                    decimal tongThanhToanSauThue = Math.Round((tongTienPhong + tongTienDichVu) * 1.1m, 0);
+
+                    // 1. TẠO 1 HÓA ĐƠN GỘP DUY NHẤT (MASTER INVOICE) CHO TOÀN BỘ PHÒNG
+                    var hoaDonGop = new HoaDon
                     {
                         MaDatPhong = datPhong.MaDatPhong,
                         NgayLap = thoiGianTra,
-                        TienPhong = roomModel.TienPhong,
-                        TienDichVu = roomModel.TongTienDichVu,
+                        TienPhong = tongTienPhong,
+                        TienDichVu = tongTienDichVu,
                         GiamGia = 0,
-                        TongTien = roomModel.TongThanhToan,
+                        TongTien = tongThanhToanSauThue,
                         TrangThai = "DaThanhToan"
                     };
-                    _context.HoaDons.Add(hoaDon);
+                    _context.HoaDons.Add(hoaDonGop);
                     await _context.SaveChangesAsync();
-                    hoaDonIdsVuaTao.Add(hoaDon.MaHD);
+                    hoaDonIdsVuaTao.Add(hoaDonGop.MaHD);
 
-                    foreach (var phongItem in roomModel.DanhSachPhong)
+                    // 2. DUYỆT LƯU TIỀN PHÒNG CHO TỪNG PHÒNG
+                    foreach (var roomModel in roomPaymentModels)
                     {
-                        _context.ChiTietHoaDons.Add(new ChiTietHoaDon
+                        var chiTietPhong = chiTietThanhToan.FirstOrDefault(c => c.MaPhong == roomModel.MaPhong);
+                        foreach (var phongItem in roomModel.DanhSachPhong)
                         {
-                            MaHD = hoaDon.MaHD,
-                            TenKhoanThu = $"Tiền phòng {phongItem.SoPhong}",
-                            LoaiKhoanThu = "Phong",
-                            MaThamChieu = chiTietPhong.MaChiTietDatPhong,
-                            SoLuong = phongItem.SoDem,
-                            DonGia = phongItem.GiaTheoDem,
-                            ThanhTien = phongItem.ThanhTien
-                        });
+                            _context.ChiTietHoaDons.Add(new ChiTietHoaDon
+                            {
+                                MaHD = hoaDonGop.MaHD,
+                                TenKhoanThu = $"Tiền phòng {phongItem.SoPhong} ({phongItem.TenLoaiPhong})",
+                                LoaiKhoanThu = "Phong",
+                                MaThamChieu = chiTietPhong?.MaChiTietDatPhong,
+                                SoLuong = phongItem.SoDem,
+                                DonGia = phongItem.GiaTheoDem,
+                                ThanhTien = phongItem.ThanhTien
+                            });
+                        }
                     }
-                    foreach (var dichVu in roomModel.DanhSachDichVu)
+
+                    // 3. TÁCH RIÊNG: DUYỆT LƯU DỊCH VỤ PHÁT SINH - HOÀN TOÀN TÁCH KHỎI VÒNG LẶP PHÒNG (CHỈ CHẠY 1 LẦN DUY NHẤT)
+                    foreach (var dichVu in dsDichVuThucTe)
                     {
                         _context.ChiTietHoaDons.Add(new ChiTietHoaDon
                         {
-                            MaHD = hoaDon.MaHD,
-                            TenKhoanThu = dichVu.TenDichVu,
+                            MaHD = hoaDonGop.MaHD,
+                            TenKhoanThu = dichVu.DichVu?.TenDichVu ?? "Dịch vụ",
                             LoaiKhoanThu = "DichVu",
+                            MaThamChieu = dichVu.MaChiTietDichVu,
                             SoLuong = dichVu.SoLuong,
                             DonGia = dichVu.DonGia,
-                            ThanhTien = dichVu.ThanhTien
+                            ThanhTien = dichVu.SoLuong * dichVu.DonGia
                         });
                     }
+
+                    // Ghi nhận 1 giao dịch thanh toán tổng
                     _context.ThanhToans.Add(new ThanhToan
                     {
-                        MaHD = hoaDon.MaHD,
-                        SoTien = roomModel.SoTienConLai,
+                        MaHD = hoaDonGop.MaHD,
+                        SoTien = checkoutInfoForPayment.SoTienConLai,
                         PhuongThuc = model.PhuongThucThanhToan ?? "TienMat",
                         TrangThai = "ThanhCong",
                         NgayThanhToan = thoiGianTra,
-                        MaGiaoDich = "GD" + hoaDon.MaHD + thoiGianTra.ToString("yyyyMMddHHmmss")
+                        MaGiaoDich = "GD" + hoaDonGop.MaHD + thoiGianTra.ToString("yyyyMMddHHmmss")
                     });
                     await _context.SaveChangesAsync();
-                    ViewBag.MaHoaDonThanhToanCuoi = hoaDon.MaHD;
+                    ViewBag.MaHoaDonThanhToanCuoi = hoaDonGop.MaHD;
+                }
+                else
+                {
+                    // 2. TẠO NHIỀU HÓA ĐƠN TÁCH RIÊNG TỪNG PHÒNG
+                    foreach (var roomModel in roomPaymentModels)
+                    {
+                        var chiTietPhong = chiTietThanhToan.First(c => c.MaPhong == roomModel.MaPhong);
+                        var hoaDon = new HoaDon
+                        {
+                            MaDatPhong = datPhong.MaDatPhong,
+                            NgayLap = thoiGianTra,
+                            TienPhong = roomModel.TienPhong,
+                            TienDichVu = roomModel.TongTienDichVu,
+                            GiamGia = 0,
+                            TongTien = roomModel.TongThanhToan,
+                            TrangThai = "DaThanhToan"
+                        };
+                        _context.HoaDons.Add(hoaDon);
+                        await _context.SaveChangesAsync();
+                        hoaDonIdsVuaTao.Add(hoaDon.MaHD);
+
+                        foreach (var phongItem in roomModel.DanhSachPhong)
+                        {
+                            _context.ChiTietHoaDons.Add(new ChiTietHoaDon
+                            {
+                                MaHD = hoaDon.MaHD,
+                                TenKhoanThu = $"Tiền phòng {phongItem.SoPhong}",
+                                LoaiKhoanThu = "Phong",
+                                MaThamChieu = chiTietPhong.MaChiTietDatPhong,
+                                SoLuong = phongItem.SoDem,
+                                DonGia = phongItem.GiaTheoDem,
+                                ThanhTien = phongItem.ThanhTien
+                            });
+                        }
+                        foreach (var dichVu in roomModel.DanhSachDichVu)
+                        {
+                            _context.ChiTietHoaDons.Add(new ChiTietHoaDon
+                            {
+                                MaHD = hoaDon.MaHD,
+                                TenKhoanThu = dichVu.TenDichVu,
+                                LoaiKhoanThu = "DichVu",
+                                SoLuong = dichVu.SoLuong,
+                                DonGia = dichVu.DonGia,
+                                ThanhTien = dichVu.ThanhTien
+                            });
+                        }
+                        _context.ThanhToans.Add(new ThanhToan
+                        {
+                            MaHD = hoaDon.MaHD,
+                            SoTien = roomModel.SoTienConLai,
+                            PhuongThuc = model.PhuongThucThanhToan ?? "TienMat",
+                            TrangThai = "ThanhCong",
+                            NgayThanhToan = thoiGianTra,
+                            MaGiaoDich = "GD" + hoaDon.MaHD + thoiGianTra.ToString("yyyyMMddHHmmss")
+                        });
+                        await _context.SaveChangesAsync();
+                        ViewBag.MaHoaDonThanhToanCuoi = hoaDon.MaHD;
+                    }
                 }
             }
 
@@ -916,15 +1017,26 @@ namespace HotelManagement.Controllers
                     .Where(h => h.MaDatPhong == targetId).OrderByDescending(h => h.MaHD).FirstOrDefaultAsync();
 
             int realMaDatPhong = hoaDon?.MaDatPhong ?? targetId;
-            var maPhongHoaDon = hoaDon == null ? null : await _context.ChiTietHoaDons.AsNoTracking()
+            var maPhongsHoaDon = hoaDon == null ? new List<int>() : await _context.ChiTietHoaDons.AsNoTracking()
                 .Where(c => c.MaHD == hoaDon.MaHD && c.LoaiKhoanThu == "Phong" && c.MaThamChieu.HasValue)
-                .Select(c => (int?)_context.ChiTietDatPhongs
+                .Select(c => _context.ChiTietDatPhongs
                     .Where(ct => ct.MaChiTietDatPhong == c.MaThamChieu.Value)
                     .Select(ct => ct.MaPhong)
                     .FirstOrDefault())
-                .FirstOrDefaultAsync();
+                .Where(p => p > 0)
+                .Distinct()
+                .ToListAsync();
 
-            var viewModel = await GetHoaDonCheckoutViewModelAsync(realMaDatPhong, cheDoXuatHoaDon: true, maPhong: maPhongHoaDon);
+            HoaDonCheckoutViewModel? viewModel = null;
+            if (maPhongsHoaDon.Count > 1)
+            {
+                viewModel = await GetHoaDonCheckoutForRoomsAsync(realMaDatPhong, maPhongsHoaDon);
+            }
+            else
+            {
+                viewModel = await GetHoaDonCheckoutViewModelAsync(realMaDatPhong, cheDoXuatHoaDon: true, maPhong: maPhongsHoaDon.FirstOrDefault());
+            }
+
             if (viewModel == null)
             {
                 return NotFound();
@@ -1118,7 +1230,7 @@ namespace HotelManagement.Controllers
                                                      && l.ChiTietDatPhong != null
                                                      && l.ChiTietDatPhong.MaDatPhong == maDatPhong));
 
-            if (cheDoXuatHoaDon && maLuuTruTrongHoaDon.Count > 0)
+            if ((cheDoXuatHoaDon || maPhong.HasValue) && maLuuTruTrongHoaDon.Count > 0)
                 truyVanDichVu = truyVanDichVu.Where(cdv => maLuuTruTrongHoaDon.Contains(cdv.MaLuuTru));
 
             var dsDichVu = await truyVanDichVu
@@ -1178,6 +1290,7 @@ namespace HotelManagement.Controllers
             {
                 MaDatPhong = datPhong.MaDatPhong,
                 MaPhong = maPhong,
+                MaPhongs = chiTietTrongHoaDon.Select(ct => ct.MaPhong).Distinct().ToList(),
                 SoPhong = soPhongText,
                 TenKhachHang = datPhong.KhachHang?.HoTen ?? "Khách vãng lai",
                 SoDienThoai = datPhong.KhachHang?.SoDienThoai ?? "",
