@@ -312,12 +312,22 @@
                                 <span class="val" id="sumUnitPrice">0 đ</span>
                             </div>
 
+                            <div class="summary-item">
+                                <span class="label">Tiền phòng trước thuế:</span>
+                                <span class="val" id="sumRoomSubtotal">0 đ</span>
+                            </div>
+
+                            <div class="summary-item">
+                                <span class="label">Thuế VAT (10%):</span>
+                                <span class="val" id="sumTax">0 đ</span>
+                            </div>
+
                             <hr class="summary-divider" />
 
                             <div class="summary-total">
                                 <div class="total-label">
                                     <span>TỔNG TIỀN DỰ KIẾN</span>
-                                    <small>(Thanh toán trực tiếp tại khách sạn)</small>
+                                    <small>(Đã bao gồm thuế VAT 10%)</small>
                                 </div>
                                 <div class="total-amount" id="sumTotalAmount">0 đ</div>
                             </div>
@@ -782,6 +792,8 @@
             const sumCheckOut = document.getElementById('sumCheckOut');
             const sumNights = document.getElementById('sumNights');
             const sumUnitPrice = document.getElementById('sumUnitPrice');
+             const sumRoomSubtotal = document.getElementById('sumRoomSubtotal');
+             const sumTax = document.getElementById('sumTax');
             const sumTotalAmount = document.getElementById('sumTotalAmount');
 
             function formatDateVN(dateStr) {
@@ -847,7 +859,11 @@
                     sumRoomType.textContent = roomType;
                     sumUnitPrice.textContent = formatCurrency(price);
 
-                    const total = price * nights;
+                    const subtotal = price * nights;
+                    const tax = subtotal * 0.10;
+                    const total = subtotal + tax;
+                    sumRoomSubtotal.textContent = formatCurrency(subtotal);
+                    sumTax.textContent = formatCurrency(tax);
                     sumTotalAmount.textContent = formatCurrency(total);
                 }
             }

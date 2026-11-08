@@ -28,10 +28,6 @@ namespace HotelManagement.Models
         [Display(Name = "Tiền tố nội dung chuyển khoản")]
         public string NoiDungPrefix { get; set; } = "DP";
 
-        [Display(Name = "Tỷ lệ thanh toán trước (%)")]
-        [Range(1, 100, ErrorMessage = "Tỷ lệ thanh toán từ 1% đến 100%")]
-        public int TiLeThanhToanPercent { get; set; } = 100;
-
         // Danh sách các ngân hàng phổ biến tại Việt Nam hỗ trợ VietQR
         public static readonly List<BankInfo> DanhSachNganHang = new()
         {

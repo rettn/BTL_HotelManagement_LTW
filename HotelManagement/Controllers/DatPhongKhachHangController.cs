@@ -280,8 +280,10 @@ namespace HotelManagement.Controllers
             var caiDatGiuPhong = await _context.CaiDatHeThongs.FirstOrDefaultAsync();
             var thoiHanGiuPhong = Math.Clamp(caiDatGiuPhong?.ThoiHanGiuPhong ?? 15, 5, 120);
             var hanThanhToan = datPhong.NgayDat.AddMinutes(thoiHanGiuPhong);
-            var tiLe = settings.TiLeThanhToanPercent > 0 ? settings.TiLeThanhToanPercent : 100;
+            var tiLe = Math.Clamp(caiDatGiuPhong?.TienCocMacDinh ?? 30, 0, 100);
             var soTienThanhToan = tongTien * 1.10m * tiLe / 100m;
+            var tienThue = tongTien * 0.10m;
+            var tongTienCoThue = tongTien + tienThue;
 
             // Tạo mã QR VietQR
             var vietQrUrl = _sePayService.GenerateVietQrUrl(datPhong.MaDatPhong, soTienThanhToan);
@@ -289,6 +291,8 @@ namespace HotelManagement.Controllers
             ViewBag.Settings = settings;
             ViewBag.SoDem = soDem;
             ViewBag.TongTien = tongTien;
+            ViewBag.TienThue = tienThue;
+            ViewBag.TongTienCoThue = tongTienCoThue;
             ViewBag.SoTienThanhToan = soTienThanhToan;
             ViewBag.VietQrUrl = vietQrUrl;
             ViewBag.NoiDungChuyenKhoan = $"{settings.NoiDungPrefix}{datPhong.MaDatPhong}";

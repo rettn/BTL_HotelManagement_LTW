@@ -86,14 +86,6 @@
                                     <span asp-validation-for="TenChuTaiKhoan" class="text-danger small d-block"></span>
                                 </div>
 
-                                <div class="col-md-4">
-                                    <label asp-for="TiLeThanhToanPercent" class="form-label fw-semibold">Yêu cầu thu trước</label>
-                                    <div class="input-group">
-                                        <input asp-for="TiLeThanhToanPercent" type="number" min="1" max="100" class="form-control" />
-                                        <span class="input-group-text">%</span>
-                                    </div>
-                                    <small class="text-muted">100% = Toàn bộ tiền</small>
-                                </div>
                             </div>
                         </div>
 
@@ -108,7 +100,7 @@
                                     <label asp-for="SePayApiKey" class="form-label fw-semibold">SePay API Token / Key</label>
                                     <div class="input-group">
                                         <span class="input-group-text bg-light"><i class="bi bi-key"></i></span>
-                                        <input asp-for="SePayApiKey" type="password" autocomplete="off" class="form-control font-monospace" id="inputApiKey" placeholder="Dán mã API Token từ SePay (ví dụ: SP_...)" />
+                                        <input asp-for="SePayApiKey" type="password" value="@Model.SePayApiKey" autocomplete="off" class="form-control font-monospace" id="inputApiKey" placeholder="Dán mã API Token từ SePay (ví dụ: SP_...)" />
                                         <button class="btn btn-outline-secondary" type="button" id="btnToggleApiKey" title="Ẩn/Hiện">
                                             <i class="bi bi-eye" id="eyeIcon"></i>
                                         </button>
