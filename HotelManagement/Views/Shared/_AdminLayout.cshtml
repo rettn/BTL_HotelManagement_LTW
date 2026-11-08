@@ -235,14 +235,37 @@
 
                     @if (CanAccess("reports"))
                     {
-
-                    <div class="sidebar-section-label">BÁO CÁO & HỆ THỐNG</div>
-                    <a asp-controller="Report" asp-action="Dashboard" class="sidebar-link @(currentController.Equals("Report", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
-                        <i class="bi bi-pie-chart-fill"></i><span>Báo cáo tổng quan</span>
-                    </a>
-                    <a asp-controller="Dashboard" asp-action="TaiChinh" class="sidebar-link @(currentController.Equals("Dashboard", StringComparison.OrdinalIgnoreCase) && currentAction.Equals("TaiChinh", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
-                        <i class="bi bi-bar-chart-line-fill"></i><span>Báo cáo tài chính</span>
-                    </a>
+                        <div class="sidebar-section-label">BÁO CÁO & HỆ THỐNG</div>
+                        <div class="sidebar-parent-row">
+                            <a asp-controller="Report" asp-action="Overview"
+                               class="sidebar-link sidebar-parent @(currentController.Equals("Report", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
+                                <i class="bi bi-pie-chart-fill"></i><span>Báo cáo & Thống kê</span>
+                            </a>
+                            <button type="button" class="sidebar-parent-toggle" data-menu-toggle="reportMenu"
+                                    aria-label="@(isReportSection ? "Thu gọn mục báo cáo" : "Mở rộng mục báo cáo")"
+                                    aria-expanded="@(isReportSection ? "true" : "false")">
+                                <i class="bi bi-chevron-left menu-chevron menu-chevron-closed" aria-hidden="true"></i>
+                                <i class="bi bi-chevron-down menu-chevron menu-chevron-open" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                        <div class="sidebar-submenu @(isReportSection ? "show" : "")" id="reportMenu">
+                            <a asp-controller="Report" asp-action="Overview"
+                               class="sidebar-sublink @(currentController.Equals("Report", StringComparison.OrdinalIgnoreCase) && (currentAction.Equals("Overview", StringComparison.OrdinalIgnoreCase) || currentAction.Equals("Dashboard", StringComparison.OrdinalIgnoreCase) || currentAction.Equals("Index", StringComparison.OrdinalIgnoreCase)) ? "active" : "")">
+                                <i class="bi bi-speedometer2 me-1"></i>Tổng quan chung
+                            </a>
+                            <a asp-controller="Report" asp-action="RoomPerformance"
+                               class="sidebar-sublink @(currentController.Equals("Report", StringComparison.OrdinalIgnoreCase) && (currentAction.Equals("RoomPerformance", StringComparison.OrdinalIgnoreCase) || currentAction.Equals("CongSuatPhong", StringComparison.OrdinalIgnoreCase)) ? "active" : "")">
+                                <i class="bi bi-door-open me-1"></i>Công suất & Hạng phòng
+                            </a>
+                            <a asp-controller="Report" asp-action="ServiceRevenue"
+                               class="sidebar-sublink @(currentController.Equals("Report", StringComparison.OrdinalIgnoreCase) && (currentAction.Equals("ServiceRevenue", StringComparison.OrdinalIgnoreCase) || currentAction.Equals("DoanhThuDichVu", StringComparison.OrdinalIgnoreCase)) ? "active" : "")">
+                                <i class="bi bi-cup-hot me-1"></i>Doanh thu theo dịch vụ
+                            </a>
+                            <a asp-controller="Report" asp-action="TopCustomers"
+                               class="sidebar-sublink @(currentController.Equals("Report", StringComparison.OrdinalIgnoreCase) && (currentAction.Equals("TopCustomers", StringComparison.OrdinalIgnoreCase) || currentAction.Equals("TopKhachHang", StringComparison.OrdinalIgnoreCase)) ? "active" : "")">
+                                <i class="bi bi-gem me-1"></i>Top Khách hàng VIP
+                            </a>
+                        </div>
                     }
 
                     @if (User.IsInRole("Admin"))
