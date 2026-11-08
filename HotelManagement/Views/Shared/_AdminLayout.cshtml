@@ -373,17 +373,29 @@
 
                 <main class="admin-content">
 
-                    @if (TempData["Success"] != null)
+                    @{
+                        var pageBody = RenderBody();
+                        using var pageBodyWriter = new System.IO.StringWriter();
+                        pageBody.WriteTo(pageBodyWriter, System.Text.Encodings.Web.HtmlEncoder.Default);
+                        var pageBodyHtml = pageBodyWriter.ToString();
+                        var successFlash = TempData["Success"] as string;
+                        var errorFlash = TempData["Error"] as string;
+                        var successAlreadyRendered = !string.IsNullOrWhiteSpace(successFlash)
+                            && pageBodyHtml.Contains(System.Text.Encodings.Web.HtmlEncoder.Default.Encode(successFlash), StringComparison.Ordinal);
+                        var errorAlreadyRendered = !string.IsNullOrWhiteSpace(errorFlash)
+                            && pageBodyHtml.Contains(System.Text.Encodings.Web.HtmlEncoder.Default.Encode(errorFlash), StringComparison.Ordinal);
+                    }
+                    @if (!string.IsNullOrWhiteSpace(successFlash) && !successAlreadyRendered)
                     {
                         <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
-                            @TempData["Success"]
+                            @successFlash
                             <button type="button" class="btn-close" data-coreui-dismiss="alert" aria-label="Đóng"></button>
                         </div>
                     }
-                    @if (TempData["Error"] != null)
+                    @if (!string.IsNullOrWhiteSpace(errorFlash) && !errorAlreadyRendered)
                     {
                         <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
-                            @TempData["Error"]
+                            @errorFlash
                             <button type="button" class="btn-close" data-coreui-dismiss="alert" aria-label="Đóng"></button>
                         </div>
                     }
@@ -401,7 +413,7 @@
                             <i class="bi bi-calendar3"></i>@DateTime.Now.ToString("dd/MM/yyyy")
                         </div>
                     </div>
-                    @RenderBody()
+                    @pageBody
                 </main>
 
                 <footer class="admin-footer">
