@@ -24,6 +24,11 @@
             <i class="bi bi-bell"></i>
             <span>Thông báo</span>
         </a>
+        <a asp-controller="CaiDat" asp-action="Chatbot"
+           class="settings-nav-tab @(currentAction == "Chatbot" ? "active" : "")">
+            <i class="bi bi-stars"></i>
+            <span>Chatbot AI</span>
+        </a>
         <a asp-controller="ThanhToan" asp-action="Index" 
            class="settings-nav-tab @(ViewContext.RouteData.Values["controller"]?.ToString() == "ThanhToan" ? "active" : "")">
             <i class="bi bi-qr-code-scan"></i>

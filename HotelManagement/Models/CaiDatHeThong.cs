@@ -33,5 +33,14 @@ namespace HotelManagement.Models
         public bool ThongBaoSapNhanTra { get; set; } = true;
         public bool ThongBaoKho { get; set; } = false;
         public string? KenhThongBao { get; set; } = "System"; // Phân cách bằng dấu phẩy nếu nhiều kênh
+
+        // 5. Cấu hình trợ lý AI Gemini
+        [StringLength(2000)]
+        public string? GeminiApiKeyProtected { get; set; }
+
+        [StringLength(100)]
+        public string GeminiModel { get; set; } = "gemini-2.0-flash";
+
+        public int GeminiTimeoutSeconds { get; set; } = 30;
     }
 }

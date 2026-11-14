@@ -135,6 +135,18 @@ namespace HotelManagement.Data.Migrations
                     b.Property<string>("Email")
                         .HasColumnType("longtext");
 
+                    b.Property<string>("GeminiApiKeyProtected")
+                        .HasMaxLength(2000)
+                        .HasColumnType("varchar(2000)");
+
+                    b.Property<string>("GeminiModel")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<int>("GeminiTimeoutSeconds")
+                        .HasColumnType("int");
+
                     b.Property<string>("GioNhanPhong")
                         .HasColumnType("longtext");
 

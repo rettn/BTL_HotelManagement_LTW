@@ -3,6 +3,7 @@ using HotelManagement.Models;
 using HotelManagement.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.DataProtection;
 
 namespace HotelManagement.Controllers
 {
@@ -11,11 +12,16 @@ namespace HotelManagement.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IWebHostEnvironment _environment;
+        private readonly IDataProtector _geminiKeyProtector;
 
-        public CaiDatController(ApplicationDbContext context, IWebHostEnvironment environment)
+        public CaiDatController(
+            ApplicationDbContext context,
+            IWebHostEnvironment environment,
+            IDataProtectionProvider dataProtectionProvider)
         {
             _context = context;
             _environment = environment;
+            _geminiKeyProtector = dataProtectionProvider.CreateProtector("HotelManagement.GeminiApiKey.v1");
         }
 
         // Hàm hỗ trợ: Luôn lấy ra dòng cài đặt duy nhất (Id = 1), nếu chưa có thì tự tạo
@@ -53,7 +59,40 @@ namespace HotelManagement.Controllers
         public IActionResult Index()
         {
             var settings = GetCurrentSettings();
+            ViewBag.GeminiConfigured = !string.IsNullOrWhiteSpace(settings.GeminiApiKeyProtected);
             return View(settings);
+        }
+
+        [HttpGet]
+        public IActionResult Chatbot()
+        {
+            var settings = GetCurrentSettings();
+            ViewBag.GeminiConfigured = !string.IsNullOrWhiteSpace(settings.GeminiApiKeyProtected);
+            return View(settings);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Chatbot(string? apiKey, string? model, int timeoutSeconds, bool clearApiKey = false)
+        {
+            var settings = GetCurrentSettings();
+            if (clearApiKey)
+            {
+                settings.GeminiApiKeyProtected = null;
+            }
+            else if (!string.IsNullOrWhiteSpace(apiKey))
+            {
+                settings.GeminiApiKeyProtected = _geminiKeyProtector.Protect(apiKey.Trim());
+            }
+
+            settings.GeminiModel = string.IsNullOrWhiteSpace(model) ? "gemini-flash-latest" : model.Trim();
+            settings.GeminiTimeoutSeconds = Math.Clamp(timeoutSeconds, 5, 120);
+            _context.SaveChanges();
+
+            TempData["Success"] = clearApiKey
+                ? "Đã xóa API key Gemini khỏi cài đặt."
+                : "Đã lưu cấu hình chatbot AI Gemini thành công.";
+            return RedirectToAction(nameof(Chatbot));
         }
 
         // ================= 1. THÔNG TIN KHÁCH SẠN =================
@@ -179,6 +218,80 @@ namespace HotelManagement.Controllers
             _context.SaveChanges();
             TempData["Success"] = "Đã lưu Cấu hình thông báo thành công!";
             return RedirectToAction(nameof(ThongBao));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> LayDanhSachModelGemini(string? apiKey)
+        {
+            var settings = GetCurrentSettings();
+            string? activeKey = null;
+
+            // Ưu tiên key mới nhập trên form; nếu trống thì giải mã key đã lưu trong DB
+            if (!string.IsNullOrWhiteSpace(apiKey))
+            {
+                activeKey = apiKey.Trim();
+            }
+            else if (!string.IsNullOrWhiteSpace(settings.GeminiApiKeyProtected))
+            {
+                try
+                {
+                    activeKey = _geminiKeyProtector.Unprotect(settings.GeminiApiKeyProtected);
+                }
+                catch
+                {
+                    return BadRequest(new { message = "Không thể giải mã API Key hiện tại. Vui lòng nhập lại key mới." });
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(activeKey))
+            {
+                return BadRequest(new { message = "Vui lòng nhập API Key trước khi tải danh sách model." });
+            }
+
+            try
+            {
+                using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
+                var url = $"https://generativelanguage.googleapis.com/v1beta/models?key={Uri.EscapeDataString(activeKey)}";
+                var response = await httpClient.GetAsync(url);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    return StatusCode((int)response.StatusCode, new { message = "API Key không hợp lệ hoặc không kết nối được tới Google AI." });
+                }
+
+                var json = await response.Content.ReadAsStringAsync();
+                using var doc = System.Text.Json.JsonDocument.Parse(json);
+
+                var models = new List<object>();
+                if (doc.RootElement.TryGetProperty("models", out var modelsElement))
+                {
+                    foreach (var item in modelsElement.EnumerateArray())
+                    {
+                        var rawName = item.GetProperty("name").GetString() ?? ""; // VD: "models/gemini-2.5-flash"
+                        var displayName = item.TryGetProperty("displayName", out var dn) ? dn.GetString() : rawName;
+
+                        // Chỉ lấy các model dòng Gemini có hỗ trợ generateContent (bỏ qua embedding, imagen, veo...)
+                        bool supportsChat = false;
+                        if (item.TryGetProperty("supportedGenerationMethods", out var methods))
+                        {
+                            supportsChat = methods.EnumerateArray()
+                                .Any(m => m.GetString() == "generateContent");
+                        }
+
+                        if (supportsChat && rawName.Contains("gemini", StringComparison.OrdinalIgnoreCase))
+                        {
+                            var cleanId = rawName.Replace("models/", "");
+                            models.Add(new { id = cleanId, name = $"{displayName} ({cleanId})" });
+                        }
+                    }
+                }
+
+                return Ok(models);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Lỗi khi tải danh sách model: " + ex.Message });
+            }
         }
     }
 }

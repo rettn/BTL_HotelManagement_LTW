@@ -1,4 +1,5 @@
 using HotelManagement.Data;
+using HotelManagement.Configuration;
 using HotelManagement.Repositories;
 using HotelManagement.Services;
 using Microsoft.AspNetCore.Identity;
@@ -39,7 +40,16 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options =>
 .AddRoles<IdentityRole>()
 .AddEntityFrameworkStores<ApplicationDbContext>();
 
+builder.Services.AddOptions<GeminiOptions>()
+    .Bind(builder.Configuration.GetSection(GeminiOptions.SectionName));
+builder.Services.AddHttpClient<IGeminiChatService, GeminiChatService>((serviceProvider, client) =>
+{
+    var options = serviceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<GeminiOptions>>().Value;
+    client.BaseAddress = new Uri(options.BaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(Math.Max(5, options.TimeoutSeconds));
+});
 builder.Services.AddHttpClient();
+builder.Services.AddScoped<ChatbotContextService>();
 builder.Services.AddSingleton<PaymentSettingService>();
 builder.Services.AddScoped<SePayService>();
 builder.Services.AddHostedService<DatPhongHoldExpirationService>();

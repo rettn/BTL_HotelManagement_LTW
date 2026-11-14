@@ -190,7 +190,44 @@
             </a>
         </div>
 
-        <!-- 6. Phân quyền & Nhân sự -->
+        <!-- 6. Cấu hình Chatbot AI -->
+        @{
+            bool geminiReady = ViewBag.GeminiConfigured == true;
+            string currentGeminiModel = string.IsNullOrWhiteSpace(Model?.GeminiModel) ? "gemini-flash-latest" : Model.GeminiModel;
+        }
+        <div class="col-md-6 col-xl-4">
+            <a asp-controller="CaiDat" asp-action="Chatbot" class="setting-card-item">
+                <div class="setting-card-top">
+                    <div class="setting-icon-box bg-success-subtle text-success">
+                        <i class="bi bi-stars"></i>
+                    </div>
+                    @if (geminiReady)
+                    {
+                        <span class="setting-pill-badge bg-success-subtle text-success border-success-subtle">
+                            <i class="bi bi-check-circle-fill me-1"></i>Đã kết nối
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="setting-pill-badge bg-warning-subtle text-warning border-warning-subtle">
+                            <i class="bi bi-exclamation-circle me-1"></i>Chưa có Key
+                        </span>
+                    }
+                </div>
+                <div class="setting-card-body">
+                    <h5 class="setting-title">6. Cấu hình Chatbot AI Gemini</h5>
+                    <p class="setting-desc">
+                        Model hiện tại: <code class="text-success fw-semibold">@currentGeminiModel</code>. Thiết lập API key, đồng bộ danh sách model và thời gian chờ phản hồi.
+                    </p>
+                </div>
+                <div class="setting-card-footer">
+                    <span>Cấu hình chatbot</span>
+                    <i class="bi bi-arrow-right"></i>
+                </div>
+            </a>
+        </div>
+
+        <!-- 7. Phân quyền & Nhân sự -->
         <div class="col-md-6 col-xl-4">
             <a asp-controller="QuanTri" asp-action="Index" class="setting-card-item">
                 <div class="setting-card-top">
@@ -200,7 +237,7 @@
                     <span class="setting-pill-badge bg-light text-secondary">Bảo mật</span>
                 </div>
                 <div class="setting-card-body">
-                    <h5 class="setting-title">6. Quản trị tài khoản & Nhân sự</h5>
+                    <h5 class="setting-title">7. Quản trị tài khoản & Nhân sự</h5>
                     <p class="setting-desc">Quản lý danh sách tài khoản nhân viên, phân quyền truy cập chức năng, tạo tài khoản mới và đặt lại mật khẩu an toàn.</p>
                 </div>
                 <div class="setting-card-footer">

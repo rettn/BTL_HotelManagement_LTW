@@ -1,0 +1,29 @@
+@{
+	var isStaff = User.IsInRole("Admin") || User.IsInRole("NhanVien");
+	var mode = isStaff ? "admin" : "customer";
+}
+<div class="hotel-chatbot" data-chatbot-mode="@mode">
+	<button class="hotel-chatbot-toggle" type="button" aria-expanded="false" aria-controls="hotelChatbotPanel">
+		<i class="bi bi-stars"></i><span>Trợ lý AI</span>
+	</button>
+	<section class="hotel-chatbot-panel" id="hotelChatbotPanel" hidden aria-label="Chatbot AI">
+		<header class="hotel-chatbot-header">
+			<div><strong>Trợ lý AI khách sạn</strong><small>@(isStaff ? "Dữ liệu vận hành dành cho nhân viên" : "Tư vấn thông tin khách sạn")</small></div>
+			<button type="button" class="hotel-chatbot-close" aria-label="Đóng chatbot">×</button>
+		</header>
+		<div class="hotel-chatbot-messages" role="log" aria-live="polite">
+			<div class="hotel-chatbot-message bot">@(isStaff ? "Tôi có thể tra cứu số liệu phòng, đặt phòng, doanh thu và tồn kho." : "Xin chào! Tôi có thể tư vấn thông tin khách sạn và kiểm tra phòng còn trống.")</div>
+		</div>
+		@if (!isStaff)
+		{
+			<div class="hotel-chatbot-dates">
+				<label>Nhận phòng <input type="date" class="chatbot-check-in" /></label>
+				<label>Trả phòng <input type="date" class="chatbot-check-out" /></label>
+			</div>
+		}
+		<form class="hotel-chatbot-form">
+			<input class="hotel-chatbot-input" maxlength="1000" autocomplete="off" placeholder="Nhập câu hỏi..." required />
+			<button type="submit" aria-label="Gửi câu hỏi"><i class="bi bi-send-fill"></i></button>
+		</form>
+	</section>
+</div>
